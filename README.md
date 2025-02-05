@@ -2,7 +2,7 @@
 
 # TEAM MEMBERS
 
-# Team Member1:
+# Team Member2:
 NAME: Laude, Raymund Christian A.
 COURSE: BSIT3 - G3
 
