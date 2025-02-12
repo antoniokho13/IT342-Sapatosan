@@ -13,10 +13,8 @@ Member of the CIT-U badminton varsity team. My hobbies are watching movies and p
 My goal in life is to live comfortably and have a job which allows me to work from home.
 
 # Team Member2:
-NAME: Laude, Raymund Christian A.  
-COURSE: BSIT3 - G3  
+NAME: Laude, Raymund Christian A.
+COURSE: BSIT3 - G3
 
-## Description: 
+## Desription:
 Hello everyone! I am Raymund Christian Laude a 21 year old from Minglanilla Cebu. My Hobbies are playing games , watching movies and cooking food that satisfies my cravings. My goal in life is to live in a place where I dont have to worry about anything.
-
-
