@@ -1,0 +1,209 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@400..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white; /* Change the header background to white */
+    padding: 10px 20px;
+    color: black; /* Change the text color to black */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Adjust the shadow to be more subtle */
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    height: 100px; /* Increase the height to make the logo bigger */
+    margin-right: 20px; /* Add more distance between the logo and the text */
+}
+
+.nav-links {
+    display: flex;
+    justify-content: center;
+    flex-grow: 1;
+    gap: 20px;
+    margin-left: 1px; /* Adjust the navigation links a bit to the left */
+}
+
+.nav-link {
+    position: relative;
+    display: block;
+    text-transform: uppercase;
+    margin: 20px 0;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #262626;
+    font-family: 'Montserrat', sans-serif; /* Apply the new font */
+    font-size: 12px;
+    font-weight: 600;
+    transition: .5s;
+    z-index: 1;
+}
+
+.nav-link:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 2px solid #262626;
+    border-bottom: 2px solid #262626;
+    transform: scaleY(2);
+    opacity: 0;
+    transition: .3s;
+}
+
+.nav-link:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #262626;
+    transform: scale(0);
+    opacity: 0;
+    transition: .3s;
+    z-index: -1;
+}
+
+.nav-link:hover {
+    color: #fff;
+}
+
+.nav-link:hover:before {
+    transform: scaleY(1);
+    opacity: 1;
+}
+
+.nav-link:hover:after {
+    transform: scaleY(1);
+    opacity: 1;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.auth-button {
+    position: relative;
+    display: inline-block;
+    padding: 10px 20px; /* Adjust padding to match nav links */
+    margin: 20px 0; /* Adjust margin to match nav links */
+    color: black; /* Change text color to black */
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: 0.5s;
+    letter-spacing: 4px;
+    overflow: hidden;
+    font-size: 12px; /* Set button font size to match nav links */
+    font-weight: 600; /* Set font weight to match nav links */
+}
+
+.auth-button:hover {
+    background: black; /* Change background color to black */
+    color: white; /* Change text color to white */
+    box-shadow: 0 0 5px black, 0 0 25px black, 0 0 50px black, 0 0 200px black; /* Change box shadow color to black */
+    -webkit-box-reflect: below 1px linear-gradient(transparent, #0005);
+}
+
+.auth-button span {
+    position: absolute;
+    display: block;
+}
+
+.auth-button span:nth-child(1) {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, black); /* Change gradient color to black */
+    animation: animate1 1s linear infinite;
+}
+
+@keyframes animate1 {
+    0% {
+        left: -100%;
+    }
+    50%,
+    100% {
+        left: 100%;
+    }
+}
+
+.auth-button span:nth-child(2) {
+    top: -100%;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, black); /* Change gradient color to black */
+    animation: animate2 1s linear infinite;
+    animation-delay: 0.25s;
+}
+
+@keyframes animate2 {
+    0% {
+        top: -100%;
+    }
+    50%,
+    100% {
+        top: 100%;
+    }
+}
+
+.auth-button span:nth-child(3) {
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(270deg, transparent, black); /* Change gradient color to black */
+    animation: animate3 1s linear infinite;
+    animation-delay: 0.5s;
+}
+
+@keyframes animate3 {
+    0% {
+        right: -100%;
+    }
+    50%,
+    100% {
+        right: 100%;
+    }
+}
+
+.auth-button span:nth-child(4) {
+    bottom: -100%;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent, black); /* Change gradient color to black */
+    animation: animate4 1s linear infinite;
+    animation-delay: 0.75s;
+}
+
+@keyframes animate4 {
+    0% {
+        bottom: -100%;
+    }
+    50%,
+    100% {
+        bottom: 100%;
+    }
+}
