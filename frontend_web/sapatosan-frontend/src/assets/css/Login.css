@@ -1,0 +1,349 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@400..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Import shared header and footer styles */
+@import './Home.css';
+
+/* Login section with same gradient background as register */
+.login-section {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom, #000000, #1a1a1a, #333333, #666666, #999999, #cccccc, #ffffff);
+    background-size: 100% 400%;
+    animation: gradientBG 5s ease infinite;
+    padding: 50px 20px;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 0%;
+    }
+    50% {
+        background-position: 0% 100%;
+    }
+    100% {
+        background-position: 0% 0%;
+    }
+}
+
+.login-container {
+    width: 100%;
+    max-width: 500px; /* Slightly smaller than register since fewer fields */
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-container h1 {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #333;
+    font-weight: bold;
+}
+
+/* Social Login Styles - duplicated from Register.css */
+.social-login {
+    margin-bottom: 30px;
+}
+
+.social-text {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.social-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.social-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.social-button i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.social-button.google {
+    background-color: #000000;
+}
+
+.social-button.google i {
+    margin-right: 10px;
+    background: conic-gradient(
+        #4285F4, /* Google Blue */
+        #DB4437, /* Google Red */
+        #F4B400, /* Google Yellow */
+        #0F9D58, /* Google Green */
+        #4285F4  /* Back to Blue */
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 20px;
+}
+
+.social-button.facebook {
+    background-color: #000000;
+}
+
+.social-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+.divider span {
+    padding: 0 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Form Styles - duplicated from Register.css */
+.login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input, 
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus, 
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #262626;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(38, 38, 38, 0.1);
+}
+
+/* Forgot password link */
+.forgot-password {
+    text-align: right;
+    margin-bottom: 20px;
+}
+
+.forgot-password a {
+    color: #262626;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* Login Button Styles - duplicated from Register button */
+.form-button-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.login-form-button {
+    background: #382727;     
+    box-shadow: none;
+    margin: 0;
+    padding: 10px 20px;
+    border: none;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    color: white; /* White text on black background */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.login-form-button:hover {
+    background: #ffffff;
+    color: #000000; /* Black text on white background when hovered */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.login-form-button span {
+    position: absolute;
+    display: block;
+}
+
+.login-form-button span:nth-child(1) {
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(90deg, transparent, rgb(223, 23, 23)); 
+    animation: animate1 1s linear infinite;
+}
+
+.login-form-button span:nth-child(2) {
+    top: -100%;
+    right: 0;
+    width: 8px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, rgb(209, 22, 22));
+    animation: animate2 1s linear infinite;
+    animation-delay: 0.25s;
+}
+
+.login-form-button span:nth-child(3) {
+    bottom: 0;
+    right: -100%;
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(270deg, transparent, rgb(199, 16, 16));
+    animation: animate3 1s linear infinite;
+    animation-delay: 0.5s;
+}
+
+.login-form-button span:nth-child(4) {
+    bottom: -100%;
+    left: 0;
+    width: 8px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent, rgb(225, 5, 5));
+    animation: animate4 1s linear infinite;
+    animation-delay: 0.75s;
+}
+
+/* Animation keyframes duplicated from Register.css */
+@keyframes animate1 {
+    0% {
+        left: -100%;
+    }
+    50%, 100% {
+        left: 100%;
+    }
+}
+
+@keyframes animate2 {
+    0% {
+        top: -100%;
+    }
+    50%, 100% {
+        top: 100%;
+    }
+}
+
+@keyframes animate3 {
+    0% {
+        right: -100%;
+    }
+    50%, 100% {
+        right: 100%;
+    }
+}
+
+@keyframes animate4 {
+    0% {
+        bottom: -100%;
+    }
+    50%, 100% {
+        bottom: 100%;
+    }
+}
+
+/* Register Link Styles - similar to login link in Register.css */
+.register-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.register-link a {
+    color: #262626;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive design duplicated from Register.css */
+@media screen and (max-width: 768px) {
+    .login-container {
+        padding: 30px 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .login-container {
+        padding: 20px 15px;
+    }
+    
+    .login-container h1 {
+        font-size: 24px;
+    }
+    
+    .form-group input {
+        padding: 10px 12px;
+    }
+}
