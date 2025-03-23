@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import '../assets/css/Home.css'; // Import the CSS file for styling
 import adidas from '../assets/images/adidas.png'; // Import the Adidas logo
 import anthony from '../assets/images/anthony.jpg'; // Import the image for Anthony Edwards
@@ -38,25 +39,27 @@ const Home = () => {
     return (
         <div>
             <header className="header">
-                <div className="logo-container">
-                    <img src={logo} alt="Sapatosan Logo" className="logo" />
-                </div>
-                <nav className="nav-links">
-                    <a href="#home" className="nav-link">Home</a>
-                    <a href="#basketball" className="nav-link">Basketball</a>
-                    <a href="#casual" className="nav-link">Casual</a>
-                    <a href="#running" className="nav-link">Running</a>
-                </nav>
-                <div className="auth-buttons">
-                    <a href="#join" className="auth-button">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        Join Us
-                    </a>
-                </div>
-            </header>
+    <div className="logo-container">
+        <Link to="/">
+            <img src={logo} alt="Sapatosan Logo" className="logo" />
+        </Link>
+    </div>
+    <nav className="nav-links">
+        <Link to="/#home" className="nav-link">Home</Link>
+        <Link to="/basketball" className="nav-link">Basketball</Link>
+        <Link to="/casual" className="nav-link">Casual</Link>
+        <Link to="/#running" className="nav-link">Running</Link>
+    </nav>
+    <div className="auth-buttons">
+        <Link to="/register" className="auth-button">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            Join Us
+        </Link>
+    </div>
+</header>
             <section>
                 <div className="video-container1">
                     <video className="video-teaser" autoPlay loop muted>
