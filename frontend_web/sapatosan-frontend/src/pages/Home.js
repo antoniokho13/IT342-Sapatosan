@@ -46,8 +46,8 @@ const Home = () => {
     </div>
     <nav className="nav-links">
         <Link to="/#home" className="nav-link">Home</Link>
-        <Link to="/#basketball" className="nav-link">Basketball</Link>
-        <Link to="/#casual" className="nav-link">Casual</Link>
+        <Link to="/basketball" className="nav-link">Basketball</Link>
+        <Link to="/casual" className="nav-link">Casual</Link>
         <Link to="/#running" className="nav-link">Running</Link>
     </nav>
     <div className="auth-buttons">
