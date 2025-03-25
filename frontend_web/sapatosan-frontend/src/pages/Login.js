@@ -1,12 +1,46 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, {useState} from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/Login.css';
+import { authService } from '../assets/services/authService';
 import logo from '../assets/images/logo.png'; // Import the logo
 
 const Login = () => {
-    const handleSubmit = (e) => {
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
+    });
+    const [error, setError] = useState('');
+    const navigate = useNavigate();
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Add your login form submission logic here
+        setError('');
+
+        try {
+            const response = await authService.login(formData);
+            
+            // Store the token and user info in localStorage
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('userId', response.userId);
+            localStorage.setItem('userRole', response.role);
+            
+            // Redirect based on role
+            if (response.role === 'ADMIN') {
+                navigate('/admin-dashboard');
+            } else {
+                navigate('/dashboard');
+            }
+        } catch (err) {
+            setError(err.message || 'Login failed');
+        }
     };
 
     return (
@@ -35,12 +69,12 @@ const Login = () => {
                 </div>
             </header>
 
-            {/* Login Form */}
             <section className="login-section">
                 <div className="login-container">
                     <h1>Login to Your Account</h1>
                     
-                    {/* Social Login Options */}
+                    {error && <div className="error-message">{error}</div>}
+
                     <div className="social-login">
                         <p className="social-text">Sign in with</p>
                         <div className="social-buttons">
@@ -61,11 +95,25 @@ const Login = () => {
                     <form className="login-form" onSubmit={handleSubmit}>
                         <div className="form-group">
                             <label htmlFor="email">Email Address</label>
-                            <input type="email" id="email" name="email" required />
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                value={formData.email}
+                                onChange={handleChange}
+                                required 
+                            />
                         </div>
                         <div className="form-group">
                             <label htmlFor="password">Password</label>
-                            <input type="password" id="password" name="password" required />
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                value={formData.password}
+                                onChange={handleChange}
+                                required 
+                            />
                         </div>
                         <div className="forgot-password">
                             <Link to="/forgot-password">Forgot Password?</Link>
@@ -86,7 +134,6 @@ const Login = () => {
                 </div>
             </section>
 
-            {/* Footer - duplicated from Register.js */}
             <footer className="footer">
                 <div className="footer-bottom">
                     <p>&copy; 2025 Sapatosan. All rights reserved.</p>
