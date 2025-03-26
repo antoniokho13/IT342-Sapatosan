@@ -36,7 +36,7 @@ const Login = () => {
             if (response.role === 'ADMIN') {
                 navigate('/admin-dashboard');
             } else {
-                navigate('/dashboard');
+                navigate('/');
             }
         } catch (err) {
             setError(err.message || 'Login failed');
