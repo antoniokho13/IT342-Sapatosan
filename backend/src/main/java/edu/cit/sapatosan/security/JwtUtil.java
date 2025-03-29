@@ -1,5 +1,6 @@
 package edu.cit.sapatosan.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -60,5 +61,14 @@ public class JwtUtil {
         } catch (JwtException e) {
             return false;
         }
+    }
+    // Add this method
+    public Date extractExpiration(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getExpiration();
     }
 }

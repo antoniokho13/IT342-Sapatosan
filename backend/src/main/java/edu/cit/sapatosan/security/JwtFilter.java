@@ -1,5 +1,6 @@
 package edu.cit.sapatosan.security;
 
+import edu.cit.sapatosan.repository.TokenBlacklistRepository;
 import edu.cit.sapatosan.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -11,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 import java.util.Collections;
 
@@ -19,10 +21,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final TokenBlacklistRepository tokenBlacklistRepository;
 
-    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepository) {
+    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepository, TokenBlacklistRepository tokenBlacklistRepository) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
     }
 
     @Override
@@ -41,12 +45,11 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtUtil.validateToken(token)) {
-                String role = jwtUtil.extractRole(token); // 🔑 Extract role from token
+            if (jwtUtil.validateToken(token) && !tokenBlacklistRepository.findByToken(token).isPresent()) {
+                String role = jwtUtil.extractRole(token);
                 var userDetails = userRepository.findByEmail(email).orElse(null);
 
                 if (userDetails != null) {
-                    // 👇 ROLE_ prefix is important for Spring Security
                     var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
 
                     UsernamePasswordAuthenticationToken authToken =
