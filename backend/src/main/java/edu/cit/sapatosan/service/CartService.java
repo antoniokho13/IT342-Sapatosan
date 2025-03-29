@@ -36,6 +36,8 @@ public class CartService {
             cart.setUserId(updatedCart.getUserId());
             cart.setProductId(updatedCart.getProductId());
             cart.setStatus(updatedCart.getStatus());
+            cart.setQuantity(updatedCart.getQuantity());
+            cart.setPrice(updatedCart.getPrice());
             return cartRepository.save(cart);
         });
     }
@@ -44,11 +46,13 @@ public class CartService {
         cartRepository.deleteById(id);
     }
 
-    public CartEntity addProductToCart(Long userId, Long productId) {
+    public CartEntity addProductToCart(Long userId, Long productId, Integer quantity, Double price) {
         CartEntity cart = new CartEntity();
         cart.setUserId(userId);
         cart.setProductId(productId);
         cart.setStatus("PENDING");
+        cart.setQuantity(quantity);
+        cart.setPrice(price);
         return cartRepository.save(cart);
     }
 
