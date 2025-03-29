@@ -50,8 +50,8 @@ public class CartController {
     }
 
     @PostMapping("/addProductToCart")
-    public ResponseEntity<CartEntity> addProductToCart(@RequestParam Long userId, @RequestParam Long productId) {
-        CartEntity cart = cartService.addProductToCart(userId, productId);
+    public ResponseEntity<CartEntity> addProductToCart(@RequestParam Long userId, @RequestParam Long productId, @RequestParam Integer quantity, @RequestParam Double price) {
+        CartEntity cart = cartService.addProductToCart(userId, productId, quantity, price);
         return ResponseEntity.ok(cart);
     }
 

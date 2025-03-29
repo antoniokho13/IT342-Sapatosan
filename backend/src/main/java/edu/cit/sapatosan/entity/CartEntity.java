@@ -18,6 +18,12 @@ public class CartEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(nullable = false)
+    private Double price;
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -49,5 +55,21 @@ public class CartEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
     }
 }
