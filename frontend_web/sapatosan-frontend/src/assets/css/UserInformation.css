@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Cinzel:wght@400..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+/* Import shared header and footer styles */
+@import './Home.css';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.user-information-page {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f8f8f8;
+    color: #262626;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header styling is now imported from Home.css */
+
+/* Main Content */
+.user-content {
+    flex: 1;
+    padding: 50px 20px;
+}
+
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* User Avatar */
+.user-avatar-container {
+    margin-bottom: 30px;
+}
+
+.user-avatar {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 3px solid #ddd;
+    position: relative;
+    overflow: hidden;
+    background-color: #f0f0f0; /* Light gray background for empty avatar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.default-avatar-icon {
+    font-size: 80px;
+    color: #cccccc; /* Light color for the icon */
+}
+
+.user-avatar.editable {
+    cursor: pointer;
+}
+
+.upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.user-avatar:hover .upload-overlay {
+    opacity: 1;
+}
+
+.upload-overlay i {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.upload-overlay p {
+    font-size: 14px;
+}
+
+/* Profile Form */
+.profile-form {
+    width: 100%;
+    max-width: 500px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #000;
+    outline: none;
+}
+
+.form-group input:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+/* Edit Button with animation similar to auth-button */
+.edit-button {
+    width: 100%;
+    padding: 12px 0;
+    margin-top: 15px;
+    background-color: #000;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.3s;
+}
+
+.edit-button:hover {
+    background-color: #333;
+}
+
+.save-button {
+    background-color: #2c7873; /* Different color for save button */
+}
+
+.save-button:hover {
+    background-color: #1a4d2e;
+}
+
+/* Button animation styles similar to auth-button */
+.edit-button span {
+    position: absolute;
+    display: block;
+}
+
+.edit-button span:nth-child(1) {
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, white);
+    animation: animate1 1s linear infinite;
+}
+
+.edit-button span:nth-child(2) {
+    top: -100%;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, white);
+    animation: animate2 1s linear infinite;
+    animation-delay: 0.25s;
+}
+
+.edit-button span:nth-child(3) {
+    bottom: 0;
+    right: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(270deg, transparent, white);
+    animation: animate3 1s linear infinite;
+    animation-delay: 0.5s;
+}
+
+.edit-button span:nth-child(4) {
+    bottom: -100%;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent, white);
+    animation: animate4 1s linear infinite;
+    animation-delay: 0.75s;
+}
+
+/* Footer is imported from Home.css */
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 30px 20px;
+    }
+    
+    .user-avatar {
+        width: 150px;
+        height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .profile-form {
+        padding: 0 10px;
+    }
+    
+    .form-group input {
+        padding: 10px;
+    }
+}

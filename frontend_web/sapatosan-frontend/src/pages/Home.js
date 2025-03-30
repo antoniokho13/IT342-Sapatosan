@@ -48,7 +48,7 @@ const Home = () => {
         <Link to="/#home" className="nav-link">Home</Link>
         <Link to="/basketball" className="nav-link">Basketball</Link>
         <Link to="/casual" className="nav-link">Casual</Link>
-        <Link to="/#running" className="nav-link">Running</Link>
+        <Link to="/running" className="nav-link">Running</Link>
     </nav>
     <div className="auth-buttons">
         <Link to="/register" className="auth-button">

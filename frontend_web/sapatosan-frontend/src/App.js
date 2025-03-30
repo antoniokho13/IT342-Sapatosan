@@ -5,6 +5,8 @@ import Casual from './pages/Casual';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Running from './pages/Running';
+import UserInformation from './pages/UserInformation';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/basketball" element={<Basketball />} />
           <Route path="/casual" element={<Casual />} />
+          <Route path="/running" element={<Running />} />
+          <Route path="/profile" element={<UserInformation />} />
         </Routes>
       </div>
     </Router>
