@@ -4,8 +4,8 @@ import edu.cit.sapatosan.dto.LoginRequest;
 import edu.cit.sapatosan.dto.LoginResponse;
 import edu.cit.sapatosan.dto.LogoutRequest;
 import edu.cit.sapatosan.entity.TokenBlacklist;
-import edu.cit.sapatosan.repository.TokenBlacklistRepository;
 import edu.cit.sapatosan.entity.UserEntity;
+import edu.cit.sapatosan.repository.TokenBlacklistRepository;
 import edu.cit.sapatosan.repository.UserRepository;
 import edu.cit.sapatosan.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +26,12 @@ public class AuthService {
     @Autowired
     public AuthService(UserRepository userRepository,
                        UserService userService,
-                       TokenBlacklistRepository tokenBlacklistRepository, // Add this line
+                       TokenBlacklistRepository tokenBlacklistRepository,
                        JwtUtil jwtUtil,
                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.tokenBlacklistRepository = tokenBlacklistRepository; // Add this line
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
@@ -50,6 +50,9 @@ public class AuthService {
 
     public void logout(LogoutRequest request) {
         String token = request.getToken();
+        if (token == null || token.isEmpty()) {
+            throw new IllegalArgumentException("JWT token cannot be null or empty");
+        }
         Date expirationDate = jwtUtil.extractExpiration(token);
 
         TokenBlacklist tokenBlacklist = new TokenBlacklist();

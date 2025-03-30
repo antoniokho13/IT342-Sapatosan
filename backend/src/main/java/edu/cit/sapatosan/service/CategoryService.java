@@ -30,7 +30,6 @@ public class CategoryService {
     public Optional<CategoryEntity> updateCategory(Long id, CategoryEntity updatedCategory) {
         return categoryRepository.findById(id).map(category -> {
             category.setName(updatedCategory.getName());
-            category.setProducts(updatedCategory.getProducts());
             return categoryRepository.save(category);
         });
     }
