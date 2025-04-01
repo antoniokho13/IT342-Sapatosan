@@ -1,3 +1,4 @@
+// OrderController.java
 package edu.cit.sapatosan.controller;
 
 import edu.cit.sapatosan.entity.OrderEntity;
@@ -16,35 +17,32 @@ public class OrderController {
         this.orderService = orderService;
     }
 
-    @GetMapping("/getAllOrders")
-    public ResponseEntity<List<OrderEntity>> getAllOrders() {
-        List<OrderEntity> orders = orderService.getAllOrders();
+    // Endpoint to list all orders of a user by userId
+    @GetMapping("/list")
+    public ResponseEntity<List<OrderEntity>> listUserOrders(@RequestParam Long userId) {
+        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
 
-    @GetMapping("/getOrderById/{id}")
-    public ResponseEntity<OrderEntity> getOrderById(@PathVariable Long id) {
+    // Endpoint to get details of a specific order by orderId
+    @GetMapping("/details/{id}")
+    public ResponseEntity<OrderEntity> getOrderDetails(@PathVariable Long id) {
         return orderService.getOrderById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/createOrder")
-    public ResponseEntity<OrderEntity> createOrder(@RequestBody OrderEntity order) {
-        OrderEntity createdOrder = orderService.createOrder(order);
-        return ResponseEntity.ok(createdOrder);
+    // Endpoint to create an order from the cart of a user
+    @PostMapping("/createFromCart/{userId}")
+    public ResponseEntity<OrderEntity> createOrderFromCart(@PathVariable Long userId) {
+        OrderEntity order = orderService.createOrderFromCart(userId);
+        return ResponseEntity.ok(order);
     }
 
-    @PutMapping("/updateOrder/{id}")
-    public ResponseEntity<OrderEntity> updateOrder(@PathVariable Long id, @RequestBody OrderEntity updatedOrder) {
-        return orderService.updateOrder(id, updatedOrder)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/deleteOrder/{id}")
-    public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
-        orderService.deleteOrder(id);
-        return ResponseEntity.noContent().build();
+    // Endpoint to create a direct order for a user with a specific product and quantity
+    @PostMapping("/createDirectOrder/{userId}/{productId}/{quantity}")
+    public ResponseEntity<OrderEntity> createDirectOrder(@PathVariable Long userId, @PathVariable Long productId, @PathVariable Integer quantity) {
+        OrderEntity order = orderService.createDirectOrder(userId, productId, quantity);
+        return ResponseEntity.ok(order);
     }
 }

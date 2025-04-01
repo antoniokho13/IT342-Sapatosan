@@ -2,6 +2,8 @@ package edu.cit.sapatosan.entity;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "carts")
 public class CartEntity {
@@ -9,20 +11,12 @@ public class CartEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
-    @Column(nullable = false)
-    private Long productId;
-
-    @Column(nullable = false)
-    private String status;
-
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(nullable = false)
-    private Double price;
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartProductEntity> cartProducts;
 
     // Getters and Setters
     public Long getId() {
@@ -33,43 +27,29 @@ public class CartEntity {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public UserEntity getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 
-    public Long getProductId() {
-        return productId;
+    public List<CartProductEntity> getCartProducts() {
+        return cartProducts;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setCartProducts(List<CartProductEntity> cartProducts) {
+        this.cartProducts = cartProducts;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
+    // Convenience method to calculate total
+    public Double getTotal() {
+        if (cartProducts == null || cartProducts.isEmpty()) {
+            return 0.0;
+        }
+        return cartProducts.stream()
+                .mapToDouble(cp -> cp.getQuantity() * cp.getProduct().getPrice())
+                .sum();
     }
 }
