@@ -23,6 +23,10 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
+    public List<ProductEntity> getProductsByCategory(Long categoryId) {
+        return productRepository.findByCategoryId(categoryId);
+    }
+
     public ProductEntity createProduct(ProductEntity product) {
         return productRepository.save(product);
     }
