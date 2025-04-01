@@ -19,5 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Sapatosan_backend"
+rootProject.name = "Frontend_mobile"
 include(":app")
+ 
