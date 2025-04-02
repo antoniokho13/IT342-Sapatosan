@@ -18,7 +18,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    @GetMapping("/getAllCategories")
+    @GetMapping
     public ResponseEntity<List<CategoryDTO>> getAllCategories() {
         List<CategoryDTO> categories = categoryService.getAllCategories().stream()
                 .map(this::convertToDTO)
@@ -26,7 +26,7 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
-    @GetMapping("/getCategoryById/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
         return categoryService.getCategoryById(id)
                 .map(this::convertToDTO)
@@ -34,13 +34,13 @@ public class CategoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/createCategory")
+    @PostMapping
     public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryEntity category) {
         CategoryEntity createdCategory = categoryService.createCategory(category);
         return ResponseEntity.ok(convertToDTO(createdCategory));
     }
 
-    @PutMapping("/updateCategory/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody CategoryEntity updatedCategory) {
         return categoryService.updateCategory(id, updatedCategory)
                 .map(this::convertToDTO)
@@ -48,7 +48,7 @@ public class CategoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/deleteCategory/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();

@@ -18,7 +18,7 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @GetMapping("/getAllProducts")
+    @GetMapping
     public ResponseEntity<List<ProductDTO>> getAllProducts() {
         List<ProductDTO> products = productService.getAllProducts().stream()
                 .map(this::convertToDTO)
@@ -26,7 +26,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/getProductById/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProductById(@PathVariable Long id) {
         return productService.getProductById(id)
                 .map(this::convertToDTO)
@@ -34,13 +34,13 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/createProduct")
+    @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductEntity product) {
         ProductEntity createdProduct = productService.createProduct(product);
         return ResponseEntity.ok(convertToDTO(createdProduct));
     }
 
-    @PutMapping("/updateProduct/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductEntity updatedProduct) {
         return productService.updateProduct(id, updatedProduct)
                 .map(this::convertToDTO)
@@ -48,12 +48,13 @@ public class ProductController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/deleteProduct/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
-    @GetMapping("/getProductsByCategory/{categoryId}")
+
+    @GetMapping("/category/{categoryId}")
     public ResponseEntity<List<ProductDTO>> getProductsByCategory(@PathVariable Long categoryId) {
         List<ProductDTO> products = productService.getProductsByCategory(categoryId).stream()
                 .map(this::convertToDTO)
