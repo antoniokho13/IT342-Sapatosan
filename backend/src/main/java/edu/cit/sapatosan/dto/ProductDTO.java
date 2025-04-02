@@ -1,40 +1,13 @@
-package edu.cit.sapatosan.entity;
+package edu.cit.sapatosan.dto;
 
-import jakarta.persistence.*;
-
-import java.util.List;
-
-@Entity
-@Table(name = "products")
-public class ProductEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ProductDTO {
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
-    @Column
     private String description;
-
-    @Column(nullable = false)
     private Double price;
-
-    @Column(nullable = false)
     private Integer stock;
-
-    @Column
     private String imageUrl;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private CategoryEntity category;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartProductEntity> cartProducts;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderProductEntity> orderProducts;
+    private Long categoryId;
 
     // Getters and Setters
     public Long getId() {
@@ -85,11 +58,11 @@ public class ProductEntity {
         this.imageUrl = imageUrl;
     }
 
-    public CategoryEntity getCategory() {
-        return category;
+    public Long getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategory(CategoryEntity category) {
-        this.category = category;
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
     }
 }

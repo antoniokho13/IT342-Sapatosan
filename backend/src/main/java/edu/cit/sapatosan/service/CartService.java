@@ -1,80 +1,86 @@
+// CartService.java
 package edu.cit.sapatosan.service;
 
-import edu.cit.sapatosan.entity.CartEntity;
-import edu.cit.sapatosan.entity.OrderEntity;
-import edu.cit.sapatosan.repository.CartRepository;
-import edu.cit.sapatosan.repository.OrderRepository;
+import edu.cit.sapatosan.entity.*;
+import edu.cit.sapatosan.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class CartService {
     private final CartRepository cartRepository;
-    private final OrderRepository orderRepository;
+    private final CartProductRepository cartProductRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
 
-    public CartService(CartRepository cartRepository, OrderRepository orderRepository) {
+    public CartService(CartRepository cartRepository, CartProductRepository cartProductRepository, ProductRepository productRepository, UserRepository userRepository) {
         this.cartRepository = cartRepository;
-        this.orderRepository = orderRepository;
+        this.cartProductRepository = cartProductRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
     }
 
-    public List<CartEntity> getAllCarts() {
-        return cartRepository.findAll();
-    }
-
-    public Optional<CartEntity> getCartById(Long id) {
-        return cartRepository.findById(id);
-    }
-
-    public CartEntity createCart(CartEntity cart) {
-        return cartRepository.save(cart);
-    }
-
-    public Optional<CartEntity> updateCart(Long id, CartEntity updatedCart) {
-        return cartRepository.findById(id).map(cart -> {
-            cart.setUserId(updatedCart.getUserId());
-            cart.setProductId(updatedCart.getProductId());
-            cart.setStatus(updatedCart.getStatus());
-            cart.setQuantity(updatedCart.getQuantity());
-            cart.setPrice(updatedCart.getPrice());
-            return cartRepository.save(cart);
-        });
-    }
-
-    public void deleteCart(Long id) {
-        cartRepository.deleteById(id);
-    }
-
-    public CartEntity addProductToCart(Long userId, Long productId, Integer quantity, Double price) {
-        CartEntity cart = new CartEntity();
-        cart.setUserId(userId);
-        cart.setProductId(productId);
-        cart.setStatus("PENDING");
-        cart.setQuantity(quantity);
-        cart.setPrice(price);
-        return cartRepository.save(cart);
-    }
-
-    public List<CartEntity> getCartContents(Long userId) {
+    public CartEntity getCartByUserId(Long userId) {
         return cartRepository.findByUserId(userId);
     }
 
-    public void removeProductFromCart(Long userId, Long productId) {
-        cartRepository.deleteByUserIdAndProductId(userId, productId);
+    public CartEntity createCartForUser(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        CartEntity cart = new CartEntity();
+        cart.setUser(user);
+        return cartRepository.save(cart);
     }
 
-    public OrderEntity checkoutCart(Long userId) {
-        List<CartEntity> cartContents = cartRepository.findByUserId(userId);
-        double totalAmount = cartContents.stream().mapToDouble(cart -> cart.getPrice() * cart.getQuantity()).sum();
-        OrderEntity order = new OrderEntity();
-        order.setUserId(userId);
-        order.setTotalAmount(totalAmount);
-        order.setStatus("COMPLETED");
-        order.setQuantity(cartContents.size());
-        order.setPrice(totalAmount);
-        orderRepository.save(order);
-        cartRepository.deleteAll(cartContents);
-        return order;
+    public CartProductEntity addProductToCart(Long userId, Long productId, Integer quantity) {
+        CartEntity cart = cartRepository.findByUserId(userId);
+        if (cart == null) {
+            cart = createCartForUser(userId);
+        }
+        ProductEntity product = productRepository.findById(productId).orElseThrow(() -> new RuntimeException("Product not found"));
+
+        if (product.getStock() < quantity) {
+            throw new RuntimeException("Not enough stock available");
+        }
+
+        CartProductEntity cartProduct = cartProductRepository.findByCartIdAndProductId(cart.getId(), productId);
+        if (cartProduct == null) {
+            cartProduct = new CartProductEntity();
+            cartProduct.setCart(cart);
+            cartProduct.setProduct(product);
+            cartProduct.setQuantity(quantity);
+        } else {
+            if (product.getStock() < cartProduct.getQuantity() + quantity) {
+                throw new RuntimeException("Not enough stock available");
+            }
+            cartProduct.setQuantity(cartProduct.getQuantity() + quantity);
+        }
+
+        return cartProductRepository.save(cartProduct);
+    }
+
+    public CartProductEntity updateProductQuantityInCart(Long userId, Long productId, Integer quantity) {
+        CartEntity cart = cartRepository.findByUserId(userId);
+        CartProductEntity cartProduct = cartProductRepository.findByCartIdAndProductId(cart.getId(), productId);
+        if (cartProduct == null) {
+            throw new RuntimeException("Product not found in cart");
+        }
+        cartProduct.setQuantity(quantity);
+        return cartProductRepository.save(cartProduct);
+    }
+
+    public void removeProductFromCart(Long userId, Long productId) {
+        CartEntity cart = cartRepository.findByUserId(userId);
+        CartProductEntity cartProduct = cartProductRepository.findByCartIdAndProductId(cart.getId(), productId);
+        if (cartProduct != null) {
+            cartProductRepository.delete(cartProduct);
+        }
+    }
+
+    public void clearCart(Long userId) {
+        CartEntity cart = cartRepository.findByUserId(userId);
+        cartProductRepository.deleteAll(cart.getCartProducts());
     }
 }

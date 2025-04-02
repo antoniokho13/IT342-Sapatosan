@@ -2,6 +2,7 @@ package edu.cit.sapatosan.entity;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -10,8 +11,9 @@ public class OrderEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @Column(nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
@@ -23,11 +25,8 @@ public class OrderEntity {
     @Column(nullable = false)
     private String status;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(nullable = false)
-    private Double price;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderProductEntity> orderProducts;
 
     // Getters and Setters
     public Long getId() {
@@ -38,12 +37,12 @@ public class OrderEntity {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public UserEntity getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 
     public Date getOrderDate() {
@@ -70,19 +69,11 @@ public class OrderEntity {
         this.status = status;
     }
 
-    public Integer getQuantity() {
-        return quantity;
+    public List<OrderProductEntity> getOrderProducts() {
+        return orderProducts;
     }
 
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
+    public void setOrderProducts(List<OrderProductEntity> orderProducts) {
+        this.orderProducts = orderProducts;
     }
 }
