@@ -18,6 +18,9 @@ public class CartEntity {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartProductEntity> cartProducts;
 
+    @Column(nullable = false)
+    private String status;
+
     // Getters and Setters
     public Long getId() {
         return id;
