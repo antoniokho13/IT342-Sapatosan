@@ -1,4 +1,3 @@
-// CartController.java
 package edu.cit.sapatosan.controller;
 
 import edu.cit.sapatosan.entity.CartEntity;
@@ -18,36 +17,31 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    // Endpoint to view the cart of a user by userId
-    @GetMapping("/view/{userId}")
+    @GetMapping("/{userId}")
     public ResponseEntity<CartEntity> viewCart(@PathVariable Long userId) {
         CartEntity cart = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(cart);
     }
 
-    // Endpoint to add a product to the cart
-    @PostMapping("/addProduct/{userId}/{productId}/{quantity}")
+    @PostMapping("/{userId}/products/{productId}/{quantity}")
     public ResponseEntity<CartProductEntity> addProductToCart(@PathVariable Long userId, @PathVariable Long productId, @PathVariable Integer quantity) {
         CartProductEntity cartProduct = cartService.addProductToCart(userId, productId, quantity);
         return ResponseEntity.ok(cartProduct);
     }
 
-    // Endpoint to update the quantity of a product in the cart
-    @PutMapping("/updateProductQuantity/{userId}/{productId}/{quantity}")
+    @PutMapping("/{userId}/products/{productId}/{quantity}")
     public ResponseEntity<CartProductEntity> updateProductQuantityInCart(@PathVariable Long userId, @PathVariable Long productId, @PathVariable Integer quantity) {
         CartProductEntity cartProduct = cartService.updateProductQuantityInCart(userId, productId, quantity);
         return ResponseEntity.ok(cartProduct);
     }
 
-    // Endpoint to remove a product from the cart
-    @DeleteMapping("/removeProduct/{userId}/{productId}")
+    @DeleteMapping("/{userId}/products/{productId}")
     public ResponseEntity<Void> removeProductFromCart(@PathVariable Long userId, @PathVariable Long productId) {
         cartService.removeProductFromCart(userId, productId);
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoint to clear the cart of a user
-    @DeleteMapping("/clear/{userId}")
+    @DeleteMapping("/{userId}")
     public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
         cartService.clearCart(userId);
         return ResponseEntity.noContent().build();
