@@ -73,9 +73,8 @@ public class CartService {
 
     public void removeProductFromCart(Long userId, Long productId) {
         CartEntity cart = cartRepository.findByUserId(userId);
-        CartProductEntity cartProduct = cartProductRepository.findByCartIdAndProductId(cart.getId(), productId);
-        if (cartProduct != null) {
-            cartProductRepository.delete(cartProduct);
+        if (cart != null) {
+            cartProductRepository.deleteByCartIdAndProductId(cart.getId(), productId);
         }
     }
 
