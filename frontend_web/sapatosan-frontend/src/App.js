@@ -1,5 +1,6 @@
 import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import AdminUsers from './pages/AdminUsers';
 import Basketball from './pages/Basketball';
 import Casual from './pages/Casual';
 import Home from './pages/Home';
@@ -20,6 +21,7 @@ function App() {
           <Route path="/casual" element={<Casual />} />
           <Route path="/running" element={<Running />} />
           <Route path="/profile" element={<UserInformation />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
         </Routes>
       </div>
     </Router>
