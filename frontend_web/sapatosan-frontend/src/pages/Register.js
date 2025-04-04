@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/Register.css';
-import { authService } from '../assets/services/authService';
 import logo from '../assets/images/logo.png'; // Import the logo
+import { authService } from '../assets/services/authService';
 
 const Register = () => {
     const [formData, setFormData] = useState({
