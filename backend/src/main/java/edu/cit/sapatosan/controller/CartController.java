@@ -1,12 +1,12 @@
 package edu.cit.sapatosan.controller;
 
 import edu.cit.sapatosan.entity.CartEntity;
-import edu.cit.sapatosan.entity.CartProductEntity;
 import edu.cit.sapatosan.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/carts")
@@ -17,33 +17,27 @@ public class CartController {
         this.cartService = cartService;
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<CartEntity> viewCart(@PathVariable Long userId) {
-        CartEntity cart = cartService.getCartByUserId(userId);
-        return ResponseEntity.ok(cart);
+    @GetMapping("/{id}")
+    public ResponseEntity<CartEntity> getCartById(@PathVariable String id) throws ExecutionException, InterruptedException {
+        Optional<CartEntity> cart = cartService.getCartById(id).get();
+        return cart.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{userId}/products/{productId}/{quantity}")
-    public ResponseEntity<CartProductEntity> addProductToCart(@PathVariable Long userId, @PathVariable Long productId, @PathVariable Integer quantity) {
-        CartProductEntity cartProduct = cartService.addProductToCart(userId, productId, quantity);
-        return ResponseEntity.ok(cartProduct);
+    @PostMapping
+    public ResponseEntity<Void> createCart(@RequestBody CartEntity cart) {
+        cartService.createCart(cart.getId(), cart);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{userId}/products/{productId}/{quantity}")
-    public ResponseEntity<CartProductEntity> updateProductQuantityInCart(@PathVariable Long userId, @PathVariable Long productId, @PathVariable Integer quantity) {
-        CartProductEntity cartProduct = cartService.updateProductQuantityInCart(userId, productId, quantity);
-        return ResponseEntity.ok(cartProduct);
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateCart(@PathVariable String id, @RequestBody CartEntity updatedCart) {
+        cartService.updateCart(id, updatedCart);
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{userId}/products/{productId}")
-    public ResponseEntity<Void> removeProductFromCart(@PathVariable Long userId, @PathVariable Long productId) {
-        cartService.removeProductFromCart(userId, productId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
-        cartService.clearCart(userId);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCart(@PathVariable String id) {
+        cartService.deleteCart(id);
         return ResponseEntity.noContent().build();
     }
 }

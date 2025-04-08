@@ -6,49 +6,53 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-    public UserController(UserService userService){
-        this.userService=userService;
-    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @GetMapping
-    public ResponseEntity<List<UserEntity>> getAllUsers() {
-        List<UserEntity> users = userService.getAllUsers();
+    public ResponseEntity<List<UserEntity>> getAllUsers() throws ExecutionException, InterruptedException {
+        List<UserEntity> users = userService.getAllUsers().get();
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<UserEntity> getUserById(@PathVariable String id) throws ExecutionException, InterruptedException {
+        Optional<UserEntity> user = userService.getUserById(id).get();
+        return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    // New method to handle POST /api/users
     @PostMapping
-    public UserEntity createUser(@RequestBody UserEntity user) {
-        return userService.createUser(user);
+    public ResponseEntity<Void> createUser(@RequestBody UserEntity user) {
+        String id = UUID.randomUUID().toString(); // Generate a unique ID for the user
+        userService.createUser(id, user);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<Void> createUserWithId(@PathVariable String id, @RequestBody UserEntity user) {
+        userService.createUser(id, user);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserEntity> updateUser(@PathVariable Long id, @RequestBody UserEntity updatedUser) {
-        return userService.updateUser(id, updatedUser)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PatchMapping("/{id}")
-    public ResponseEntity<UserEntity> patchUser(@PathVariable Long id, @RequestBody UserEntity updatedUser) {
-        return userService.updateUser(id, updatedUser)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Void> updateUser(@PathVariable String id, @RequestBody UserEntity updatedUser) {
+        userService.updateUser(id, updatedUser);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
