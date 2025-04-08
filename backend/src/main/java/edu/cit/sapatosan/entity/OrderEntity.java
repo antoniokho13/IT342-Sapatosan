@@ -1,48 +1,35 @@
 package edu.cit.sapatosan.entity;
 
-import jakarta.persistence.*;
 import java.util.Date;
 import java.util.List;
 
-@Entity
-@Table(name = "orders")
 public class OrderEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
-
-    @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
+    private String id;
+    private String userId; // Reference to User
     private Date orderDate;
-
-    @Column(nullable = false)
     private Double totalAmount;
-
-    @Column(nullable = false)
     private String status;
+    private List<String> orderProductIds; // References to OrderProductEntity
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderProductEntity> orderProducts;
+    public OrderEntity() {
+        // Default constructor for Firebase
+    }
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public UserEntity getUser() {
-        return user;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUser(UserEntity user) {
-        this.user = user;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public Date getOrderDate() {
@@ -69,11 +56,11 @@ public class OrderEntity {
         this.status = status;
     }
 
-    public List<OrderProductEntity> getOrderProducts() {
-        return orderProducts;
+    public List<String> getOrderProductIds() {
+        return orderProductIds;
     }
 
-    public void setOrderProducts(List<OrderProductEntity> orderProducts) {
-        this.orderProducts = orderProducts;
+    public void setOrderProductIds(List<String> orderProductIds) {
+        this.orderProductIds = orderProductIds;
     }
 }

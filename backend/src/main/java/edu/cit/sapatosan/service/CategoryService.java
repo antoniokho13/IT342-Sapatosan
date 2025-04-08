@@ -1,40 +1,74 @@
 package edu.cit.sapatosan.service;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import edu.cit.sapatosan.entity.CategoryEntity;
-import edu.cit.sapatosan.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class CategoryService {
-    private final CategoryRepository categoryRepository;
+    private final DatabaseReference categoryRef;
 
-    public CategoryService(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public CategoryService() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        this.categoryRef = database.getReference("categories");
     }
 
-    public List<CategoryEntity> getAllCategories() {
-        return categoryRepository.findAll();
-    }
+    public CompletableFuture<List<CategoryEntity>> getAllCategories() {
+        CompletableFuture<List<CategoryEntity>> future = new CompletableFuture<>();
+        categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                List<CategoryEntity> categories = new ArrayList<>();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    CategoryEntity category = child.getValue(CategoryEntity.class);
+                    categories.add(category);
+                }
+                future.complete(categories);
+            }
 
-    public Optional<CategoryEntity> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
-    }
-
-    public CategoryEntity createCategory(CategoryEntity category) {
-        return categoryRepository.save(category);
-    }
-
-    public Optional<CategoryEntity> updateCategory(Long id, CategoryEntity updatedCategory) {
-        return categoryRepository.findById(id).map(category -> {
-            category.setName(updatedCategory.getName());
-            return categoryRepository.save(category);
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
+            }
         });
+        return future;
     }
 
-    public void deleteCategory(Long id) {
-        categoryRepository.deleteById(id);
+    public CompletableFuture<Optional<CategoryEntity>> getCategoryById(String id) {
+        CompletableFuture<Optional<CategoryEntity>> future = new CompletableFuture<>();
+        categoryRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                CategoryEntity category = snapshot.getValue(CategoryEntity.class);
+                future.complete(Optional.ofNullable(category));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
+            }
+        });
+        return future;
+    }
+
+    public void createCategory(String id, CategoryEntity category) {
+        categoryRef.child(id).setValueAsync(category);
+    }
+
+    public void updateCategory(String id, CategoryEntity updatedCategory) {
+        categoryRef.child(id).setValueAsync(updatedCategory);
+    }
+
+    public void deleteCategory(String id) {
+        categoryRef.child(id).removeValueAsync();
     }
 }

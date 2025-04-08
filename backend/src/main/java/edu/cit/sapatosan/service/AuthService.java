@@ -3,62 +3,57 @@ package edu.cit.sapatosan.service;
 import edu.cit.sapatosan.dto.LoginRequest;
 import edu.cit.sapatosan.dto.LoginResponse;
 import edu.cit.sapatosan.dto.LogoutRequest;
-import edu.cit.sapatosan.entity.TokenBlacklist;
 import edu.cit.sapatosan.entity.UserEntity;
-import edu.cit.sapatosan.repository.TokenBlacklistRepository;
-import edu.cit.sapatosan.repository.UserRepository;
 import edu.cit.sapatosan.security.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class AuthService {
 
-    private final UserRepository userRepository;
     private final UserService userService;
-    private final TokenBlacklistRepository tokenBlacklistRepository;
+    private final TokenBlacklistService tokenBlacklistService;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public AuthService(UserRepository userRepository,
-                       UserService userService,
-                       TokenBlacklistRepository tokenBlacklistRepository,
+    public AuthService(UserService userService,
+                       TokenBlacklistService tokenBlacklistService,
                        JwtUtil jwtUtil,
                        PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
         this.userService = userService;
-        this.tokenBlacklistRepository = tokenBlacklistRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
 
     public LoginResponse login(LoginRequest request) {
-        UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            UserEntity user = userService.getAllUsers().get().stream()
+                    .filter(u -> u.getEmail().equals(request.getEmail()))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new RuntimeException("Invalid password");
+            }
+
+            String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+            return new LoginResponse(token, user.getId(), user.getEmail(), user.getRole());
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException("Error fetching user from Firebase", e);
         }
-
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-        return new LoginResponse(token, user.getId(), user.getEmail(), user.getRole());
     }
 
     public void logout(LogoutRequest request) {
         String token = request.getToken();
         if (token == null || token.isEmpty()) {
-            throw new IllegalArgumentException("JWT token cannot be null or empty");
+            throw new RuntimeException("Token is required for logout");
         }
+
         Date expirationDate = jwtUtil.extractExpiration(token);
-
-        TokenBlacklist tokenBlacklist = new TokenBlacklist();
-        tokenBlacklist.setToken(token);
-        tokenBlacklist.setExpirationDate(expirationDate);
-
-        tokenBlacklistRepository.save(tokenBlacklist);
+        tokenBlacklistService.addTokenToBlacklist(token, expirationDate.getTime());
     }
 }

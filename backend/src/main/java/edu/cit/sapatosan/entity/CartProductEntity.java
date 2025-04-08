@@ -1,77 +1,45 @@
 package edu.cit.sapatosan.entity;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "cart_products")
 public class CartProductEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "cart_id", nullable = false)
-    private CartEntity cart;
-
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private ProductEntity product;
-
-    @Column(nullable = false)
+    private String id;
+    private String cartId; // Reference to Cart
+    private String productId; // Reference to Product
     private Integer quantity;
 
+    public CartProductEntity() {
+        // Default constructor for Firebase
+    }
+
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
-    public void setId(Long id) {
+
+    public void setId(String id) {
         this.id = id;
     }
-    public CartEntity getCart() {
-        return cart;
+
+    public String getCartId() {
+        return cartId;
     }
-    public void setCart(CartEntity cart) {
-        this.cart = cart;
+
+    public void setCartId(String cartId) {
+        this.cartId = cartId;
     }
-    public ProductEntity getProduct() {
-        return product;
+
+    public String getProductId() {
+        return productId;
     }
-    public void setProduct(ProductEntity product) {
-        this.product = product;
+
+    public void setProductId(String productId) {
+        this.productId = productId;
     }
+
     public Integer getQuantity() {
         return quantity;
     }
+
     public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-    @Override
-    public String toString() {
-        return "CartProductEntity{" +
-                "id=" + id +
-                ", cart=" + cart +
-                ", product=" + product +
-                ", quantity=" + quantity +
-                '}';
-    }
-    // Override equals and hashCode if necessary
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof CartProductEntity)) return false;
-        CartProductEntity that = (CartProductEntity) o;
-        return id != null && id.equals(that.id);
-    }
-    @Override
-    public int hashCode() {
-        return 31;
-    }
-    // You can also add a constructor if needed
-    public CartProductEntity() {
-    }
-    public CartProductEntity(CartEntity cart, ProductEntity product, Integer quantity) {
-        this.cart = cart;
-        this.product = product;
         this.quantity = quantity;
     }
 }
