@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import '../assets/css/Home.css'; // Import the CSS file for styling
 import adidas from '../assets/images/adidas.png'; // Import the Adidas logo
 import anthony from '../assets/images/anthony.jpg'; // Import the image for Anthony Edwards
-import antonio from '../assets/images/antonio.jpg'; // Import the image for Antonio Abangan Kho
+import antonio from '../assets/images/antonio.png'; // Import the image for Antonio Abangan Kho
 import ja from '../assets/images/ja.jpg'; // Import the image for Ja Morant
 import lebron from '../assets/images/lebron.jpg'; // Import the image for LeBron James
 import logo from '../assets/images/logo.png'; // Import the logo

@@ -18,6 +18,7 @@ const Casual = () => {
     const [cart, setCart] = useState([]);
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
+    const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
     
     // Casual shoe data with your real images
     const casualShoes = [
@@ -114,7 +115,7 @@ const Casual = () => {
     ];
 
     const addToCart = (shoe, size = null) => {
-        const shoeWithSize = size ? {...shoe, selectedSize: size} : shoe;
+        const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
         setCart([...cart, shoeWithSize]);
         // Show a temporary "Added to cart" message
         const shoeCard = document.getElementById(`shoe-${shoe.id}`);
@@ -131,9 +132,29 @@ const Casual = () => {
         }
     };
 
+    const removeFromCart = (index) => {
+        const newCart = [...cart];
+        newCart.splice(index, 1);
+        setCart(newCart);
+    };
+
+    const calculateTotal = () => {
+        return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
+    };
+
+    const toggleCart = () => {
+        setShowCart(!showCart);
+        // If we're opening the cart, close any other modals
+        if (!showCart) {
+            setQuickViewShoe(null);
+        }
+    };
+
     const openQuickView = (shoe) => {
         setQuickViewShoe(shoe);
         setSelectedSize(null);
+        // Close cart if open
+        setShowCart(false);
     };
 
     const closeQuickView = () => {
@@ -141,11 +162,14 @@ const Casual = () => {
         setSelectedSize(null);
     };
 
-    // Close modal when clicking outside
+    // Close modals when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
                 closeQuickView();
+            }
+            if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-indicator')) {
+                setShowCart(false);
             }
         };
 
@@ -153,7 +177,7 @@ const Casual = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [quickViewShoe]);
+    }, [quickViewShoe, showCart]);
 
     // Animation for sections
     useEffect(() => {
@@ -179,7 +203,7 @@ const Casual = () => {
 
     // Prevent body scrolling when modal is open
     useEffect(() => {
-        if (quickViewShoe) {
+        if (quickViewShoe || showCart) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -187,7 +211,7 @@ const Casual = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [quickViewShoe]);
+    }, [quickViewShoe, showCart]);
 
     return (
         <div className="casual-page">
@@ -220,7 +244,7 @@ const Casual = () => {
                 <div className="hero-content">
                     <h1>CASUAL SHOES</h1>
                     <p>Trendy styles for everyday comfort and streetwear fashion.</p>
-                    <div className="cart-indicator">
+                    <div className="cart-indicator" onClick={toggleCart}>
                         <span className="cart-icon">
                             <i className="fas fa-shopping-cart"></i>
                         </span>
@@ -349,6 +373,73 @@ const Casual = () => {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shopping Cart Modal */}
+            {showCart && (
+                <div className="cart-modal">
+                    <div className="cart-modal-content">
+                        <button className="close-modal" onClick={() => setShowCart(false)}>×</button>
+                        <h2>Your Shopping Cart</h2>
+                        
+                        {cart.length === 0 ? (
+                            <div className="empty-cart">
+                                <i className="fas fa-shopping-cart"></i>
+                                <p>Your cart is empty</p>
+                                <button 
+                                    className="continue-shopping" 
+                                    onClick={() => setShowCart(false)}
+                                >
+                                    Continue Shopping
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="cart-items">
+                                    {cart.map((item, index) => (
+                                        <div key={index} className="cart-item">
+                                            <div className="cart-item-image">
+                                                <img src={item.image} alt={item.name} />
+                                            </div>
+                                            <div className="cart-item-details">
+                                                <h3>{item.name}</h3>
+                                                <p className="cart-item-brand">{item.brand}</p>
+                                                <p className="cart-item-size">
+                                                    Size: US {item.selectedSize}
+                                                </p>
+                                                <p className="cart-item-price">${item.price.toFixed(2)}</p>
+                                            </div>
+                                            <button 
+                                                className="remove-item" 
+                                                onClick={() => removeFromCart(index)}
+                                            >
+                                                <i className="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="cart-summary">
+                                    <div className="cart-total">
+                                        <span>Total:</span>
+                                        <span>${calculateTotal()}</span>
+                                    </div>
+                                    <div className="cart-actions">
+                                        <button 
+                                            className="continue-shopping" 
+                                            onClick={() => setShowCart(false)}
+                                        >
+                                            Continue Shopping
+                                        </button>
+                                        <button className="checkout">
+                                            Proceed to Checkout
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
