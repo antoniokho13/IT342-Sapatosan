@@ -30,9 +30,9 @@ public class CategoryController {
         return category.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{id}")
-    public ResponseEntity<Void> createCategory(@PathVariable String id, @RequestBody CategoryEntity category) {
-        categoryService.createCategory(id, category);
+    @PostMapping
+    public ResponseEntity<Void> createCategory(@RequestBody CategoryEntity category) {
+        categoryService.createCategory(category);
         return ResponseEntity.ok().build();
     }
 

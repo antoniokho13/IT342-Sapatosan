@@ -30,7 +30,10 @@ public class CategoryService {
                 List<CategoryEntity> categories = new ArrayList<>();
                 for (DataSnapshot child : snapshot.getChildren()) {
                     CategoryEntity category = child.getValue(CategoryEntity.class);
-                    categories.add(category);
+                    if (category != null) {
+                        category.setId(child.getKey()); // Set the id field using the key
+                        categories.add(category);
+                    }
                 }
                 future.complete(categories);
             }
@@ -60,8 +63,12 @@ public class CategoryService {
         return future;
     }
 
-    public void createCategory(String id, CategoryEntity category) {
-        categoryRef.child(id).setValueAsync(category);
+    public void createCategory(CategoryEntity category) {
+        String id = categoryRef.push().getKey(); // Generate a unique key
+        if (id != null) {
+            category.setId(id); // Set the generated key as the category ID
+            categoryRef.child(id).setValueAsync(category); // Save the category under the generated key
+        }
     }
 
     public void updateCategory(String id, CategoryEntity updatedCategory) {

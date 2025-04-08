@@ -1,146 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
-
-// Import shoe images
-import basketshoe1 from '../assets/images/basketball/Anthony Edwards 1.png';
-import basketshoe2 from '../assets/images/basketball/Harden Volume 8 Unisex.png';
-import running1 from '../assets/images/running/Nike InfinityRN 4 Mens Road.png';
-import running2 from '../assets/images/running/Nike Interact Run SE Mens Road.png';
+import axios from 'axios';
 
 const AdminProduct = () => {
-    // State for managing products data
-    const [products, setProducts] = useState([
-        { 
-            id: 1, 
-            name: "Nike Anthony Edwards 1", 
-            brand: "Nike", 
-            category: "Basketball",
-            price: 120.00,
-            stock: 45,
-            image: basketshoe1,
-            description: "The Nike Anthony Edwards 1 is the first signature shoe for the rising NBA star. Featuring responsive cushioning and excellent court feel."
-        },
-        { 
-            id: 2, 
-            name: "Harden Volume 8 Unisex", 
-            brand: "Adidas", 
-            category: "Basketball",
-            price: 140.00,
-            stock: 32,
-            image: basketshoe2,
-            description: "The Harden Volume 8 is designed for James Harden's deceptive, change-of-pace game. Enhanced traction pattern for explosive moves."
-        },
-        { 
-            id: 3, 
-            name: "Nike InfinityRN 4 Mens Road", 
-            brand: "Nike", 
-            category: "Running",
-            price: 160.00,
-            stock: 28,
-            image: running1,
-            description: "Designed for daily training runs with maximum cushioning and a smooth ride. Features React foam and a breathable upper."
-        },
-        { 
-            id: 4, 
-            name: "Nike Interact Run SE Mens Road", 
-            brand: "Nike", 
-            category: "Running",
-            price: 120.00,
-            stock: 53,
-            image: running2,
-            description: "Lightweight and responsive running shoes ideal for both training and casual wear. Offers excellent support and versatility."
-        },
-        { 
-            id: 5, 
-            name: "Nike Zoom Air Running Shoes", 
-            brand: "Nike", 
-            category: "Running",
-            price: 170.00,
-            stock: 18,
-            image: null,
-            description: "Premium running shoes with Nike's Zoom Air technology for responsive cushioning. Perfect for serious runners."
-        },
-        { 
-            id: 6, 
-            name: "Nike LeBron 21", 
-            brand: "Nike", 
-            category: "Basketball",
-            price: 200.00,
-            stock: 25,
-            image: null,
-            description: "LeBron James' signature shoe featuring dual-chambered Air units and a Zoom Air unit for maximum impact protection."
-        },
-        { 
-            id: 7, 
-            name: "Puma Future Rider", 
-            brand: "Puma", 
-            category: "Casual",
-            price: 85.00,
-            stock: 60,
-            image: null,
-            description: "Retro-inspired casual sneakers with modern comfort technologies. Versatile design for everyday wear."
-        },
-        { 
-            id: 8, 
-            name: "Adidas Superstar", 
-            brand: "Adidas", 
-            category: "Casual",
-            price: 90.00,
-            stock: 72,
-            image: null,
-            description: "Iconic shell-toe design that has been a staple in fashion and streetwear for decades. Timeless style with modern comfort."
-        }
-    ]);
-
-    // State for searching and pagination
+    const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [categoryFilter, setCategoryFilter] = useState('');
     const [brandFilter, setBrandFilter] = useState('');
     const itemsPerPage = 5;
 
-    // State for product modals
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [showProductModal, setShowProductModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
-        id: null,
+        id: '',
         name: '',
         brand: '',
-        category: 'Basketball',
+        categoryId: '',
         price: '',
         stock: '',
-        image: null,
-        description: '',
-        imageUrl: ''
+        imageUrl: '',
+        description: ''
     });
 
-    // Filter products based on search term and filters
-    const filteredProducts = products.filter(product => 
-        (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.brand.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (categoryFilter === '' || product.category === categoryFilter) &&
-        (brandFilter === '' || product.brand === brandFilter)
-    );
+    const [categories, setCategories] = useState([]);
 
-    // Pagination logic
-    const indexOfLastProduct = currentPage * itemsPerPage;
-    const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-    const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const token = localStorage.getItem('token');
 
-    // Handle page change
-    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+    // Fetch products and categories from the backend
+    useEffect(() => {
+        fetchProducts();
+        fetchCategories(); // Ensure this is called
+    }, []);
 
-    // Handle search change
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1); // Reset to first page on search
+    const fetchProducts = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/products', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setProducts(response.data);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+        }
     };
 
-    // Handle filter changes
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/categories', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            localStorage.removeItem('token'); // Clear the token from localStorage
+            window.location.href = '/'; // Redirect to the landing page
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+    };
+
     const handleCategoryChange = (e) => {
         setCategoryFilter(e.target.value);
         setCurrentPage(1);
@@ -151,50 +85,60 @@ const AdminProduct = () => {
         setCurrentPage(1);
     };
 
-    // Get unique categories and brands for filters
-    const categories = [...new Set(products.map(product => product.category))];
-    const brands = [...new Set(products.map(product => product.brand))];
+    const filteredProducts = products.filter(product =>
+        (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.brand.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (categoryFilter === '' || product.categoryId === categoryFilter) &&
+        (brandFilter === '' || product.brand === brandFilter)
+    );
 
-    // Handle row click to select a product
+    const indexOfLastProduct = currentPage * itemsPerPage;
+    const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
+    const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
     const handleRowClick = (product) => {
         setSelectedProduct(product);
         setShowProductModal(true);
     };
-    
-    // Handle edit product
+
     const handleEdit = () => {
         setShowProductModal(false);
-        setCurrentProduct({...selectedProduct});
+        setCurrentProduct({ ...selectedProduct });
         setShowEditModal(true);
     };
-    
-    // Handle delete product
-    const handleDelete = () => {
+
+    const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this product?')) {
-            const updatedProducts = products.filter(product => product.id !== selectedProduct.id);
-            setProducts(updatedProducts);
-            setShowProductModal(false);
-            setSelectedProduct(null);
+            try {
+                await axios.delete(`http://localhost:8080/api/products/${selectedProduct.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setProducts(products.filter(product => product.id !== selectedProduct.id));
+                setShowProductModal(false);
+                setSelectedProduct(null);
+            } catch (error) {
+                console.error('Error deleting product:', error);
+            }
         }
     };
 
-    // Handle add new product
     const handleAddProduct = () => {
         setCurrentProduct({
-            id: null,
+            id: '',
             name: '',
             brand: '',
-            category: 'Basketball',
+            categoryId: '',
             price: '',
             stock: '',
-            image: null,
-            description: '',
-            imageUrl: ''
+            imageUrl: '',
+            description: ''
         });
         setShowEditModal(true);
     };
-    
-    // Handle input changes in the form
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setCurrentProduct({
@@ -203,30 +147,35 @@ const AdminProduct = () => {
         });
     };
 
-    // Handle form submission
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (currentProduct.id) {
-            // Update existing product
-            setProducts(
-                products.map(product => 
-                    product.id === currentProduct.id ? currentProduct : product
-                )
-            );
-        } else {
-            // Add new product
-            const newProduct = {
-                ...currentProduct,
-                id: Math.max(...products.map(p => p.id)) + 1
-            };
-            setProducts([...products, newProduct]);
+
+        try {
+            if (currentProduct.id) {
+                // Update existing product
+                const response = await axios.put(
+                    `http://localhost:8080/api/products/${currentProduct.id}`,
+                    currentProduct,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                setProducts(products.map(product =>
+                    product.id === currentProduct.id ? response.data : product
+                ));
+            } else {
+                // Add new product
+                const response = await axios.post(
+                    'http://localhost:8080/api/products',
+                    currentProduct,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                setProducts([...products, response.data]);
+            }
+            setShowEditModal(false);
+        } catch (error) {
+            console.error('Error saving product:', error);
         }
-        
-        setShowEditModal(false);
     };
-    
-    // Close the modals
+
     const closeProductModal = () => {
         setShowProductModal(false);
         setSelectedProduct(null);
@@ -247,13 +196,13 @@ const AdminProduct = () => {
                 </div>
                 <h1 className="admin-title">ADMIN DASHBOARD</h1>
                 <div className="auth-buttons">
-                    <Link to="/" className="auth-button">
+                    <button onClick={handleLogout} className="auth-button">
                         <span></span>
                         <span></span>
                         <span></span>
                         <span></span>
                         Logout
-                    </Link>
+                    </button>
                 </div>
             </header>
 
@@ -308,7 +257,9 @@ const AdminProduct = () => {
                                 >
                                     <option value="">All Categories</option>
                                     {categories.map(category => (
-                                        <option key={category} value={category}>{category}</option>
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -320,9 +271,7 @@ const AdminProduct = () => {
                                     style={{ paddingLeft: '15px', minWidth: '150px' }}
                                 >
                                     <option value="">All Brands</option>
-                                    {brands.map(brand => (
-                                        <option key={brand} value={brand}>{brand}</option>
-                                    ))}
+                                    {/* Brands will be dynamically fetched */}
                                 </select>
                             </div>
                             <button className="add-button" onClick={handleAddProduct}>
@@ -355,9 +304,9 @@ const AdminProduct = () => {
                                         >
                                             <td>{product.id}</td>
                                             <td>
-                                                {product.image ? (
+                                                {product.imageUrl ? (
                                                     <img 
-                                                        src={product.image} 
+                                                        src={product.imageUrl} 
                                                         alt={product.name} 
                                                         style={{ width: '50px', height: '50px', objectFit: 'cover' }} 
                                                     />
@@ -380,7 +329,9 @@ const AdminProduct = () => {
                                             </td>
                                             <td>{product.name}</td>
                                             <td>{product.brand}</td>
-                                            <td>{product.category}</td>
+                                            <td>
+                                                {categories.find(category => category.id === product.categoryId)?.name || 'Unknown'}
+                                            </td>
                                             <td>${product.price.toFixed(2)}</td>
                                             <td>{product.stock}</td>
                                         </tr>
@@ -429,9 +380,9 @@ const AdminProduct = () => {
                         </div>
                         <div className="product-details">
                             <div className="product-image-container">
-                                {selectedProduct.image ? (
+                                {selectedProduct.imageUrl ? (
                                     <img 
-                                        src={selectedProduct.image} 
+                                        src={selectedProduct.imageUrl} 
                                         alt={selectedProduct.name}
                                         className="product-preview" 
                                     />
@@ -443,7 +394,9 @@ const AdminProduct = () => {
                             </div>
                             <h4>{selectedProduct.name}</h4>
                             <div className="product-info">
-                                <span className="product-brand">{selectedProduct.brand} | {selectedProduct.category}</span>
+                                <span className="product-brand">
+                                    {selectedProduct.brand} | {categories.find(category => category.id === selectedProduct.categoryId)?.name || 'Unknown'}
+                                </span>
                                 <span className="product-price">${selectedProduct.price.toFixed(2)}</span>
                             </div>
                         </div>
@@ -503,17 +456,20 @@ const AdminProduct = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="category">Category</label>
+                                    <label htmlFor="categoryId">Category</label>
                                     <select
-                                        id="category"
-                                        name="category"
-                                        value={currentProduct.category}
+                                        id="categoryId"
+                                        name="categoryId"
+                                        value={currentProduct.categoryId}
                                         onChange={handleInputChange}
                                         required
                                     >
-                                        <option value="Basketball">Basketball</option>
-                                        <option value="Running">Running</option>
-                                        <option value="Casual">Casual</option>
+                                        <option value="">Select a Category</option>
+                                        {categories.map(category => (
+                                            <option key={category.id} value={category.id}>
+                                                {category.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
@@ -544,18 +500,6 @@ const AdminProduct = () => {
                                         required
                                     />
                                 </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label htmlFor="description">Description</label>
-                                <textarea
-                                    id="description"
-                                    name="description"
-                                    value={currentProduct.description}
-                                    onChange={handleInputChange}
-                                    rows="3"
-                                    required
-                                ></textarea>
                             </div>
 
                             <div className="form-group">
