@@ -19,104 +19,104 @@ const Running = () => {
     const [cart, setCart] = useState([]);
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
+    const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
     
     // Running shoe data with your real images
-    // Running shoe data with your real images
-const runningShoes = [
-    {
-        id: 1,
-        name: "Nike InfinityRN 4 Mens Road",
-        price: 160.00,
-        image: running1,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12, 13],
-        description: "The Nike InfinityRN 4 delivers exceptional stability and cushioning for everyday runs. Featuring Nike React foam for responsive support and a cushioned feel with every stride."
-    },
-    {
-        id: 2,
-        name: "Nike Interact Run SE Mens Road",
-        price: 120.00,
-        image: running2,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12],
-        description: "The Nike Interact Run SE combines lightweight design with adaptive cushioning. Perfect for casual runners seeking comfort and responsive performance on road surfaces."
-    },
-    {
-        id: 3,
-        name: "Nike Invincible 3 Mens Road",
-        price: 180.00,
-        image: running3,
-        brand: "Nike",
-        sizes: [8, 9, 10, 11, 12],
-        description: "The Nike Invincible 3 offers ultimate cushioning with ZoomX foam for maximum shock absorption. Designed for long training runs with enhanced stability and comfort."
-    },
-    {
-        id: 4,
-        name: "Nike Pegasus 41 Electric Older Kids Road",
-        price: 110.00,
-        image: running4,
-        brand: "Nike",
-        sizes: [3, 4, 5, 6, 7],
-        description: "The Nike Pegasus 41 Electric is designed specifically for growing runners. Features responsive cushioning and durable construction in a vibrant colorway that kids will love."
-    },
-    {
-        id: 5,
-        name: "Nike Pegasus 41 Mens Road",
-        price: 130.00,
-        image: running5,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12, 13],
-        description: "The Nike Pegasus 41 continues the legacy of the workhorse with versatile performance. Nike React foam and Zoom Air unit provide responsive cushioning for everyday runs."
-    },
-    {
-        id: 6,
-        name: "Nike Pegasus 41 Premium Mens Road",
-        price: 150.00,
-        image: running6,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12],
-        description: "The Nike Pegasus 41 Premium elevates the classic design with premium materials and enhanced comfort features. Perfect balance of cushioning and responsiveness for serious runners."
-    },
-    {
-        id: 7,
-        name: "Nike Pegasus Easy On Blueprint",
-        price: 140.00,
-        image: running7,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12, 13],
-        description: "The Nike Pegasus Easy On Blueprint features a FlyEase entry system for quick, hands-free access. Maintains the Pegasus cushioning and support with added accessibility."
-    },
-    {
-        id: 8,
-        name: "Nike Revolution 7 EasyOn Womens Easy On Off Road",
-        price: 85.00,
-        image: running8,
-        brand: "Nike",
-        sizes: [5, 6, 7, 8, 9, 10, 11],
-        description: "The Nike Revolution 7 EasyOn provides a hands-free entry system designed specifically for women. Lightweight cushioning with a soft, breathable upper for comfortable daily runs."
-    },
-    {
-        id: 9,
-        name: "Nike Revolution 7 Mens Road",
-        price: 80.00,
-        image: running9,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12, 13],
-        description: "The Nike Revolution 7 offers lightweight cushioning at an affordable price point. Breathable mesh upper and soft foam midsole provide comfort for everyday running and training."
-    },
-    {
-        id: 10,
-        name: "Nike Zoom Air Running Shoes",
-        price: 170.00,
-        image: running10,
-        brand: "Nike",
-        sizes: [7, 8, 9, 10, 11, 12],
-        description: "The Nike Zoom Air Running Shoes feature responsive Zoom Air cushioning for explosive propulsion. Engineered for speed with a lightweight design and secure fit for race day performance."
-    }
-];
+    const runningShoes = [
+        {
+            id: 1,
+            name: "Nike InfinityRN 4 Mens Road",
+            price: 160.00,
+            image: running1,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12, 13],
+            description: "The Nike InfinityRN 4 delivers exceptional stability and cushioning for everyday runs. Featuring Nike React foam for responsive support and a cushioned feel with every stride."
+        },
+        {
+            id: 2,
+            name: "Nike Interact Run SE Mens Road",
+            price: 120.00,
+            image: running2,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12],
+            description: "The Nike Interact Run SE combines lightweight design with adaptive cushioning. Perfect for casual runners seeking comfort and responsive performance on road surfaces."
+        },
+        {
+            id: 3,
+            name: "Nike Invincible 3 Mens Road",
+            price: 180.00,
+            image: running3,
+            brand: "Nike",
+            sizes: [8, 9, 10, 11, 12],
+            description: "The Nike Invincible 3 offers ultimate cushioning with ZoomX foam for maximum shock absorption. Designed for long training runs with enhanced stability and comfort."
+        },
+        {
+            id: 4,
+            name: "Nike Pegasus 41 Electric Older Kids Road",
+            price: 110.00,
+            image: running4,
+            brand: "Nike",
+            sizes: [3, 4, 5, 6, 7],
+            description: "The Nike Pegasus 41 Electric is designed specifically for growing runners. Features responsive cushioning and durable construction in a vibrant colorway that kids will love."
+        },
+        {
+            id: 5,
+            name: "Nike Pegasus 41 Mens Road",
+            price: 130.00,
+            image: running5,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12, 13],
+            description: "The Nike Pegasus 41 continues the legacy of the workhorse with versatile performance. Nike React foam and Zoom Air unit provide responsive cushioning for everyday runs."
+        },
+        {
+            id: 6,
+            name: "Nike Pegasus 41 Premium Mens Road",
+            price: 150.00,
+            image: running6,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12],
+            description: "The Nike Pegasus 41 Premium elevates the classic design with premium materials and enhanced comfort features. Perfect balance of cushioning and responsiveness for serious runners."
+        },
+        {
+            id: 7,
+            name: "Nike Pegasus Easy On Blueprint",
+            price: 140.00,
+            image: running7,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12, 13],
+            description: "The Nike Pegasus Easy On Blueprint features a FlyEase entry system for quick, hands-free access. Maintains the Pegasus cushioning and support with added accessibility."
+        },
+        {
+            id: 8,
+            name: "Nike Revolution 7 EasyOn Womens Easy On Off Road",
+            price: 85.00,
+            image: running8,
+            brand: "Nike",
+            sizes: [5, 6, 7, 8, 9, 10, 11],
+            description: "The Nike Revolution 7 EasyOn provides a hands-free entry system designed specifically for women. Lightweight cushioning with a soft, breathable upper for comfortable daily runs."
+        },
+        {
+            id: 9,
+            name: "Nike Revolution 7 Mens Road",
+            price: 80.00,
+            image: running9,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12, 13],
+            description: "The Nike Revolution 7 offers lightweight cushioning at an affordable price point. Breathable mesh upper and soft foam midsole provide comfort for everyday running and training."
+        },
+        {
+            id: 10,
+            name: "Nike Zoom Air Running Shoes",
+            price: 170.00,
+            image: running10,
+            brand: "Nike",
+            sizes: [7, 8, 9, 10, 11, 12],
+            description: "The Nike Zoom Air Running Shoes feature responsive Zoom Air cushioning for explosive propulsion. Engineered for speed with a lightweight design and secure fit for race day performance."
+        }
+    ];
 
     const addToCart = (shoe, size = null) => {
-        const shoeWithSize = size ? {...shoe, selectedSize: size} : shoe;
+        const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
         setCart([...cart, shoeWithSize]);
         // Show a temporary "Added to cart" message
         const shoeCard = document.getElementById(`shoe-${shoe.id}`);
@@ -133,9 +133,29 @@ const runningShoes = [
         }
     };
 
+    const removeFromCart = (index) => {
+        const newCart = [...cart];
+        newCart.splice(index, 1);
+        setCart(newCart);
+    };
+
+    const calculateTotal = () => {
+        return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
+    };
+
+    const toggleCart = () => {
+        setShowCart(!showCart);
+        // If we're opening the cart, close any other modals
+        if (!showCart) {
+            setQuickViewShoe(null);
+        }
+    };
+
     const openQuickView = (shoe) => {
         setQuickViewShoe(shoe);
         setSelectedSize(null);
+        // Close cart if open
+        setShowCart(false);
     };
 
     const closeQuickView = () => {
@@ -143,11 +163,14 @@ const runningShoes = [
         setSelectedSize(null);
     };
 
-    // Close modal when clicking outside
+    // Close modals when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
                 closeQuickView();
+            }
+            if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-indicator')) {
+                setShowCart(false);
             }
         };
 
@@ -155,7 +178,7 @@ const runningShoes = [
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [quickViewShoe]);
+    }, [quickViewShoe, showCart]);
 
     // Animation for sections
     useEffect(() => {
@@ -181,7 +204,7 @@ const runningShoes = [
 
     // Prevent body scrolling when modal is open
     useEffect(() => {
-        if (quickViewShoe) {
+        if (quickViewShoe || showCart) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -189,7 +212,7 @@ const runningShoes = [
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [quickViewShoe]);
+    }, [quickViewShoe, showCart]);
 
     return (
         <div className="running-page">
@@ -222,7 +245,7 @@ const runningShoes = [
                 <div className="hero-content">
                     <h1>RUNNING SHOES</h1>
                     <p>Advanced technology and comfort for every runner.</p>
-                    <div className="cart-indicator">
+                    <div className="cart-indicator" onClick={toggleCart}>
                         <span className="cart-icon">
                             <i className="fas fa-shopping-cart"></i>
                         </span>
@@ -356,6 +379,73 @@ const runningShoes = [
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Shopping Cart Modal */}
+            {showCart && (
+                <div className="cart-modal">
+                    <div className="cart-modal-content">
+                        <button className="close-modal" onClick={() => setShowCart(false)}>×</button>
+                        <h2>Your Shopping Cart</h2>
+                        
+                        {cart.length === 0 ? (
+                            <div className="empty-cart">
+                                <i className="fas fa-shopping-cart"></i>
+                                <p>Your cart is empty</p>
+                                <button 
+                                    className="continue-shopping" 
+                                    onClick={() => setShowCart(false)}
+                                >
+                                    Continue Shopping
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="cart-items">
+                                    {cart.map((item, index) => (
+                                        <div key={index} className="cart-item">
+                                            <div className="cart-item-image">
+                                                <img src={item.image} alt={item.name} />
+                                            </div>
+                                            <div className="cart-item-details">
+                                                <h3>{item.name}</h3>
+                                                <p className="cart-item-brand">{item.brand}</p>
+                                                <p className="cart-item-size">
+                                                    Size: US {item.selectedSize}
+                                                </p>
+                                                <p className="cart-item-price">${item.price.toFixed(2)}</p>
+                                            </div>
+                                            <button 
+                                                className="remove-item" 
+                                                onClick={() => removeFromCart(index)}
+                                            >
+                                                <i className="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="cart-summary">
+                                    <div className="cart-total">
+                                        <span>Total:</span>
+                                        <span>${calculateTotal()}</span>
+                                    </div>
+                                    <div className="cart-actions">
+                                        <button 
+                                            className="continue-shopping" 
+                                            onClick={() => setShowCart(false)}
+                                        >
+                                            Continue Shopping
+                                        </button>
+                                        <button className="checkout">
+                                            Proceed to Checkout
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

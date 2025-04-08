@@ -20,6 +20,18 @@ const AdminUsers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 5;
+    
+    // State for selected user and modals
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [currentUser, setCurrentUser] = useState({
+        id: null,
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: ''
+    });
 
     // Filter users based on search term
     const filteredUsers = users.filter(user => 
@@ -42,17 +54,93 @@ const AdminUsers = () => {
         setSearchTerm(e.target.value);
         setCurrentPage(1); // Reset to first page on search
     };
+    
+    // Handle row click to select a user
+    const handleRowClick = (user) => {
+        setSelectedUser(user);
+        setShowUserModal(true);
+    };
+    
+    // Handle edit user
+    const handleEdit = () => {
+        setShowUserModal(false);
+        setCurrentUser({...selectedUser});
+        setShowEditModal(true);
+    };
+    
+    // Handle delete user
+    const handleDelete = () => {
+        // Filter out the selected user
+        const updatedUsers = users.filter(user => user.id !== selectedUser.id);
+        setUsers(updatedUsers);
+        setShowUserModal(false);
+        setSelectedUser(null);
+    };
+
+    // Handle add new user
+    const handleAddUser = () => {
+        setCurrentUser({
+            id: null,
+            firstName: '',
+            lastName: '',
+            email: '',
+            password: ''
+        });
+        setShowEditModal(true);
+    };
+    
+    // Handle input changes in the form
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setCurrentUser({
+            ...currentUser,
+            [name]: value
+        });
+    };
+
+    // Handle form submission
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        if (currentUser.id) {
+            // Update existing user
+            setUsers(
+                users.map(user => 
+                    user.id === currentUser.id ? currentUser : user
+                )
+            );
+        } else {
+            // Add new user
+            const newUser = {
+                ...currentUser,
+                id: Math.max(...users.map(u => u.id)) + 1
+            };
+            setUsers([...users, newUser]);
+        }
+        
+        setShowEditModal(false);
+    };
+    
+    // Close the modals
+    const closeUserModal = () => {
+        setShowUserModal(false);
+        setSelectedUser(null);
+    };
+
+    const closeEditModal = () => {
+        setShowEditModal(false);
+    };
 
     return (
         <div className="admin-dashboard">
-            {/* Header - similar to Home.js */}
+            {/* Header */}
             <header className="header">
                 <div className="logo-container">
                     <Link to="/">
                         <img src={logo} alt="Sapatosan Logo" className="logo" />
                     </Link>
                 </div>
-                <h1 className="admin-title">Admin Dashboard</h1>
+                <h1 className="admin-title">ADMIN DASHBOARD</h1>
                 <div className="auth-buttons">
                     <Link to="/" className="auth-button">
                         <span></span>
@@ -106,7 +194,7 @@ const AdminUsers = () => {
                                 />
                                 <i className="fas fa-search search-icon"></i>
                             </div>
-                            <button className="add-button">
+                            <button className="add-button" onClick={handleAddUser}>
                                 <i className="fas fa-plus"></i> Add User
                             </button>
                         </div>
@@ -122,31 +210,26 @@ const AdminUsers = () => {
                                     <th>Last Name</th>
                                     <th>Email</th>
                                     <th>Password</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {currentUsers.length > 0 ? (
                                     currentUsers.map(user => (
-                                        <tr key={user.id}>
+                                        <tr 
+                                            key={user.id} 
+                                            onClick={() => handleRowClick(user)}
+                                            className="clickable-row"
+                                        >
                                             <td>{user.id}</td>
                                             <td>{user.firstName}</td>
                                             <td>{user.lastName}</td>
                                             <td>{user.email}</td>
                                             <td>{user.password}</td>
-                                            <td className="action-cell">
-                                                <button className="action-button edit">
-                                                    <i className="fas fa-edit"></i>
-                                                </button>
-                                                <button className="action-button delete">
-                                                    <i className="fas fa-trash-alt"></i>
-                                                </button>
-                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="6" className="no-results">No users found</td>
+                                        <td colSpan="5" className="no-results">No users found</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -177,8 +260,107 @@ const AdminUsers = () => {
                     )}
                 </main>
             </div>
+            
+            {/* User Action Modal */}
+            {showUserModal && selectedUser && (
+                <div className="modal-overlay">
+                    <div className="modal-content user-action-modal">
+                        <div className="modal-header">
+                            <h3>User Actions</h3>
+                            <button className="close-modal" onClick={closeUserModal}>×</button>
+                        </div>
+                        <div className="user-details">
+                            <h4>{selectedUser.firstName} {selectedUser.lastName}</h4>
+                            <p>{selectedUser.email}</p>
+                        </div>
+                        <div className="user-actions">
+                            <button 
+                                className="action-button-large edit"
+                                onClick={handleEdit}
+                            >
+                                <i className="fas fa-edit"></i>
+                                Edit User
+                            </button>
+                            <button 
+                                className="action-button-large delete"
+                                onClick={handleDelete}
+                            >
+                                <i className="fas fa-trash-alt"></i>
+                                Delete User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            {/* Footer - same as Home.js */}
+            {/* User Edit/Add Modal */}
+            {showEditModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h3>{currentUser.id ? 'Edit User' : 'Add New User'}</h3>
+                            <button className="close-modal" onClick={closeEditModal}>×</button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="user-form">
+                            <div className="form-group">
+                                <label htmlFor="firstName">First Name</label>
+                                <input
+                                    id="firstName"
+                                    name="firstName"
+                                    type="text"
+                                    value={currentUser.firstName}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="lastName">Last Name</label>
+                                <input
+                                    id="lastName"
+                                    name="lastName"
+                                    type="text"
+                                    value={currentUser.lastName}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={currentUser.email}
+                                    onChange={handleInputChange}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="password">Password</label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    value={currentUser.password}
+                                    onChange={handleInputChange}
+                                    required={!currentUser.id} // Required only for new users
+                                    placeholder={currentUser.id ? "Leave blank to keep current password" : ""}
+                                />
+                            </div>
+                            <div className="form-buttons">
+                                <button type="button" onClick={closeEditModal} className="cancel-button">
+                                    Cancel
+                                </button>
+                                <button type="submit" className="save-button">
+                                    {currentUser.id ? 'Update' : 'Add'} User
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Footer */}
             <footer className="footer">
                 <div className="footer-bottom">
                     <p>&copy; 2025 Sapatosan. All rights reserved.</p>
