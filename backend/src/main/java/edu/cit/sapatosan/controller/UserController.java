@@ -1,13 +1,18 @@
 package edu.cit.sapatosan.controller;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import edu.cit.sapatosan.entity.UserEntity;
 import edu.cit.sapatosan.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -21,7 +26,7 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<UserEntity>> getAllUsers() throws ExecutionException, InterruptedException {
-        List<UserEntity> users = userService.getAllUsers().get();
+        List<UserEntity> users = userService.getAllUsers().get(); // Delegate to UserService
         return ResponseEntity.ok(users);
     }
 
