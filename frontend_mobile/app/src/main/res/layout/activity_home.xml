@@ -1,89 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".HomeActivity">
 
-    <!-- Top navigation bar -->
+    <!-- Main content -->
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/navigationBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/white"
-        android:elevation="4dp"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent">
 
-        <!-- Category filters -->
+        <!-- Top navigation bar with filter buttons -->
         <HorizontalScrollView
-            android:layout_width="match_parent"
+            android:id="@+id/navigationBar"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
-            app:layout_constraintTop_toTopOf="parent">
+            android:background="@android:color/white"
+            android:padding="17dp"
+            android:fillViewport="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <LinearLayout
                 android:id="@+id/categoryFilters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <TextView
-                    android:id="@+id/btnAll"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="16dp"
-                    android:text="ALL"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                <!-- Filter buttons -->
+                <ImageView
+                    android:id="@+id/logoImage"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="24dp"
+                    android:src="@drawable/logo"
+                    android:contentDescription="Logo"
+                    android:scaleType="fitCenter" />
 
                 <TextView
                     android:id="@+id/btnBasketball"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="20dp"
                     android:text="BASKETBALL"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
 
                 <TextView
                     android:id="@+id/btnCasual"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="16dp"
+                    android:layout_marginEnd="20dp"
                     android:text="CASUAL"
-                    android:textSize="16sp" />
+                    android:textSize="15sp" />
 
                 <TextView
                     android:id="@+id/btnRunning"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="RUNNING"
-                    android:textSize="16sp" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerViewShoes"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:padding="8dp"
-                    android:clipToPadding="false"
-                    android:scrollbars="vertical"
-                    />
+                    android:layout_marginEnd="20dp"
+                    android:textSize="15sp" />
             </LinearLayout>
         </HorizontalScrollView>
+
+        <!-- Hamburger icon floating top-right -->
+        <ImageView
+            android:id="@+id/ic_menu"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_margin="12dp"
+            android:src="@drawable/ic_menu"
+            android:contentDescription="Menu"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewShoes"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            app:layout_constraintTop_toBottomOf="@id/navigationBar"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:scrollbars="vertical" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Content placeholder -->
+    <!-- Side drawer content -->
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="16dp">
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Navigation Bar is functioning. Content will be added later."
-        android:textSize="16sp"
-        android:padding="16dp"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/navigationBar" />
+        android:text="Profile"
+        android:textSize="18sp"
+        android:padding="8dp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Settings"
+        android:textSize="18sp"
+        android:padding="8dp" />
+    </LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
