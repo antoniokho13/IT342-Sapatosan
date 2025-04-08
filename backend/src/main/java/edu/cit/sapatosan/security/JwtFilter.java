@@ -1,32 +1,32 @@
 package edu.cit.sapatosan.security;
 
-import edu.cit.sapatosan.repository.TokenBlacklistRepository;
-import edu.cit.sapatosan.repository.UserRepository;
+import com.google.firebase.database.DatabaseError;
+import edu.cit.sapatosan.entity.UserEntity;
+import edu.cit.sapatosan.service.TokenBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
-    private final TokenBlacklistRepository tokenBlacklistRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepository, TokenBlacklistRepository tokenBlacklistRepository) {
+    public JwtFilter(JwtUtil jwtUtil, TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
-        this.userRepository = userRepository;
-        this.tokenBlacklistRepository = tokenBlacklistRepository;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -45,11 +45,17 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtUtil.validateToken(token) && !tokenBlacklistRepository.findByToken(token).isPresent()) {
-                String role = jwtUtil.extractRole(token);
-                var userDetails = userRepository.findByEmail(email).orElse(null);
+            try {
+                // Check if the token is blacklisted
+                boolean isBlacklisted = tokenBlacklistService.isTokenBlacklisted(token).get();
+                if (isBlacklisted) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
+                }
 
-                if (userDetails != null) {
+                if (jwtUtil.validateToken(token)) {
+                    UserEntity userDetails = new UserEntity(); // Replace with actual user fetching logic
+                    String role = jwtUtil.extractRole(token);
                     var authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
 
                     UsernamePasswordAuthenticationToken authToken =
@@ -58,6 +64,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
             }
         }
 

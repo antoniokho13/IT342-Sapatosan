@@ -1,69 +1,92 @@
 package edu.cit.sapatosan.service;
 
-import edu.cit.sapatosan.repository.UserRepository;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import edu.cit.sapatosan.entity.UserEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class UserService {
-    private final UserRepository userRepository;
+    private final DatabaseReference userRef;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
+    public UserService(PasswordEncoder passwordEncoder) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        this.userRef = database.getReference("users");
         this.passwordEncoder = passwordEncoder;
     }
 
-    public List<UserEntity> getAllUsers(){
-        return userRepository.findAll();
-    }
-
-    public Optional<UserEntity> getUserById(Long id){
-        return userRepository.findById(id);
-    }
-
-    public UserEntity createUser(UserEntity user) {
-        // ✅ Set default role if none provided
-        String role = user.getRole();
-        if (role == null || role.isEmpty()) {
-            user.setRole("USER");
-        } else if (!role.equalsIgnoreCase("ADMIN") && !role.equalsIgnoreCase("USER")) {
-            throw new IllegalArgumentException("Invalid role. Allowed roles: ADMIN, USER.");
-        }
-
-        // ✅ Hash the password before saving
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
-    }
-
-    public Optional<UserEntity> updateUser(Long id, UserEntity updatedUser) {
-        return userRepository.findById(id).map(user -> {
-            user.setFirstName(updatedUser.getFirstName());
-            user.setLastName(updatedUser.getLastName());
-            user.setEmail(updatedUser.getEmail());
-
-            if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-                user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+    public CompletableFuture<List<UserEntity>> getAllUsers() {
+        CompletableFuture<List<UserEntity>> future = new CompletableFuture<>();
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                List<UserEntity> users = new ArrayList<>();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    UserEntity user = child.getValue(UserEntity.class);
+                    users.add(user);
+                }
+                future.complete(users);
             }
 
-            if (updatedUser.getRole() != null) {
-                user.setRole(updatedUser.getRole());
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
             }
-
-            return userRepository.save(user);
         });
+        return future;
     }
 
-    public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+    public CompletableFuture<Optional<UserEntity>> getUserById(String id) {
+        CompletableFuture<Optional<UserEntity>> future = new CompletableFuture<>();
+        userRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                UserEntity user = snapshot.getValue(UserEntity.class);
+                future.complete(Optional.ofNullable(user));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
+            }
+        });
+        return future;
     }
 
-    public boolean validatePassword(String raw, String encoded) {
-        return passwordEncoder.matches(raw, encoded);
+    public CompletableFuture<Void> saveUserToDatabase(String id, UserEntity user) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        userRef.child(id).setValue(user, (error, ref) -> {
+            if (error != null) {
+                future.completeExceptionally(error.toException());
+            } else {
+                future.complete(null);
+            }
+        });
+        return future;
+    }
+
+    public void createUser(String id, UserEntity user) {
+        // Hash the password before saving
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // Save the user to the database
+        saveUserToDatabase(id, user);
+    }
+
+    public void updateUser(String id, UserEntity updatedUser) {
+        userRef.child(id).setValueAsync(updatedUser);
+    }
+
+    public void deleteUser(String id) {
+        userRef.child(id).removeValueAsync();
     }
 }

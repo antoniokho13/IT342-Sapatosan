@@ -1,58 +1,47 @@
 package edu.cit.sapatosan.entity;
 
-import jakarta.persistence.*;
-
 import java.util.List;
 
-@Entity
-@Table(name = "carts")
 public class CartEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
-
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartProductEntity> cartProducts;
-
-    @Column(nullable = false)
+    private String id;
+    private String userId; // Reference to User
+    private List<String> cartProductIds; // References to CartProductEntity
     private String status;
 
+    public CartEntity() {
+        // Default constructor for Firebase
+    }
+
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public UserEntity getUser() {
-        return user;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUser(UserEntity user) {
-        this.user = user;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public List<CartProductEntity> getCartProducts() {
-        return cartProducts;
+    public List<String> getCartProductIds() {
+        return cartProductIds;
     }
 
-    public void setCartProducts(List<CartProductEntity> cartProducts) {
-        this.cartProducts = cartProducts;
+    public void setCartProductIds(List<String> cartProductIds) {
+        this.cartProductIds = cartProductIds;
     }
 
-    // Convenience method to calculate total
-    public Double getTotal() {
-        if (cartProducts == null || cartProducts.isEmpty()) {
-            return 0.0;
-        }
-        return cartProducts.stream()
-                .mapToDouble(cp -> cp.getQuantity() * cp.getProduct().getPrice())
-                .sum();
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

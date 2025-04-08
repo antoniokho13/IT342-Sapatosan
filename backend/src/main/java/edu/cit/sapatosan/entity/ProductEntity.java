@@ -1,47 +1,24 @@
 package edu.cit.sapatosan.entity;
 
-import jakarta.persistence.*;
-
-import java.util.List;
-
-@Entity
-@Table(name = "products")
 public class ProductEntity {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
+    private String id;
     private String name;
-
-    @Column
     private String description;
-
-    @Column(nullable = false)
     private Double price;
-
-    @Column(nullable = false)
     private Integer stock;
-
-    @Column
     private String imageUrl;
+    private String categoryId; // Reference to Category
 
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private CategoryEntity category;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartProductEntity> cartProducts;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderProductEntity> orderProducts;
+    public ProductEntity() {
+        // Default constructor for Firebase
+    }
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -85,11 +62,11 @@ public class ProductEntity {
         this.imageUrl = imageUrl;
     }
 
-    public CategoryEntity getCategory() {
-        return category;
+    public String getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategory(CategoryEntity category) {
-        this.category = category;
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
     }
 }

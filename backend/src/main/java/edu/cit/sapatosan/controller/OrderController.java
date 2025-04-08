@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -17,27 +19,32 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderEntity>> listUserOrders(@RequestParam Long userId) {
-        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
+    public ResponseEntity<List<OrderEntity>> listUserOrders(@RequestParam String userId) throws ExecutionException, InterruptedException {
+        List<OrderEntity> orders = orderService.getOrdersByUserId(userId).get();
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderEntity> getOrderDetails(@PathVariable Long id) {
-        return orderService.getOrderById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<OrderEntity> getOrderDetails(@PathVariable String id) throws ExecutionException, InterruptedException {
+        Optional<OrderEntity> order = orderService.getOrderById(id).get();
+        return order.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/createFromCart/{userId}")
-    public ResponseEntity<OrderEntity> createOrderFromCart(@PathVariable Long userId) {
-        OrderEntity order = orderService.createOrderFromCart(userId);
-        return ResponseEntity.ok(order);
+    @PostMapping
+    public ResponseEntity<Void> createOrder(@RequestBody OrderEntity order) {
+        orderService.createOrder(order.getId(), order);
+        return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/createDirectOrder/{userId}/{productId}/{quantity}")
-    public ResponseEntity<OrderEntity> createDirectOrder(@PathVariable Long userId, @PathVariable Long productId, @PathVariable Integer quantity) {
-        OrderEntity order = orderService.createDirectOrder(userId, productId, quantity);
-        return ResponseEntity.ok(order);
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> updateOrder(@PathVariable String id, @RequestBody OrderEntity updatedOrder) {
+        orderService.updateOrder(id, updatedOrder);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
+        orderService.deleteOrder(id);
+        return ResponseEntity.noContent().build();
     }
 }

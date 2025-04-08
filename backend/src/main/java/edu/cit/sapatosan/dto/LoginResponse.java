@@ -3,11 +3,11 @@ package edu.cit.sapatosan.dto;
 public class LoginResponse {
     private String token;
     private String type = "Bearer";
-    private Long userId;
+    private String userId;
     private String email;
     private String role;
 
-    public LoginResponse(String token, Long userId, String email, String role) {
+    public LoginResponse(String token, String userId, String email, String role) {
         this.token = token;
         this.userId = userId;
         this.email = email;
@@ -22,7 +22,7 @@ public class LoginResponse {
         return type;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 

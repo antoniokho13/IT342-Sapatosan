@@ -1,13 +1,13 @@
 package edu.cit.sapatosan.controller;
 
-import edu.cit.sapatosan.dto.CategoryDTO;
 import edu.cit.sapatosan.entity.CategoryEntity;
 import edu.cit.sapatosan.service.CategoryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -19,45 +19,32 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CategoryDTO>> getAllCategories() {
-        List<CategoryDTO> categories = categoryService.getAllCategories().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<CategoryEntity>> getAllCategories() throws ExecutionException, InterruptedException {
+        List<CategoryEntity> categories = categoryService.getAllCategories().get();
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id) {
-        return categoryService.getCategoryById(id)
-                .map(this::convertToDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CategoryEntity> getCategoryById(@PathVariable String id) throws ExecutionException, InterruptedException {
+        Optional<CategoryEntity> category = categoryService.getCategoryById(id).get();
+        return category.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<CategoryDTO> createCategory(@RequestBody CategoryEntity category) {
-        CategoryEntity createdCategory = categoryService.createCategory(category);
-        return ResponseEntity.ok(convertToDTO(createdCategory));
+    @PostMapping("/{id}")
+    public ResponseEntity<Void> createCategory(@PathVariable String id, @RequestBody CategoryEntity category) {
+        categoryService.createCategory(id, category);
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody CategoryEntity updatedCategory) {
-        return categoryService.updateCategory(id, updatedCategory)
-                .map(this::convertToDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Void> updateCategory(@PathVariable String id, @RequestBody CategoryEntity updatedCategory) {
+        categoryService.updateCategory(id, updatedCategory);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private CategoryDTO convertToDTO(CategoryEntity category) {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setId(category.getId());
-        categoryDTO.setName(category.getName());
-        return categoryDTO;
     }
 }
