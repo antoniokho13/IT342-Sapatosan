@@ -1,105 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
+import axios from 'axios';
 
 const AdminCategories = () => {
-    // State for managing categories data
-    const [categories, setCategories] = useState([
-        { 
-            id: 1, 
-            name: "Basketball", 
-            description: "High-performance basketball shoes for indoor and outdoor courts",
-            productsCount: 10,
-            featured: true,
-            image: "basketball-category.jpg"
-        },
-        { 
-            id: 2, 
-            name: "Running", 
-            description: "Responsive running shoes designed for road and trail surfaces",
-            productsCount: 10,
-            featured: true,
-            image: "running-category.jpg"
-        },
-        { 
-            id: 3, 
-            name: "Casual", 
-            description: "Everyday casual shoes for comfort and style",
-            productsCount: 8,
-            featured: true,
-            image: "casual-category.jpg"
-        },
-        { 
-            id: 4, 
-            name: "Soccer", 
-            description: "Professional soccer cleats for field play",
-            productsCount: 0,
-            featured: false,
-            image: null
-        },
-        { 
-            id: 5, 
-            name: "Training", 
-            description: "Cross-training shoes for gym and fitness activities",
-            productsCount: 0,
-            featured: false,
-            image: null
-        },
-    ]);
-
-    // State for searching and form management
+    const [categories, setCategories] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [currentCategory, setCurrentCategory] = useState({
-        id: null,
+        id: '',
         name: '',
         description: '',
         featured: false,
         image: null
     });
 
-    // Filter categories based on search term
-    const filteredCategories = categories.filter(category => 
-        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        category.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const token = localStorage.getItem('token');
 
-    // Handle search change
+    // Fetch categories from the backend
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/categories', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setCategories(response.data);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
 
-    // Handle row click to select a category
     const handleRowClick = (category) => {
         setSelectedCategory(category);
         setShowCategoryModal(true);
     };
-    
-    // Handle edit category
+
     const handleEdit = () => {
         setShowCategoryModal(false);
-        setCurrentCategory({...selectedCategory});
+        setCurrentCategory({ ...selectedCategory });
         setIsFormOpen(true);
     };
-    
-    // Handle delete category
-    const handleDelete = () => {
+
+    const handleDelete = async () => {
         if (selectedCategory.productsCount > 0) {
             alert('Cannot delete category with products');
             return;
         }
-        
+
         if (window.confirm('Are you sure you want to delete this category?')) {
-            setCategories(categories.filter(category => category.id !== selectedCategory.id));
-            setShowCategoryModal(false);
-            setSelectedCategory(null);
+            try {
+                await axios.delete(`http://localhost:8080/api/categories/${selectedCategory.id}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setCategories(categories.filter(category => category.id !== selectedCategory.id));
+                setShowCategoryModal(false);
+                setSelectedCategory(null);
+            } catch (error) {
+                console.error('Error deleting category:', error);
+            }
         }
     };
 
-    // Form handlers
     const openAddForm = () => {
         setCurrentCategory({
             id: null,
@@ -114,8 +85,7 @@ const AdminCategories = () => {
     const closeForm = () => {
         setIsFormOpen(false);
     };
-    
-    // Close the category action modal
+
     const closeCategoryModal = () => {
         setShowCategoryModal(false);
         setSelectedCategory(null);
@@ -129,28 +99,61 @@ const AdminCategories = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (currentCategory.id) {
-            // Update existing category
-            setCategories(
-                categories.map(category => 
-                    category.id === currentCategory.id ? currentCategory : category
-                )
-            );
-        } else {
-            // Add new category
-            const newCategory = {
-                ...currentCategory,
-                id: Math.max(...categories.map(c => c.id)) + 1,
-                productsCount: 0
-            };
-            setCategories([...categories, newCategory]);
+
+        try {
+            if (currentCategory.id) {
+                // Update existing category
+                const response = await axios.put(
+                    `http://localhost:8080/api/categories/${currentCategory.id}`,
+                    {
+                        name: currentCategory.name,
+                        description: currentCategory.description,
+                        isFeatured: currentCategory.featured,
+                        image: currentCategory.image
+                    },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                setCategories(categories.map(category =>
+                    category.id === currentCategory.id ? response.data : category
+                ));
+            } else {
+                // Add new category
+                const response = await axios.post(
+                    'http://localhost:8080/api/categories',
+                    {
+                        name: currentCategory.name,
+                        description: currentCategory.description,
+                        isFeatured: currentCategory.featured,
+                        image: currentCategory.image
+                    },
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                setCategories([...categories, response.data]);
+            }
+            setIsFormOpen(false);
+        } catch (error) {
+            console.error('Error saving category:', error);
         }
-        
-        setIsFormOpen(false);
     };
+
+    const handleLogout = async () => {
+        try {
+            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            localStorage.removeItem('token'); // Clear the token from localStorage
+            window.location.href = '/'; // Redirect to the landing page
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
+    const filteredCategories = categories.filter(category =>
+        (category.name?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+        (category.description?.toLowerCase().includes(searchTerm.toLowerCase()) || '')
+    );
 
     return (
         <div className="admin-dashboard">
@@ -163,13 +166,13 @@ const AdminCategories = () => {
                 </div>
                 <h1 className="admin-title">ADMIN DASHBOARD</h1>
                 <div className="auth-buttons">
-                    <Link to="/" className="auth-button">
+                    <button onClick={handleLogout} className="auth-button">
                         <span></span>
                         <span></span>
                         <span></span>
                         <span></span>
                         Logout
-                    </Link>
+                    </button>
                 </div>
             </header>
 
@@ -244,7 +247,7 @@ const AdminCategories = () => {
                                             <td>{category.id}</td>
                                             <td>{category.name}</td>
                                             <td>{category.description}</td>
-                                            <td>{category.productsCount}</td>
+                                            <td>{category.productsCount || 0}</td> {/* Default to 0 if undefined */}
                                             <td>
                                                 {category.featured ? (
                                                     <span className="badge-featured">

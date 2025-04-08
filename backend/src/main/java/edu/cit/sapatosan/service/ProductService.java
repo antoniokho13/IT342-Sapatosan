@@ -5,6 +5,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import edu.cit.sapatosan.entity.CategoryEntity;
 import edu.cit.sapatosan.entity.ProductEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +31,10 @@ public class ProductService {
                 List<ProductEntity> products = new ArrayList<>();
                 for (DataSnapshot child : snapshot.getChildren()) {
                     ProductEntity product = child.getValue(ProductEntity.class);
-                    products.add(product);
+                    if (product != null) {
+                        product.setId(child.getKey()); // Set the id field using the key
+                        products.add(product);
+                    }
                 }
                 future.complete(products);
             }
@@ -60,8 +64,33 @@ public class ProductService {
         return future;
     }
 
-    public void createProduct(String id, ProductEntity product) {
-        productRef.child(id).setValueAsync(product);
+    public void createProduct(ProductEntity product) {
+        String id = productRef.push().getKey(); // Generate a unique key for the product
+        if (id != null) {
+            product.setId(id); // Set the generated key as the product ID
+            productRef.child(id).setValueAsync(product); // Save the product under the generated key
+
+            // Update the products count in the corresponding category
+            if (product.getCategoryId() != null) {
+                DatabaseReference categoryRef = FirebaseDatabase.getInstance().getReference("categories").child(product.getCategoryId());
+                categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        CategoryEntity category = snapshot.getValue(CategoryEntity.class);
+                        if (category != null) {
+                            int currentProducts = category.getProducts();
+                            category.setProducts(currentProducts + 1); // Increment the products count
+                            categoryRef.setValueAsync(category); // Update the category in the database
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        System.err.println("Failed to update category products count: " + error.getMessage());
+                    }
+                });
+            }
+        }
     }
 
     public void updateProduct(String id, ProductEntity updatedProduct) {

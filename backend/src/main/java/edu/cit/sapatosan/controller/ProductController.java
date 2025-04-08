@@ -30,9 +30,9 @@ public class ProductController {
         return product.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping("/{id}")
-    public ResponseEntity<Void> createProduct(@PathVariable String id, @RequestBody ProductEntity product) {
-        productService.createProduct(id, product);
+    @PostMapping
+    public ResponseEntity<Void> createProduct(@RequestBody ProductEntity product) {
+        productService.createProduct(product); // No need to pass an ID
         return ResponseEntity.ok().build();
     }
 
