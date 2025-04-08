@@ -3,7 +3,7 @@ package edu.cit.sapatosan.entity;
 public class ProductEntity {
     private String id;
     private String name;
-    private String description;
+    private String brand; // Changed from description to brand
     private Double price;
     private Integer stock;
     private String imageUrl;
@@ -30,12 +30,12 @@ public class ProductEntity {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public String getBrand() {
+        return brand;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setBrand(String brand) {
+        this.brand = brand;
     }
 
     public Double getPrice() {

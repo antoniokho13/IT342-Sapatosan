@@ -1,9 +1,9 @@
 package edu.cit.sapatosan.service;
 
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import edu.cit.sapatosan.entity.UserEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +33,8 @@ public class UserService {
                 List<UserEntity> users = new ArrayList<>();
                 for (DataSnapshot child : snapshot.getChildren()) {
                     UserEntity user = child.getValue(UserEntity.class);
+                    // Set the id using the key of the child snapshot
+                    user.setId(child.getKey());
                     users.add(user);
                 }
                 future.complete(users);
@@ -52,6 +54,9 @@ public class UserService {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 UserEntity user = snapshot.getValue(UserEntity.class);
+                if (user != null) {
+                    user.setId(snapshot.getKey()); // Set the id here as well
+                }
                 future.complete(Optional.ofNullable(user));
             }
 

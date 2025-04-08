@@ -83,6 +83,19 @@ const AdminUsers = () => {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            localStorage.removeItem('token'); // Clear the token from localStorage
+            window.location.href = '/'; // Redirect to the landing page
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
     const closeUserModal = () => setShowUserModal(false);
     const closeEditModal = () => setShowEditModal(false);
     const closeDeleteModal = () => setShowDeleteModal(false);
@@ -98,13 +111,13 @@ const AdminUsers = () => {
                 </div>
                 <h1 className="admin-title">ADMIN DASHBOARD</h1>
                 <div className="auth-buttons">
-                    <Link to="/" className="auth-button">
+                    <button onClick={handleLogout} className="auth-button">
                         <span></span>
                         <span></span>
                         <span></span>
                         <span></span>
                         Logout
-                    </Link>
+                    </button>
                 </div>
             </header>
 

@@ -4,20 +4,22 @@ public class CategoryEntity {
     private String id;
     private String name;
     private String description;
+    private int products; // Number of products in the category
+    private boolean isFeatured; // Whether the category is featured
 
     public CategoryEntity() {
-        // Default constructor required for Firebase
-        // Realtime Database
-        // and Firestore
-        // serialization/deserialization
+        // Default constructor for Firebase
     }
 
-    public CategoryEntity(String id, String name, String description) {
+    public CategoryEntity(String id, String name, String description, int products, boolean isFeatured) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.products = products;
+        this.isFeatured = isFeatured;
     }
 
+    // Getters and Setters
     public String getId() {
         return id;
     }
@@ -40,5 +42,21 @@ public class CategoryEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public int getProducts() {
+        return products;
+    }
+
+    public void setProducts(int products) {
+        this.products = products;
+    }
+
+    public boolean isFeatured() {
+        return isFeatured;
+    }
+
+    public void setFeatured(boolean featured) {
+        isFeatured = featured;
     }
 }
