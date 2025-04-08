@@ -5,17 +5,21 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                Surface {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     LoginScreenWithActions()
                 }
             }
@@ -27,25 +31,74 @@ class LoginActivity : ComponentActivity() {
 fun LoginScreenWithActions() {
     val context = LocalContext.current
 
-    LoginScreen(
-        onLoginClick = { email, password ->
-            // Handle login logic here
-            // This could be a call to your backend API or Firebase Auth
-            Toast.makeText(
-                context,
-                "Logging in with $email",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            // Navigate to main screen after successful login
-            // For example:
-            // val intent = Intent(context, MainActivity::class.java)
-            // context.startActivity(intent)
+    LoginScreenContent(
+        onLoginClick = { email: String, password: String ->
+            if (email == "admin@example.com" && password == "password") {
+                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                val intent = Intent(context, HomeActivity::class.java)
+                context.startActivity(intent)
+                if (context is ComponentActivity) context.finish()
+            } else {
+                Toast.makeText(context, "Invalid credentials", Toast.LENGTH_SHORT).show()
+            }
         },
         onRegisterClick = {
-            // Navigate to register screen
             val intent = Intent(context, RegisterActivity::class.java)
             context.startActivity(intent)
+            if (context is ComponentActivity) context.finish()
         }
     )
+}
+
+@Composable
+fun LoginScreen(
+    onLoginClick: (String, String) -> Unit,
+    onRegisterClick: () -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Login", style = MaterialTheme.typography.headlineMedium)
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { onLoginClick(email, password) },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Login")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(onClick = { onRegisterClick() }) {
+            Text("Don't have an account? Register")
+        }
+    }
 }
