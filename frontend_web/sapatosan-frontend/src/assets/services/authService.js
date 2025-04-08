@@ -5,7 +5,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
 export const authService = {
     register: async (userData) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/users/createUser`, {
+            const response = await axios.post(`${API_BASE_URL}/users`, {
                 firstName: userData.firstName,
                 lastName: userData.lastName,
                 email: userData.email,
