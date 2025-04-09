@@ -68,6 +68,7 @@ const Home = () => {
     </nav>
     <div className="auth-buttons">
         {localStorage.getItem('token') ? (
+            // If logged in, show "Log Out"
             <button onClick={handleLogout} className="auth-button">
                 <span></span>
                 <span></span>
@@ -76,6 +77,7 @@ const Home = () => {
                 Log Out
             </button>
         ) : (
+            // If not logged in, show "Join Us"
             <Link to="/register" className="auth-button">
                 <span></span>
                 <span></span>
