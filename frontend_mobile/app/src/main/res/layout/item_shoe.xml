@@ -1,21 +1,26 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    android:elevation="4dp">
+    android:elevation="4dp"
+    android:padding="12dp"> <!-- NEW: Add padding here -->
 
     <LinearLayout
         android:orientation="vertical"
-        android:padding="8dp"
-        android:gravity="center"
+        android:gravity="center_horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:paddingHorizontal="4dp"
+        tools:ignore="ExtraText">
 
         <ImageView
             android:id="@+id/shoeImage"
             android:layout_width="120dp"
             android:layout_height="120dp"
+            android:layout_marginBottom="8dp"
             android:scaleType="centerCrop" />
 
         <TextView
@@ -25,16 +30,16 @@
             android:text="Shoe Name"
             android:textStyle="bold"
             android:textSize="16sp"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:layout_marginBottom="4dp" />
 
         <TextView
             android:id="@+id/shoePrice"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="₱0.00"
-            android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
-            android:gravity="center"/>
-
+            android:textSize="15sp"
+            android:textColor="#FF0000"
+            android:gravity="center" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

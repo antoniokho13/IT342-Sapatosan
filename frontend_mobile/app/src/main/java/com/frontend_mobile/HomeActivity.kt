@@ -1,7 +1,9 @@
 package com.frontend_mobile
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -19,7 +21,7 @@ class HomeActivity : AppCompatActivity() {
         ShoeItem("OBERON", "₱1,923.00", R.drawable.nike_invincible_3_men_road, "BASKETBALL"),
         ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
         ShoeItem("OBERON", "₱1,923.00", R.drawable.nike_invincible_3_men_road, "CASUAL"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
+        ShoeItem("MUFER", "₱2,393.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
         ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
         ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
         ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
@@ -40,21 +42,28 @@ class HomeActivity : AppCompatActivity() {
         updateCategory("ALL")
 
         binding.icMenu.setOnClickListener {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(Gravity.LEFT)
+            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                drawerLayout.closeDrawer(GravityCompat.END)
             } else {
                 drawerLayout.openDrawer(GravityCompat.END)
             }
         }
+        val profileTextView = findViewById<TextView>(R.id.drawer_profile)
+        profileTextView.setOnClickListener {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivity(intent)
+            drawerLayout.closeDrawer(GravityCompat.END)
+        }
     }
 
     override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
             drawerLayout.closeDrawer(GravityCompat.END)
         } else {
             super.onBackPressed()
         }
     }
+
 
     private fun setupRecyclerView() {
         shoeAdapter = ShoeAdapter(mutableListOf())
