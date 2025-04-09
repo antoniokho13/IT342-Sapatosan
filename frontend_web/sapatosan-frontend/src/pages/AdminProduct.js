@@ -27,13 +27,15 @@ const AdminProduct = () => {
     });
 
     const [categories, setCategories] = useState([]);
+    const [brands, setBrands] = useState([]);
 
     const token = localStorage.getItem('token');
 
-    // Fetch products and categories from the backend
+    // Fetch products, categories, and brands from the backend
     useEffect(() => {
         fetchProducts();
-        fetchCategories(); // Ensure this is called
+        fetchCategories();
+        fetchBrands(); // Fetch brands on component load
     }, []);
 
     const fetchProducts = async () => {
@@ -55,6 +57,17 @@ const AdminProduct = () => {
             setCategories(response.data);
         } catch (error) {
             console.error('Error fetching categories:', error);
+        }
+    };
+
+    const fetchBrands = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/brands', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setBrands(response.data);
+        } catch (error) {
+            console.error('Error fetching brands:', error);
         }
     };
 
@@ -153,23 +166,20 @@ const AdminProduct = () => {
         try {
             if (currentProduct.id) {
                 // Update existing product
-                const response = await axios.put(
+                await axios.put(
                     `http://localhost:8080/api/products/${currentProduct.id}`,
                     currentProduct,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
-                setProducts(products.map(product =>
-                    product.id === currentProduct.id ? response.data : product
-                ));
             } else {
                 // Add new product
-                const response = await axios.post(
+                await axios.post(
                     'http://localhost:8080/api/products',
                     currentProduct,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
-                setProducts([...products, response.data]);
             }
+            await fetchProducts(); // Fetch updated products
             setShowEditModal(false);
         } catch (error) {
             console.error('Error saving product:', error);
@@ -214,14 +224,15 @@ const AdminProduct = () => {
                             <i className="fas fa-users"></i>
                             <span>Users</span>
                         </Link>
-                        <Link to="/admin/products" className="sidebar-link active">
-                            <i className="fas fa-shoe-prints"></i>
-                            <span>Products</span>
-                        </Link>
                         <Link to="/admin/categories" className="sidebar-link">
                             <i className="fas fa-tags"></i>
                             <span>Categories</span>
                         </Link>
+                        <Link to="/admin/products" className="sidebar-link active">
+                            <i className="fas fa-shoe-prints"></i>
+                            <span>Products</span>
+                        </Link>
+                        
                         <Link to="/admin/orders" className="sidebar-link">
                             <i className="fas fa-shopping-cart"></i>
                             <span>Orders</span>
@@ -271,7 +282,11 @@ const AdminProduct = () => {
                                     style={{ paddingLeft: '15px', minWidth: '150px' }}
                                 >
                                     <option value="">All Brands</option>
-                                    {/* Brands will be dynamically fetched */}
+                                    {brands.map(brand => (
+                                        <option key={brand.id} value={brand.name}>
+                                            {brand.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <button className="add-button" onClick={handleAddProduct}>
