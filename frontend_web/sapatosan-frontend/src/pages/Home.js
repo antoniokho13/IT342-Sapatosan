@@ -13,6 +13,7 @@ import pullsnBear from '../assets/images/pullsnbear.png'; // Import the Pull&Bea
 import puma from '../assets/images/puma.png'; // Import the Puma logo
 import raymund from '../assets/images/raymund.jpg'; // Import the image for Raymund Laude
 import teaser from '../assets/images/teaser.mp4';
+import axios from 'axios';
 
 const Home = () => {
     useEffect(() => {
@@ -36,6 +37,21 @@ const Home = () => {
         };
     }, []);
 
+    const handleLogout = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                await axios.post('http://localhost:8080/api/auth/logout', {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                localStorage.removeItem('token'); // Clear the token from localStorage
+                window.location.href = '/'; // Redirect to the home page
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
     return (
         <div>
             <header className="header">
@@ -51,13 +67,23 @@ const Home = () => {
         <Link to="/running" className="nav-link">Running</Link>
     </nav>
     <div className="auth-buttons">
-        <Link to="/register" className="auth-button">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            Join Us
-        </Link>
+        {localStorage.getItem('token') ? (
+            <button onClick={handleLogout} className="auth-button">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                Log Out
+            </button>
+        ) : (
+            <Link to="/register" className="auth-button">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                Join Us
+            </Link>
+        )}
     </div>
 </header>
             <section>

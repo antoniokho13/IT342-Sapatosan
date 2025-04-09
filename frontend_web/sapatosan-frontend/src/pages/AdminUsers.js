@@ -129,14 +129,15 @@ const AdminUsers = () => {
                             <i className="fas fa-users"></i>
                             <span>Users</span>
                         </Link>
-                        <Link to="/admin/products" className="sidebar-link">
-                            <i className="fas fa-shoe-prints"></i>
-                            <span>Products</span>
-                        </Link>
                         <Link to="/admin/categories" className="sidebar-link">
                             <i className="fas fa-tags"></i>
                             <span>Categories</span>
                         </Link>
+                        <Link to="/admin/products" className="sidebar-link">
+                            <i className="fas fa-shoe-prints"></i>
+                            <span>Products</span>
+                        </Link>
+                        
                         <Link to="/admin/orders" className="sidebar-link">
                             <i className="fas fa-shopping-cart"></i>
                             <span>Orders</span>

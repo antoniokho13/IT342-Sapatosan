@@ -14,7 +14,7 @@ const AdminCategories = () => {
         id: '',
         name: '',
         description: '',
-        featured: false,
+        featured: '',
         image: null
     });
 
@@ -62,7 +62,7 @@ const AdminCategories = () => {
                 await axios.delete(`http://localhost:8080/api/categories/${selectedCategory.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                setCategories(categories.filter(category => category.id !== selectedCategory.id));
+                await fetchCategories(); // Refresh categories dynamically
                 setShowCategoryModal(false);
                 setSelectedCategory(null);
             } catch (error) {
@@ -73,7 +73,7 @@ const AdminCategories = () => {
 
     const openAddForm = () => {
         setCurrentCategory({
-            id: null,
+            id: '',
             name: '',
             description: '',
             featured: false,
@@ -104,37 +104,50 @@ const AdminCategories = () => {
 
         try {
             if (currentCategory.id) {
-                // Update existing category
-                const response = await axios.put(
+                await axios.put(
                     `http://localhost:8080/api/categories/${currentCategory.id}`,
                     {
                         name: currentCategory.name,
                         description: currentCategory.description,
-                        isFeatured: currentCategory.featured,
-                        image: currentCategory.image
+                        isFeatured: currentCategory.featured
                     },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
-                setCategories(categories.map(category =>
-                    category.id === currentCategory.id ? response.data : category
-                ));
             } else {
-                // Add new category
-                const response = await axios.post(
+                await axios.post(
                     'http://localhost:8080/api/categories',
                     {
                         name: currentCategory.name,
                         description: currentCategory.description,
-                        isFeatured: currentCategory.featured,
-                        image: currentCategory.image
+                        isFeatured: currentCategory.featured
                     },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
-                setCategories([...categories, response.data]);
             }
+            await fetchCategories(); // Refresh categories dynamically
             setIsFormOpen(false);
         } catch (error) {
             console.error('Error saving category:', error);
+        }
+    };
+
+    const toggleFeatured = async (category) => {
+        try {
+            const updatedCategory = { ...category, featured: !category.featured };
+            await axios.put(
+                `http://localhost:8080/api/categories/${category.id}`,
+                {
+                    name: updatedCategory.name,
+                    description: updatedCategory.description,
+                    isFeatured: updatedCategory.featured
+                },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setCategories(categories.map(cat =>
+                cat.id === category.id ? updatedCategory : cat
+            ));
+        } catch (error) {
+            console.error('Error toggling featured state:', error);
         }
     };
 
@@ -184,14 +197,15 @@ const AdminCategories = () => {
                             <i className="fas fa-users"></i>
                             <span>Users</span>
                         </Link>
-                        <Link to="/admin/products" className="sidebar-link">
-                            <i className="fas fa-shoe-prints"></i>
-                            <span>Products</span>
-                        </Link>
                         <Link to="/admin/categories" className="sidebar-link active">
                             <i className="fas fa-tags"></i>
                             <span>Categories</span>
                         </Link>
+                        <Link to="/admin/products" className="sidebar-link">
+                            <i className="fas fa-shoe-prints"></i>
+                            <span>Products</span>
+                        </Link>
+                        
                         <Link to="/admin/orders" className="sidebar-link">
                             <i className="fas fa-shopping-cart"></i>
                             <span>Orders</span>
@@ -239,16 +253,22 @@ const AdminCategories = () => {
                             <tbody>
                                 {filteredCategories.length > 0 ? (
                                     filteredCategories.map(category => (
-                                        <tr 
+                                        <tr
                                             key={category.id}
                                             onClick={() => handleRowClick(category)}
                                             className="clickable-row"
+                                            style={{ backgroundColor: category.featured ? '#d4edda' : 'transparent' }}
                                         >
                                             <td>{category.id}</td>
                                             <td>{category.name}</td>
                                             <td>{category.description}</td>
-                                            <td>{category.productsCount || 0}</td> {/* Default to 0 if undefined */}
+                                            <td>{category.productsCount || 0}</td>
                                             <td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={category.featured}
+                                                    onChange={() => toggleFeatured(category)}
+                                                />
                                                 {category.featured ? (
                                                     <span className="badge-featured">
                                                         <i className="fas fa-check-circle"></i> Featured
@@ -358,17 +378,6 @@ const AdminCategories = () => {
                                             onChange={handleInputChange}
                                         />
                                         <label htmlFor="featured">Featured Category</label>
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="image">Category Image (URL)</label>
-                                        <input
-                                            id="image"
-                                            name="image"
-                                            type="text"
-                                            value={currentCategory.image || ''}
-                                            onChange={handleInputChange}
-                                            placeholder="Enter image URL or leave blank"
-                                        />
                                     </div>
                                     <div className="form-buttons">
                                         <button type="button" onClick={closeForm} className="cancel-button">
