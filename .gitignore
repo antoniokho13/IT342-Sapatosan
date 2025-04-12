@@ -30,3 +30,7 @@ frontend_mobile/.idea
 
 # Ignore Gradle build output directory
 build
+backend/src/main/resources/firebase-config.json
+backend/src/main/resources/firebase-config.json
+backend/src/main/resources/firebase-config.json
+backend/src/main/resources/firebase-config.json

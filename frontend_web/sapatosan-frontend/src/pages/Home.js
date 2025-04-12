@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import axios from 'axios';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Home.css'; // Import the CSS file for styling
 import adidas from '../assets/images/adidas.png'; // Import the Adidas logo
@@ -13,9 +14,100 @@ import pullsnBear from '../assets/images/pullsnbear.png'; // Import the Pull&Bea
 import puma from '../assets/images/puma.png'; // Import the Puma logo
 import raymund from '../assets/images/raymund.jpg'; // Import the image for Raymund Laude
 import teaser from '../assets/images/teaser.mp4';
-import axios from 'axios';
 
 const Home = () => {
+    const [userInfo, setUserInfo] = useState({ email: '', name: '' });
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const storedEmail = localStorage.getItem('email');
+                
+                if (token) {
+                    console.log("Token found, attempting to fetch user data");
+                    
+                    // First, check if we already have the email stored from login
+                    if (storedEmail) {
+                        console.log("Email found in localStorage:", storedEmail);
+                        setUserInfo({
+                            email: storedEmail,
+                            name: ''  // We'll update this later if needed
+                        });
+                    }
+                    
+                    // Now fetch users to get additional data or verify the email
+                    const response = await axios.get('http://localhost:8080/api/users', {
+                        headers: {
+                            authorization: `Bearer ${token}`
+                        }
+                    });
+                    
+                    console.log("API response:", response.data);
+                    
+                    // Find the current user by the email we stored during login
+                    let userData = null;
+                    if (Array.isArray(response.data) && storedEmail) {
+                        userData = response.data.find(user => user.email === storedEmail);
+                        console.log("User found by email?", !!userData);
+                    }
+                    
+                    // If we couldn't find by stored email, we need to extract from token
+                    if (!userData && Array.isArray(response.data)) {
+                        // Try to decode the token - not ideal but better than using first user
+                        try {
+                            const tokenPayload = token.split('.')[1];
+                            const decodedPayload = JSON.parse(atob(tokenPayload));
+                            // Your JWT should contain the email according to LoginResponse.java and JwtUtil
+                            const emailFromToken = decodedPayload.sub || decodedPayload.email;
+                            console.log("Email from token:", emailFromToken);
+                            
+                            if (emailFromToken) {
+                                userData = response.data.find(user => user.email === emailFromToken);
+                                console.log("User found by token email?", !!userData);
+                            }
+                        } catch (e) {
+                            console.error("Could not decode token:", e);
+                        }
+                    }
+                    
+                    // If we still don't have a user, use the one we currently have in localStorage
+                    // Only fall back to first user as absolute last resort
+                    if (!userData) {
+                        if (Array.isArray(response.data) && response.data.length > 0) {
+                            console.warn("Could not identify specific user, using first user in array");
+                            userData = response.data[0];
+                        } else if (!Array.isArray(response.data)) {
+                            console.log("Response is a single user object");
+                            userData = response.data;
+                        }
+                    }
+                    
+                    if (userData) {
+                        setUserInfo({
+                            email: userData.email,
+                            name: userData.firstName ? `${userData.firstName} ${userData.lastName}` : ''
+                        });
+                        
+                        // Update localStorage with the confirmed email
+                        localStorage.setItem('email', userData.email);
+                        console.log("User email set in state and localStorage:", userData.email);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                if (error.response && error.response.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('email');
+                }
+            }
+        };
+
+        fetchUserData();
+    }, []);
+
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -37,6 +129,37 @@ const Home = () => {
         };
     }, []);
 
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [dropdownRef]);
+
+    const handleLogin = async (credentials) => {
+        try {
+            const response = await axios.post('http://localhost:8080/api/auth/login', credentials);
+            
+            // Store both token and email from the login response
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('email', response.data.email);
+            
+            console.log("Login successful, saved email:", response.data.email);
+            
+            // Redirect or update state as needed
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Login failed:', error);
+            // Handle login error
+        }
+    };
+
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -44,8 +167,9 @@ const Home = () => {
                 await axios.post('http://localhost:8080/api/auth/logout', {}, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                localStorage.removeItem('token'); // Clear the token from localStorage
-                window.location.href = '/'; // Redirect to the home page
+                localStorage.removeItem('token');
+                localStorage.removeItem('email');
+                window.location.href = '/';
             }
         } catch (error) {
             console.error('Error during logout:', error);
@@ -55,37 +179,76 @@ const Home = () => {
     return (
         <div>
             <header className="header">
-    <div className="logo-container">
-        <Link to="/">
-            <img src={logo} alt="Sapatosan Logo" className="logo" />
-        </Link>
-    </div>
-    <nav className="nav-links">
-        <Link to="/#home" className="nav-link">Home</Link>
-        <Link to="/basketball" className="nav-link">Basketball</Link>
-        <Link to="/casual" className="nav-link">Casual</Link>
-        <Link to="/running" className="nav-link">Running</Link>
-    </nav>
-    <div className="auth-buttons">
-        {localStorage.getItem('token') ? (
-            <button onClick={handleLogout} className="auth-button">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                Log Out
-            </button>
-        ) : (
-            <Link to="/register" className="auth-button">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                Join Us
-            </Link>
-        )}
-    </div>
-</header>
+                <div className="logo-container">
+                    <Link to="/">
+                        <img src={logo} alt="Sapatosan Logo" className="logo" />
+                    </Link>
+                </div>
+                <nav className="nav-links">
+                    <Link to="/#home" className="nav-link">Home</Link>
+                    <Link to="/basketball" className="nav-link">Basketball</Link>
+                    <Link to="/casual" className="nav-link">Casual</Link>
+                    <Link to="/running" className="nav-link">Running</Link>
+                </nav>
+                <div className="auth-buttons">
+                    <Link to="/basketball" className="header-cart-icon">
+                        <i className="fas fa-shopping-cart"></i>
+                        <span className="header-cart-count">0</span>
+                    </Link>
+                    
+                    {localStorage.getItem('token') ? (
+                        <div className="user-dropdown" ref={dropdownRef}>
+                            <button 
+                                onClick={() => setShowDropdown(!showDropdown)} 
+                                className="user-avatar-button"
+                            >
+                                <div className="user-avatar">
+                                    {(userInfo.email || localStorage.getItem('email') || 'U').charAt(0)}
+                                </div>
+                            </button>
+                            
+                            {showDropdown && (
+                                <div className="dropdown-menu">
+                                    <div className="dropdown-header">
+                                        <div className="dropdown-header-title">Signed in as</div>
+                                        <div className="dropdown-header-email">
+                                            {userInfo.email || localStorage.getItem('email')}
+                                        </div>
+                                    </div>
+                                    
+                                    <Link 
+                                        to="/userinformation" 
+                                        className="dropdown-item"
+                                        onClick={() => setShowDropdown(false)}
+                                    >
+                                        <i className="fas fa-user dropdown-item-icon"></i>
+                                        My Account
+                                    </Link>
+                                    
+                                    <button 
+                                        onClick={() => {
+                                            handleLogout();
+                                            setShowDropdown(false);
+                                        }} 
+                                        className="dropdown-item-button"
+                                    >
+                                        <i className="fas fa-sign-out-alt dropdown-item-icon"></i>
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <Link to="/register" className="auth-button">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            Join Us
+                        </Link>
+                    )}
+                </div>
+            </header>
             <section>
                 <div className="video-container1">
                     <video className="video-teaser" autoPlay loop muted>
