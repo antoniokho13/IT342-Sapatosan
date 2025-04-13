@@ -308,12 +308,6 @@ const Basketball = () => {
                 <div className="hero-content">
                     <h1>BASKETBALL SHOES</h1>
                     <p>Elevate your game with our premium selection of basketball shoes.</p>
-                    <div className="cart-indicator" onClick={toggleCart}>
-                        <span className="cart-icon">
-                            <i className="fas fa-shopping-cart"></i>
-                        </span>
-                        <span className="cart-count">{cart.length}</span>
-                    </div>
                 </div>
             </section>
 
