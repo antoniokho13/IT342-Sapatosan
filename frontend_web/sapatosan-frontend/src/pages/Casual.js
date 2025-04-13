@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Casual.css';
 import logo from '../assets/images/logo.png';
@@ -19,6 +19,11 @@ const Casual = () => {
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
     const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
+    
+    // Add user authentication states
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+    const [userInfo, setUserInfo] = useState({ email: localStorage.getItem('email') || '' });
     
     // Casual shoe data with your real images
     const casualShoes = [
@@ -162,7 +167,14 @@ const Casual = () => {
         setSelectedSize(null);
     };
 
-    // Close modals when clicking outside
+    // Add logout handler
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('email');
+        setUserInfo({ email: '' });
+    };
+
+    // Close modals when clicking outside - update to include dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
@@ -171,13 +183,16 @@ const Casual = () => {
             if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-indicator')) {
                 setShowCart(false);
             }
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [quickViewShoe, showCart]);
+    }, [quickViewShoe, showCart, showDropdown]);
 
     // Animation for sections
     useEffect(() => {
@@ -215,7 +230,7 @@ const Casual = () => {
 
     return (
         <div className="casual-page">
-            {/* Header - same as Home.js */}
+            {/* Updated Header */}
             <header className="header">
                 <div className="logo-container">
                     <Link to="/">
@@ -229,13 +244,64 @@ const Casual = () => {
                     <Link to="/running" className="nav-link">Running</Link>
                 </nav>
                 <div className="auth-buttons">
-                    <Link to="/register" className="auth-button">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        Join Us
-                    </Link>
+                    {localStorage.getItem('token') ? (
+                        <>
+                            <div className="header-cart-icon" onClick={toggleCart}>
+                                <i className="fas fa-shopping-cart"></i>
+                                <span className="header-cart-count">{cart.length}</span>
+                            </div>
+                            
+                            <div className="user-dropdown" ref={dropdownRef}>
+                                <button 
+                                    onClick={() => setShowDropdown(!showDropdown)} 
+                                    className="user-avatar-button"
+                                >
+                                    <div className="user-avatar">
+                                        {(userInfo.email || localStorage.getItem('email') || 'U').charAt(0)}
+                                    </div>
+                                </button>
+                                
+                                {showDropdown && (
+                                    <div className="dropdown-menu">
+                                        <div className="dropdown-header">
+                                            <div className="dropdown-header-title">Signed in as</div>
+                                            <div className="dropdown-header-email">
+                                                {userInfo.email || localStorage.getItem('email')}
+                                            </div>
+                                        </div>
+                                        
+                                        <Link 
+                                            to="/profile" 
+                                            className="dropdown-item"
+                                            onClick={() => setShowDropdown(false)}
+                                        >
+                                            <i className="fas fa-user dropdown-item-icon"></i>
+                                            My Account
+                                        </Link>
+                                        
+                                        <button 
+                                            onClick={() => {
+                                                handleLogout();
+                                                setShowDropdown(false);
+                                            }} 
+                                            className="dropdown-item-button"
+                                        >
+                                            <i className="fas fa-sign-out-alt dropdown-item-icon"></i>
+                                            Logout
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <Link to="/register" className="auth-button">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            Join Us
+                        </Link>
+                    )}
                 </div>
             </header>
 

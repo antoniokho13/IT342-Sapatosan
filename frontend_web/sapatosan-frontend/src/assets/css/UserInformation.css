@@ -97,6 +97,21 @@
     font-size: 14px;
 }
 
+/* Styling for the user avatar in profile */
+.profile-avatar {
+    width: 100px !important;
+    height: 100px !important;
+    font-size: 36px !important;
+    margin: 0 auto;
+}
+
+.avatar-info {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+}
+
 /* Profile Form */
 .profile-form {
     width: 100%;
@@ -205,6 +220,23 @@
     background: linear-gradient(360deg, transparent, white);
     animation: animate4 1s linear infinite;
     animation-delay: 0.75s;
+}
+
+/* Loading and error states */
+.loading-spinner, .error-message {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+}
+
+.error-message {
+    color: #f44336;
+}
+
+/* Style the active nav link */
+.dropdown-item.active {
+    background-color: rgba(0, 0, 0, 0.05);
+    font-weight: bold;
 }
 
 /* Footer is imported from Home.css */
