@@ -181,7 +181,7 @@ const Running = () => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
                 closeQuickView();
             }
-            if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-indicator')) {
+            if (showCart && !event.target.closest('.cart-modal-content')) {
                 setShowCart(false);
             }
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -311,12 +311,6 @@ const Running = () => {
                 <div className="hero-content">
                     <h1>RUNNING SHOES</h1>
                     <p>Advanced technology and comfort for every runner.</p>
-                    <div className="cart-indicator" onClick={toggleCart}>
-                        <span className="cart-icon">
-                            <i className="fas fa-shopping-cart"></i>
-                        </span>
-                        <span className="cart-count">{cart.length}</span>
-                    </div>
                 </div>
             </section>
 

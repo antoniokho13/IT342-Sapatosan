@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
@@ -206,12 +206,33 @@ const AdminUsers = () => {
             {/* User Modal */}
             {showUserModal && selectedUser && (
                 <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>User Actions</h3>
-                        <p>{selectedUser.firstName} {selectedUser.lastName}</p>
-                        <button onClick={handleEdit}>Edit</button>
-                        <button onClick={() => setShowDeleteModal(true)}>Delete</button>
-                        <button onClick={closeUserModal}>Close</button>
+                    <div className="modal-content user-action-modal">
+                        <div className="modal-header">
+                            <h3>User Actions</h3>
+                            <button className="close-modal" onClick={closeUserModal}>×</button>
+                        </div>
+                        
+                        <div className="user-details">
+                            <h4>{selectedUser.firstName} {selectedUser.lastName}</h4>
+                            <p>{selectedUser.email}</p>
+                        </div>
+                        
+                        <div className="user-actions">
+                            <button 
+                                className="action-button-large edit"
+                                onClick={handleEdit}
+                            >
+                                <i className="fas fa-edit"></i>
+                                Edit User
+                            </button>
+                            <button 
+                                className="action-button-large delete"
+                                onClick={() => setShowDeleteModal(true)}
+                            >
+                                <i className="fas fa-trash-alt"></i>
+                                Delete User
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -219,35 +240,60 @@ const AdminUsers = () => {
             {/* Edit Modal */}
             {showEditModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Edit User</h3>
-                        <form onSubmit={handleEditSubmit}>
-                            <input
-                                type="text"
-                                name="firstName"
-                                value={currentUser.firstName}
-                                onChange={(e) => setCurrentUser({ ...currentUser, firstName: e.target.value })}
-                                placeholder="First Name"
-                                required
-                            />
-                            <input
-                                type="text"
-                                name="lastName"
-                                value={currentUser.lastName}
-                                onChange={(e) => setCurrentUser({ ...currentUser, lastName: e.target.value })}
-                                placeholder="Last Name"
-                                required
-                            />
-                            <input
-                                type="email"
-                                name="email"
-                                value={currentUser.email}
-                                onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
-                                placeholder="Email"
-                                required
-                            />
-                            <button type="submit">Save</button>
-                            <button type="button" onClick={closeEditModal}>Cancel</button>
+                    <div className="modal-content user-edit-modal">
+                        <div className="modal-header">
+                            <h3>Edit User</h3>
+                            <button className="close-modal" onClick={closeEditModal}>×</button>
+                        </div>
+                        
+                        <form onSubmit={handleEditSubmit} className="category-form">
+                            <div className="form-group">
+                                <label htmlFor="firstName">First Name</label>
+                                <input
+                                    type="text"
+                                    id="firstName"
+                                    name="firstName"
+                                    value={currentUser.firstName}
+                                    onChange={(e) => setCurrentUser({ ...currentUser, firstName: e.target.value })}
+                                    placeholder="First Name"
+                                    required
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label htmlFor="lastName">Last Name</label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    name="lastName"
+                                    value={currentUser.lastName}
+                                    onChange={(e) => setCurrentUser({ ...currentUser, lastName: e.target.value })}
+                                    placeholder="Last Name"
+                                    required
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={currentUser.email}
+                                    onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
+                                    placeholder="Email"
+                                    required
+                                />
+                            </div>
+                            
+                            <div className="form-buttons">
+                                <button type="button" className="cancel-button" onClick={closeEditModal}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="save-button">
+                                    Save Changes
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -256,11 +302,36 @@ const AdminUsers = () => {
             {/* Delete Modal */}
             {showDeleteModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Confirm Delete</h3>
-                        <p>Are you sure you want to delete {selectedUser.firstName} {selectedUser.lastName}?</p>
-                        <button onClick={handleDeleteConfirm}>Yes</button>
-                        <button onClick={closeDeleteModal}>No</button>
+                    <div className="modal-content user-action-modal">
+                        <div className="modal-header">
+                            <h3>Confirm Delete</h3>
+                            <button className="close-modal" onClick={closeDeleteModal}>×</button>
+                        </div>
+                        
+                        <div className="user-details">
+                            <h4>{selectedUser.firstName} {selectedUser.lastName}</h4>
+                            <p>{selectedUser.email}</p>
+                            <p className="warning-text">
+                                Are you sure you want to delete this user? This action cannot be undone.
+                            </p>
+                        </div>
+                        
+                        <div className="user-actions">
+                            <button 
+                                className="action-button-large edit"
+                                onClick={closeDeleteModal}
+                            >
+                                <i className="fas fa-times"></i>
+                                Cancel
+                            </button>
+                            <button 
+                                className="action-button-large delete"
+                                onClick={handleDeleteConfirm}
+                            >
+                                <i className="fas fa-trash-alt"></i>
+                                Delete User
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
