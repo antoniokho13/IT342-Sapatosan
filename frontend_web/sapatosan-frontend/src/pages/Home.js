@@ -174,47 +174,54 @@ const Home = () => {
     </nav>
     <div className="auth-buttons">
         {localStorage.getItem('token') ? (
-            <div className="user-dropdown" ref={dropdownRef}>
-                <button 
-                    onClick={() => setShowDropdown(!showDropdown)} 
-                    className="user-avatar-button"
-                >
-                    <div className="user-avatar">
-                        {(userInfo.email || localStorage.getItem('email') || 'U').charAt(0)}
-                    </div>
-                </button>
+            <>
+                <Link to="/basketball" className="header-cart-icon">
+                    <i className="fas fa-shopping-cart"></i>
+                    <span className="header-cart-count">0</span>
+                </Link>
                 
-                {showDropdown && (
-                    <div className="dropdown-menu">
-                        <div className="dropdown-header">
-                            <div className="dropdown-header-title">Signed in as</div>
-                            <div className="dropdown-header-email">
-                                {userInfo.email || localStorage.getItem('email')}
-                            </div>
+                <div className="user-dropdown" ref={dropdownRef}>
+                    <button 
+                        onClick={() => setShowDropdown(!showDropdown)} 
+                        className="user-avatar-button"
+                    >
+                        <div className="user-avatar">
+                            {(userInfo.email || localStorage.getItem('email') || 'U').charAt(0)}
                         </div>
-                        
-                        <Link 
-                            to="/userinformation" 
-                            className="dropdown-item"
-                            onClick={() => setShowDropdown(false)}
-                        >
-                            <i className="fas fa-user dropdown-item-icon"></i>
-                            My Account
-                        </Link>
-                        
-                        <button 
-                            onClick={() => {
-                                handleLogout();
-                                setShowDropdown(false);
-                            }} 
-                            className="dropdown-item-button"
-                        >
-                            <i className="fas fa-sign-out-alt dropdown-item-icon"></i>
-                            Logout
-                        </button>
-                    </div>
-                )}
-            </div>
+                    </button>
+                    
+                    {showDropdown && (
+                        <div className="dropdown-menu">
+                            <div className="dropdown-header">
+                                <div className="dropdown-header-title">Signed in as</div>
+                                <div className="dropdown-header-email">
+                                    {userInfo.email || localStorage.getItem('email')}
+                                </div>
+                            </div>
+                            
+                            <Link 
+                                to="/profile" 
+                                className="dropdown-item"
+                                onClick={() => setShowDropdown(false)}
+                            >
+                                <i className="fas fa-user dropdown-item-icon"></i>
+                                My Account
+                            </Link>
+                            
+                            <button 
+                                onClick={() => {
+                                    handleLogout();
+                                    setShowDropdown(false);
+                                }} 
+                                className="dropdown-item-button"
+                            >
+                                <i className="fas fa-sign-out-alt dropdown-item-icon"></i>
+                                Logout
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </>
         ) : (
             <Link to="/register" className="auth-button">
                 <span></span>
