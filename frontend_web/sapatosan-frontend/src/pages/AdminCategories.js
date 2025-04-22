@@ -262,7 +262,7 @@ const AdminCategories = () => {
                                             <td>{category.id}</td>
                                             <td>{category.name}</td>
                                             <td>{category.description}</td>
-                                            <td>{category.productsCount || 0}</td>
+                                            <td>{category.products || 0}</td>
                                             <td>
                                                 <input
                                                     type="checkbox"

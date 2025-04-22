@@ -1,10 +1,6 @@
 package edu.cit.sapatosan.service;
 
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.*;
 import edu.cit.sapatosan.entity.CategoryEntity;
 import edu.cit.sapatosan.entity.ProductEntity;
 import org.springframework.stereotype.Service;
@@ -32,7 +28,7 @@ public class ProductService {
                 for (DataSnapshot child : snapshot.getChildren()) {
                     ProductEntity product = child.getValue(ProductEntity.class);
                     if (product != null) {
-                        product.setId(child.getKey()); // Set the id field using the key
+                        product.setId(child.getKey());
                         products.add(product);
                     }
                 }
@@ -41,7 +37,7 @@ public class ProductService {
 
             @Override
             public void onCancelled(DatabaseError error) {
-                future.completeExceptionally(error.toException());
+                future.completeExceptionally(new RuntimeException("Firebase operation failed", error.toException()));
             }
         });
         return future;
@@ -58,46 +54,100 @@ public class ProductService {
 
             @Override
             public void onCancelled(DatabaseError error) {
-                future.completeExceptionally(error.toException());
+                future.completeExceptionally(new RuntimeException("Firebase operation failed", error.toException()));
             }
         });
         return future;
     }
 
     public void createProduct(ProductEntity product) {
-        String id = productRef.push().getKey(); // Generate a unique key for the product
+        if (product.getCategoryId() == null || !isCategoryValid(product.getCategoryId())) {
+            throw new IllegalArgumentException("Invalid category ID");
+        }
+        String id = productRef.push().getKey();
         if (id != null) {
-            product.setId(id); // Set the generated key as the product ID
-            productRef.child(id).setValueAsync(product); // Save the product under the generated key
-
-            // Update the products count in the corresponding category
-            if (product.getCategoryId() != null) {
-                DatabaseReference categoryRef = FirebaseDatabase.getInstance().getReference("categories").child(product.getCategoryId());
-                categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot snapshot) {
-                        CategoryEntity category = snapshot.getValue(CategoryEntity.class);
-                        if (category != null) {
-                            int currentProducts = category.getProducts();
-                            category.setProducts(currentProducts + 1); // Increment the products count
-                            categoryRef.setValueAsync(category); // Update the category in the database
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError error) {
-                        System.err.println("Failed to update category products count: " + error.getMessage());
-                    }
-                });
-            }
+            product.setId(id);
+            productRef.child(id).setValueAsync(product);
+            updateCategoryProductCount(product.getCategoryId(), 1); // Increment product count
         }
     }
 
-    public void updateProduct(String id, ProductEntity updatedProduct) {
-        productRef.child(id).setValueAsync(updatedProduct);
+    public void deleteProduct(String id) {
+        productRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                ProductEntity product = snapshot.getValue(ProductEntity.class);
+                if (product != null && product.getCategoryId() != null) {
+                    updateCategoryProductCount(product.getCategoryId(), -1);
+                }
+                productRef.child(id).removeValueAsync();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Failed to delete product: " + error.getMessage());
+            }
+        });
     }
 
-    public void deleteProduct(String id) {
-        productRef.child(id).removeValueAsync();
+    public void updateProduct(String id, ProductEntity updatedProduct) {
+        productRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                ProductEntity existingProduct = snapshot.getValue(ProductEntity.class);
+                if (existingProduct != null) {
+                    if (!existingProduct.getCategoryId().equals(updatedProduct.getCategoryId())) {
+                        updateCategoryProductCount(existingProduct.getCategoryId(), -1); // Decrement old category count
+                        updateCategoryProductCount(updatedProduct.getCategoryId(), 1); // Increment new category count
+                    }
+                }
+                productRef.child(id).setValueAsync(updatedProduct);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Failed to update product: " + error.getMessage());
+            }
+        });
+    }
+
+    private void updateCategoryProductCount(String categoryId, int delta) {
+        DatabaseReference categoryRef = FirebaseDatabase.getInstance().getReference("categories").child(categoryId);
+        categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                CategoryEntity category = snapshot.getValue(CategoryEntity.class);
+                if (category != null) {
+                    category.setProducts(category.getProducts() + delta);
+                    categoryRef.setValueAsync(category);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Failed to update category product count: " + error.getMessage());
+            }
+        });
+    }
+
+    private boolean isCategoryValid(String categoryId) {
+        DatabaseReference categoryRef = FirebaseDatabase.getInstance().getReference("categories").child(categoryId);
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                future.complete(snapshot.exists());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
+            }
+        });
+        try {
+            return future.get();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
