@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,22 +31,33 @@ class LoginActivity : ComponentActivity() {
 @Composable
 fun LoginScreenWithActions() {
     val context = LocalContext.current
+    val auth = remember { FirebaseAuth.getInstance() }
 
     LoginScreenContent(
-        onLoginClick = { email: String, password: String ->
-            if (email == "admin@example.com" && password == "password") {
-                Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
-                val intent = Intent(context, HomeActivity::class.java)
-                context.startActivity(intent)
-                if (context is ComponentActivity) context.finish()
-            } else {
-                Toast.makeText(context, "Invalid credentials", Toast.LENGTH_SHORT).show()
-            }
+        onLoginClick = { email, password ->
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
+                    context.startActivity(Intent(context, HomeActivity::class.java))
+                    (context as? ComponentActivity)?.finish()
+                }
+                .addOnFailureListener { e ->
+                    when (e.localizedMessage) {
+                        "There is no user record corresponding to this identifier. The user may have been deleted." -> {
+                            Toast.makeText(context, "User not found. Please register first.", Toast.LENGTH_LONG).show()
+                        }
+                        "The password is invalid or the user does not have a password." -> {
+                            Toast.makeText(context, "Invalid password. Please try again.", Toast.LENGTH_LONG).show()
+                        }
+                        else -> {
+                            Toast.makeText(context, "Login failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
         },
         onRegisterClick = {
-            val intent = Intent(context, RegisterActivity::class.java)
-            context.startActivity(intent)
-            if (context is ComponentActivity) context.finish()
+            context.startActivity(Intent(context, RegisterActivity::class.java))
+            (context as? ComponentActivity)?.finish()
         }
     )
 }
@@ -97,7 +109,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        TextButton(onClick = { onRegisterClick() }) {
+        TextButton(onClick = onRegisterClick) {
             Text("Don't have an account? Register")
         }
     }
