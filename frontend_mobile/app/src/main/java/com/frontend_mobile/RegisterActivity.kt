@@ -1,3 +1,4 @@
+// RegisterActivity.kt
 package com.frontend_mobile
 
 import android.content.Intent
@@ -13,9 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import com.frontend_mobile.api.RetrofitClient
+import com.frontend_mobile.api.RegisterRequest
+import com.frontend_mobile.api.ApiResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,17 +37,11 @@ class RegisterActivity : ComponentActivity() {
 @Composable
 fun RegisterScreenWithActions() {
     val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
-    val database = remember {
-        Firebase.database(
-            "https://sapatosan-73638-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        )
-    }
 
     var firstName by remember { mutableStateOf("") }
-    var lastName  by remember { mutableStateOf("") }
-    var email     by remember { mutableStateOf("") }
-    var password  by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -53,7 +51,6 @@ fun RegisterScreenWithActions() {
         verticalArrangement = Arrangement.Center
     ) {
         Text("Register", style = MaterialTheme.typography.headlineMedium)
-
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
@@ -95,27 +92,22 @@ fun RegisterScreenWithActions() {
 
         Button(
             onClick = {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnSuccessListener { cred ->
-                        // Write profile to Realtime DB under /users/{uid}
-                        val uid = cred.user?.uid ?: return@addOnSuccessListener
-                        val userRef = database.getReference("users").child(uid)
-                        userRef.setValue(
-                            mapOf(
-                                "firstName" to firstName,
-                                "lastName"  to lastName,
-                                "email"     to email
-                                // Don't store password - Firebase Auth handles this securely
-                            )
-                        )
+                val request = RegisterRequest(firstName, lastName, email, password)
+                RetrofitClient.instance.registerUser(request).enqueue(object : Callback<ApiResponse> {
+                    override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                        if (response.isSuccessful) {
+                            Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+                            context.startActivity(Intent(context, LoginActivity::class.java))
+                            (context as? ComponentActivity)?.finish()
+                        } else {
+                            Toast.makeText(context, "Registration failed: ${response.message()}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
 
-                        Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                        context.startActivity(Intent(context, LoginActivity::class.java))
-                        (context as? ComponentActivity)?.finish()
+                    override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                        Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                     }
-                    .addOnFailureListener { e ->
-                        Toast.makeText(context, "Registration failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                    }
+                })
             },
             modifier = Modifier.fillMaxWidth()
         ) {

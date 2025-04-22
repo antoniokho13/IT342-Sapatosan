@@ -1,3 +1,4 @@
+// LoginActivity.kt
 package com.frontend_mobile
 
 import android.content.Intent
@@ -13,7 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.FirebaseAuth
+import com.frontend_mobile.api.RetrofitClient
+import com.frontend_mobile.api.LoginRequest
+import com.frontend_mobile.api.ApiResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,32 +37,29 @@ class LoginActivity : ComponentActivity() {
 @Composable
 fun LoginScreenWithActions() {
     val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
 
-    LoginScreenContent(
+    LoginScreen(
         onLoginClick = { email, password ->
-            auth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener {
-                    Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
-                    context.startActivity(Intent(context, HomeActivity::class.java))
-                    (context as? ComponentActivity)?.finish()
-                }
-                .addOnFailureListener { e ->
-                    when (e.localizedMessage) {
-                        "There is no user record corresponding to this identifier. The user may have been deleted." -> {
-                            Toast.makeText(context, "User not found. Please register first.", Toast.LENGTH_LONG).show()
-                        }
-                        "The password is invalid or the user does not have a password." -> {
-                            Toast.makeText(context, "Invalid password. Please try again.", Toast.LENGTH_LONG).show()
-                        }
-                        else -> {
-                            Toast.makeText(context, "Login failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                        }
+            val loginRequest = LoginRequest(email, password)
+            RetrofitClient.instance.loginUser(loginRequest).enqueue(object : Callback<ApiResponse> {
+                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                    if (response.isSuccessful) {
+                        Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
+                        context.startActivity(Intent(context, HomeActivity::class.java))
+                        (context as? ComponentActivity)?.finish()
+                    } else {
+                        Toast.makeText(context, "Invalid credentials.", Toast.LENGTH_SHORT).show()
                     }
                 }
+
+                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                    Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
         },
         onRegisterClick = {
-            context.startActivity(Intent(context, RegisterActivity::class.java))
+            val intent = Intent(context, RegisterActivity::class.java)
+            context.startActivity(intent)
             (context as? ComponentActivity)?.finish()
         }
     )
@@ -78,7 +81,6 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text("Login", style = MaterialTheme.typography.headlineMedium)
-
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
