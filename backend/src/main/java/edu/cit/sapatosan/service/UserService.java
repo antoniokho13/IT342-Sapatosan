@@ -88,9 +88,12 @@ public class UserService {
     }
 
     public void updateUser(String id, UserEntity updatedUser) {
+        // Check if the password is not already hashed
+        if (updatedUser.getPassword() != null && !updatedUser.getPassword().startsWith("{bcrypt}")) {
+            updatedUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+        }
         userRef.child(id).setValueAsync(updatedUser);
     }
-
     public void deleteUser(String id) {
         userRef.child(id).removeValueAsync();
     }
