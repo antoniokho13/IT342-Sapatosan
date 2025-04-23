@@ -1,8 +1,9 @@
-package com.frontend_mobile
+package com.frontend_mobile.models
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.frontend_mobile.models.ShoeItem
 import com.frontend_mobile.databinding.ItemShoeBinding
 
 class ShoeAdapter(private val items: MutableList<ShoeItem>) :

@@ -21,59 +21,86 @@
             android:contentDescription="Profile Image" />
 
         <!-- First Name -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="First Name"
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
         <EditText
             android:id="@+id/editFirstName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="First Name"
-            android:text="Admin"
+            android:hint="Enter your first name"
             android:padding="10dp"
-            android:background="@drawable/edittext_border"/>
+            android:background="@drawable/edittext_border" />
 
         <!-- Last Name -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Last Name"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="4dp" />
         <EditText
             android:id="@+id/editLastName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Last Name"
-            android:text="Admin"
+            android:hint="Enter your last name"
             android:padding="10dp"
-            android:layout_marginTop="10dp"
-            android:background="@drawable/edittext_border"/>
+            android:background="@drawable/edittext_border" />
 
         <!-- Email -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Email Address"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="4dp" />
         <EditText
             android:id="@+id/editEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="E-mail Address"
-            android:text="admin@gmail.com"
+            android:hint="Enter your email"
             android:padding="10dp"
-            android:layout_marginTop="10dp"
             android:inputType="textEmailAddress"
-            android:background="@drawable/edittext_border"/>
+            android:background="@drawable/edittext_border" />
 
         <!-- Password -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Password"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="4dp" />
         <EditText
             android:id="@+id/editPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
+            android:hint="Enter your password"
             android:padding="10dp"
-            android:layout_marginTop="10dp"
             android:inputType="textPassword"
-            android:background="@drawable/edittext_border"/>
+            android:background="@drawable/edittext_border" />
 
         <!-- Confirm Password -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Confirm Password"
+            android:textSize="16sp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="4dp" />
         <EditText
             android:id="@+id/editConfirmPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Confirm Password"
+            android:hint="Re-enter your password"
             android:padding="10dp"
-            android:layout_marginTop="10dp"
             android:inputType="textPassword"
-            android:background="@drawable/edittext_border"/>
+            android:background="@drawable/edittext_border" />
 
         <!-- Save Changes Button -->
         <Button

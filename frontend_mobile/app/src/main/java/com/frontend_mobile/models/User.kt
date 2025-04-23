@@ -5,6 +5,6 @@ data class User(
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
-    val password: String = "", // You might exclude this field from being stored locally
+    val password: String? = null, // You might exclude this field from being stored locally
     val role: String = "USER" // Optional: differentiate admin, user, etc.
 )
