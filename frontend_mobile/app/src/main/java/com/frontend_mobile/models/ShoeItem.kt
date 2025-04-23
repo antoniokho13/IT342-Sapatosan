@@ -1,4 +1,4 @@
-package com.frontend_mobile
+package com.frontend_mobile.models
 
 data class ShoeItem(
     val name: String,

@@ -10,6 +10,11 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import com.frontend_mobile.databinding.ActivityHomeBinding
+import com.frontend_mobile.models.ShoeAdapter
+import com.frontend_mobile.models.ShoeItem
+import kotlin.apply
+import kotlin.or
+import kotlin.text.clear
 
 class HomeActivity : AppCompatActivity() {
 
@@ -48,20 +53,31 @@ class HomeActivity : AppCompatActivity() {
                 drawerLayout.openDrawer(GravityCompat.END)
             }
         }
+        // Profile navigation
         val profileTextView = findViewById<TextView>(R.id.drawer_profile)
         profileTextView.setOnClickListener {
             val intent = Intent(this, ProfileActivity::class.java)
             startActivity(intent)
             drawerLayout.closeDrawer(GravityCompat.END)
         }
+
+        // Logout functionality
+        val logoutTextView = findViewById<TextView>(R.id.drawer_logout)
+        logoutTextView.setOnClickListener {
+            logout()
+        }
     }
 
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
-            drawerLayout.closeDrawer(GravityCompat.END)
-        } else {
-            super.onBackPressed()
-        }
+    private fun logout() {
+        // Clear session data (if applicable)
+        val sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE)
+        sharedPreferences.edit().clear().apply()
+
+        // Navigate back to LoginActivity
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
 

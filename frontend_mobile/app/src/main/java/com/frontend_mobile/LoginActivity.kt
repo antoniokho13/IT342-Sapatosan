@@ -1,4 +1,3 @@
-// LoginActivity.kt
 package com.frontend_mobile
 
 import android.content.Intent
@@ -6,12 +5,14 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.frontend_mobile.api.RetrofitClient
@@ -20,6 +21,7 @@ import com.frontend_mobile.api.ApiResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import androidx.compose.ui.graphics.Color
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,16 +82,26 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Logo
+        Image(
+            painter = painterResource(id = R.drawable.logo), // Replace with your logo resource
+            contentDescription = "App Logo",
+            modifier = Modifier
+                .size(150.dp) // Increased size
+                .padding(bottom = 24.dp)
+        )
+
+        // Title
         Text("Login", style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Input Fields
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
@@ -99,18 +111,19 @@ fun LoginScreen(
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
-
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Login Button
         Button(
             onClick = { onLoginClick(email, password) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Red button
         ) {
-            Text("Login")
+            Text("LOGIN", color = Color.White) // Capitalized text
         }
-
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Register Navigation
         TextButton(onClick = onRegisterClick) {
             Text("Don't have an account? Register")
         }
