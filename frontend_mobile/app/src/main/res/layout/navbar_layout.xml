@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/lightGray"
+    android:padding="8dp"
+    android:gravity="center_vertical">
+
+    <!-- Logo -->
+    <ImageView
+        android:id="@+id/logoImage"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@drawable/logo"
+        android:contentDescription="Logo"
+        android:layout_marginEnd="16dp" />
+
+    <!-- Search Bar -->
+    <androidx.appcompat.widget.SearchView
+        android:id="@+id/searchView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:queryHint="Search for shoes"
+        android:iconifiedByDefault="false" />
+
+    <!-- Hamburger Menu -->
+    <ImageView
+        android:id="@+id/icMenu"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:src="@drawable/ic_menu"
+        android:contentDescription="Menu"
+        android:layout_marginStart="16dp" />
+</LinearLayout>

@@ -1,7 +1,7 @@
 package com.frontend_mobile.models
 
 data class User(
-    val id: String = "",
+    val id: String? = null,
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
