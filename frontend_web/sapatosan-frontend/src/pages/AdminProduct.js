@@ -28,6 +28,7 @@ const AdminProduct = () => {
 
     const [categories, setCategories] = useState([]);
     const [brands, setBrands] = useState([]);
+    const [imageFile, setImageFile] = useState(null);
 
     const token = localStorage.getItem('token');
 
@@ -162,28 +163,67 @@ const AdminProduct = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         try {
+            let imageUrl = currentProduct.imageUrl; // Start with existing URL
+    
+            // Upload the image if a new file is selected
+            if (imageFile) {
+                const formData = new FormData();
+                formData.append('file', imageFile);
+    
+                console.log('Uploading image...'); // Debugging line
+                const uploadResponse = await axios.post(
+                    'http://localhost:8080/api/images/upload',
+                    formData,
+                    { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+                );
+    
+                imageUrl = uploadResponse.data; // Get the uploaded image URL
+                console.log('Image uploaded successfully:', imageUrl); // Debugging line
+            } else {
+                 console.log('No new image file selected. Using existing URL:', imageUrl); // Debugging line
+            }
+    
+            // Prepare the product data with the correct image URL
+            const productData = { ...currentProduct, imageUrl };
+    
             if (currentProduct.id) {
                 // Update existing product
+                console.log('Updating product:', currentProduct.id, productData); // Debugging line
                 await axios.put(
                     `http://localhost:8080/api/products/${currentProduct.id}`,
-                    currentProduct,
+                    // MODIFIED: Send productData object in body only
+                    productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
+                console.log('Product updated successfully'); // Debugging line
+    
             } else {
                 // Add new product
+                console.log('Adding new product:', productData); // Debugging line
                 await axios.post(
                     'http://localhost:8080/api/products',
-                    currentProduct,
+                    // MODIFIED: Send productData object in body only
+                    productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
+                console.log('Product added successfully'); // Debugging line
             }
-            await fetchProducts(); // Fetch updated products
+    
+            // Clear the selected image file state after successful save
+            setImageFile(null);
+    
+            await fetchProducts(); // Refresh the product list
             setShowEditModal(false);
         } catch (error) {
             console.error('Error saving product:', error);
+            // You might want to show an error message to the user here
         }
+    };
+    // Add this handler to your file input
+    const handleImageFileChange = (e) => {
+        setImageFile(e.target.files[0]);
     };
 
     const closeProductModal = () => {
@@ -526,6 +566,16 @@ const AdminProduct = () => {
                                     value={currentProduct.imageUrl || ''}
                                     onChange={handleInputChange}
                                     placeholder="Enter image URL or leave blank"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="imageFile">Upload Image</label>
+                                <input
+                                    id="imageFile"
+                                    name="imageFile"
+                                    type="file"
+                                    onChange={(e) => setImageFile(e.target.files[0])}
                                 />
                             </div>
 
