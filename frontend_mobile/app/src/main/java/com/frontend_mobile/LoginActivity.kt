@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.api.LoginRequest
 import com.frontend_mobile.api.ApiResponse
+import android.content.Context
+import com.frontend_mobile.api.LoginResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -43,10 +45,19 @@ fun LoginScreenWithActions() {
     LoginScreen(
         onLoginClick = { email, password ->
             val loginRequest = LoginRequest(email, password)
-            RetrofitClient.instance.loginUser(loginRequest).enqueue(object : Callback<ApiResponse> {
-                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                    if (response.isSuccessful) {
+
+            RetrofitClient.instance.loginUser(loginRequest).enqueue(object : Callback<LoginResponse> {
+                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                    if (response.isSuccessful && response.body() != null) {
+                        val loginResponse = response.body()!!
                         Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
+
+                        // Save the JWT token and user_id to SharedPreferences
+                        RetrofitClient.saveToken(loginResponse.token) // Save the token
+                        val prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
+                        prefs.edit().putString("user_id", loginResponse.userId).apply() // Save user_id
+
+                        // Navigate to HomeActivity
                         context.startActivity(Intent(context, HomeActivity::class.java))
                         (context as? ComponentActivity)?.finish()
                     } else {
@@ -54,7 +65,7 @@ fun LoginScreenWithActions() {
                     }
                 }
 
-                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
             })

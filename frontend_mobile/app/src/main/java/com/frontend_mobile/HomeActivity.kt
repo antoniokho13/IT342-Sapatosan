@@ -2,49 +2,36 @@ package com.frontend_mobile
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.Gravity
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
+import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.databinding.ActivityHomeBinding
 import com.frontend_mobile.models.ShoeAdapter
 import com.frontend_mobile.models.ShoeItem
-import kotlin.apply
-import kotlin.or
-import kotlin.text.clear
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var shoeAdapter: ShoeAdapter
     private lateinit var drawerLayout: DrawerLayout
-
-    private val shoeList = listOf(
-        ShoeItem("OBERON", "₱1,923.00", R.drawable.nike_invincible_3_men_road, "BASKETBALL"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("OBERON", "₱1,923.00", R.drawable.nike_invincible_3_men_road, "CASUAL"),
-        ShoeItem("MUFER", "₱2,393.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING"),
-        ShoeItem("MUFER", "₱2,293.00", R.drawable.nike_invincible_3_men_road, "RUNNING")
-    )
+    private var allShoes: List<ShoeItem> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        drawerLayout = binding.drawerLayout // <-- ID must match your XML root DrawerLayout
+        drawerLayout = binding.drawerLayout
 
         setupRecyclerView()
         setupNavigation()
-        updateCategory("ALL")
+        fetchShoes()
 
         binding.icMenu.setOnClickListener {
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
@@ -53,36 +40,15 @@ class HomeActivity : AppCompatActivity() {
                 drawerLayout.openDrawer(GravityCompat.END)
             }
         }
-        // Profile navigation
-        val profileTextView = findViewById<TextView>(R.id.drawer_profile)
-        profileTextView.setOnClickListener {
-            val intent = Intent(this, ProfileActivity::class.java)
-            startActivity(intent)
-            drawerLayout.closeDrawer(GravityCompat.END)
-        }
-
-        // Logout functionality
-        val logoutTextView = findViewById<TextView>(R.id.drawer_logout)
-        logoutTextView.setOnClickListener {
-            logout()
-        }
     }
-
-    private fun logout() {
-        // Clear session data (if applicable)
-        val sharedPreferences = getSharedPreferences("user_session", MODE_PRIVATE)
-        sharedPreferences.edit().clear().apply()
-
-        // Navigate back to LoginActivity
-        val intent = Intent(this, LoginActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
-        finish()
-    }
-
 
     private fun setupRecyclerView() {
-        shoeAdapter = ShoeAdapter(mutableListOf())
+        shoeAdapter = ShoeAdapter(mutableListOf()) { shoe ->
+            val intent = Intent(this, ShoeDetailsActivity::class.java)
+            intent.putParcelableArrayListExtra("allShoes", ArrayList(allShoes)) // Pass allShoes
+            intent.putExtra("selectedShoe", shoe) // Pass the selected shoe
+            startActivity(intent)
+        }
         binding.recyclerViewShoes.layoutManager = GridLayoutManager(this, 2)
         binding.recyclerViewShoes.adapter = shoeAdapter
     }
@@ -94,20 +60,47 @@ class HomeActivity : AppCompatActivity() {
         binding.btnRunning.setOnClickListener { updateCategory("RUNNING") }
     }
 
+    private fun fetchShoes() {
+        RetrofitClient.instance.getProducts().enqueue(object : Callback<List<ShoeItem>> {
+            override fun onResponse(call: Call<List<ShoeItem>>, response: Response<List<ShoeItem>>) {
+                if (response.isSuccessful) {
+                    allShoes = response.body() ?: emptyList()
+                    updateCategory("ALL")
+                } else {
+                    Toast.makeText(this@HomeActivity, "Failed to fetch shoes: ${response.message()}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<ShoeItem>>, t: Throwable) {
+                Toast.makeText(this@HomeActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
     private fun updateCategory(category: String) {
+        // Reset all button colors to default
         binding.btnBasketball.setTextColor(getColor(R.color.black))
         binding.btnCasual.setTextColor(getColor(R.color.black))
         binding.btnRunning.setTextColor(getColor(R.color.black))
 
+        // Highlight the selected category button
         when (category) {
             "BASKETBALL" -> binding.btnBasketball.setTextColor(getColor(R.color.selected))
             "CASUAL" -> binding.btnCasual.setTextColor(getColor(R.color.selected))
             "RUNNING" -> binding.btnRunning.setTextColor(getColor(R.color.selected))
         }
 
-        val filteredShoes = if (category == "ALL") shoeList else shoeList.filter { it.category == category }
+        // Filter shoes based on the selected category
+        val filteredShoes = if (category == "ALL") {
+            allShoes
+        } else {
+            allShoes.filter { it.categoryId.equals(category, ignoreCase = true) }
+        }
+
+        // Update the RecyclerView with the filtered list
         shoeAdapter.updateList(filteredShoes)
 
+        // Show a toast message for the selected category
         Toast.makeText(this, "Selected category: $category", Toast.LENGTH_SHORT).show()
     }
 }

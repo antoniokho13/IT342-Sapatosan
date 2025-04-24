@@ -3,11 +3,13 @@ package com.frontend_mobile.models
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.frontend_mobile.models.ShoeItem
+import com.bumptech.glide.Glide
 import com.frontend_mobile.databinding.ItemShoeBinding
 
-class ShoeAdapter(private val items: MutableList<ShoeItem>) :
-    RecyclerView.Adapter<ShoeAdapter.ShoeViewHolder>() {
+class ShoeAdapter(
+    private val items: MutableList<ShoeItem>,
+    private val onItemClick: (ShoeItem) -> Unit
+) : RecyclerView.Adapter<ShoeAdapter.ShoeViewHolder>() {
 
     inner class ShoeViewHolder(val binding: ItemShoeBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -19,8 +21,14 @@ class ShoeAdapter(private val items: MutableList<ShoeItem>) :
     override fun onBindViewHolder(holder: ShoeViewHolder, position: Int) {
         val item = items[position]
         holder.binding.shoeName.text = item.name
-        holder.binding.shoePrice.text = item.price
-        holder.binding.shoeImage.setImageResource(item.imageResId)
+        holder.binding.shoePrice.text = "₱${item.price}"
+        Glide.with(holder.itemView.context)
+            .load(item.imageUrl)
+            .into(holder.binding.shoeImage)
+
+        holder.itemView.setOnClickListener {
+            onItemClick(item)
+        }
     }
 
     override fun getItemCount() = items.size
