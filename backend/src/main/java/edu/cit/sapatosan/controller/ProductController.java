@@ -30,15 +30,17 @@ public class ProductController {
         return product.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    // MODIFIED: Removed @RequestParam String imageUrl
     @PostMapping
     public ResponseEntity<Void> createProduct(@RequestBody ProductEntity product) {
-        productService.createProduct(product); // No need to pass an ID
+        productService.createProduct(product); // Pass the complete product object
         return ResponseEntity.ok().build();
     }
 
+    // MODIFIED: Removed @RequestParam String imageUrl
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateProduct(@PathVariable String id, @RequestBody ProductEntity updatedProduct) {
-        productService.updateProduct(id, updatedProduct);
+        productService.updateProduct(id, updatedProduct); // Pass the complete updated product object
         return ResponseEntity.ok().build();
     }
 

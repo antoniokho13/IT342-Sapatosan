@@ -13,10 +13,12 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class ProductService {
     private final DatabaseReference productRef;
+    private final DatabaseReference categoryRef; // Added reference for categories
 
     public ProductService() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         this.productRef = database.getReference("products");
+        this.categoryRef = database.getReference("categories"); // Initialize category ref
     }
 
     public CompletableFuture<List<ProductEntity>> getAllProducts() {
@@ -49,6 +51,10 @@ public class ProductService {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 ProductEntity product = snapshot.getValue(ProductEntity.class);
+                // You might want to set the ID here as well if it's not automatically populated
+                if (product != null) {
+                    product.setId(snapshot.getKey());
+                }
                 future.complete(Optional.ofNullable(product));
             }
 
@@ -60,24 +66,13 @@ public class ProductService {
         return future;
     }
 
-    public void createProduct(ProductEntity product) {
-        if (product.getCategoryId() == null || !isCategoryValid(product.getCategoryId())) {
-            throw new IllegalArgumentException("Invalid category ID");
-        }
-        String id = productRef.push().getKey();
-        if (id != null) {
-            product.setId(id);
-            productRef.child(id).setValueAsync(product);
-            updateCategoryProductCount(product.getCategoryId(), 1); // Increment product count
-        }
-    }
-
     public void deleteProduct(String id) {
         productRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 ProductEntity product = snapshot.getValue(ProductEntity.class);
                 if (product != null && product.getCategoryId() != null) {
+                    // NOTE: Asynchronous updates might lead to race conditions on the count
                     updateCategoryProductCount(product.getCategoryId(), -1);
                 }
                 productRef.child(id).removeValueAsync();
@@ -90,17 +85,41 @@ public class ProductService {
         });
     }
 
+    // MODIFIED: Removed imageUrl parameter
+    public void createProduct(ProductEntity product) {
+        // NOTE: The isCategoryValid method uses a blocking .get().
+        // This should ideally be refactored for better performance/scalability
+        // in a real-world async application.
+        if (product.getCategoryId() == null || !isCategoryValid(product.getCategoryId())) {
+            throw new IllegalArgumentException("Invalid category ID");
+        }
+        String id = productRef.push().getKey();
+        if (id != null) {
+            product.setId(id);
+            // The imageUrl is expected to be set on the product object
+            productRef.child(id).setValueAsync(product);
+            // NOTE: Asynchronous updates might lead to race conditions on the count
+            updateCategoryProductCount(product.getCategoryId(), 1); // Increment product count
+        }
+    }
+
+    // MODIFIED: Removed imageUrl parameter
     public void updateProduct(String id, ProductEntity updatedProduct) {
+        // Ensure the ID is set on the updated product object
+        updatedProduct.setId(id);
+
         productRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 ProductEntity existingProduct = snapshot.getValue(ProductEntity.class);
                 if (existingProduct != null) {
                     if (!existingProduct.getCategoryId().equals(updatedProduct.getCategoryId())) {
+                        // NOTE: Asynchronous updates might lead to race conditions on the count
                         updateCategoryProductCount(existingProduct.getCategoryId(), -1); // Decrement old category count
                         updateCategoryProductCount(updatedProduct.getCategoryId(), 1); // Increment new category count
                     }
                 }
+                // The imageUrl is expected to be set on the updatedProduct object
                 productRef.child(id).setValueAsync(updatedProduct);
             }
 
@@ -112,14 +131,15 @@ public class ProductService {
     }
 
     private void updateCategoryProductCount(String categoryId, int delta) {
-        DatabaseReference categoryRef = FirebaseDatabase.getInstance().getReference("categories").child(categoryId);
-        categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        // Use the initialized categoryRef
+        DatabaseReference categoryItemRef = categoryRef.child(categoryId);
+        categoryItemRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 CategoryEntity category = snapshot.getValue(CategoryEntity.class);
                 if (category != null) {
                     category.setProducts(category.getProducts() + delta);
-                    categoryRef.setValueAsync(category);
+                    categoryItemRef.setValueAsync(category);
                 }
             }
 
@@ -131,9 +151,10 @@ public class ProductService {
     }
 
     private boolean isCategoryValid(String categoryId) {
-        DatabaseReference categoryRef = FirebaseDatabase.getInstance().getReference("categories").child(categoryId);
+        // Use the initialized categoryRef
+        DatabaseReference categoryItemRef = categoryRef.child(categoryId);
         CompletableFuture<Boolean> future = new CompletableFuture<>();
-        categoryRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        categoryItemRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 future.complete(snapshot.exists());
@@ -145,8 +166,11 @@ public class ProductService {
             }
         });
         try {
+            // This is a blocking call and can impact performance.
+            // Consider refactoring to use asynchronous methods throughout the service.
             return future.get();
         } catch (Exception e) {
+            System.err.println("Error checking category validity: " + e.getMessage());
             return false;
         }
     }
