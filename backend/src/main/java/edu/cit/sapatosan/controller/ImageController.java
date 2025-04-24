@@ -1,65 +1,69 @@
 package edu.cit.sapatosan.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.firebase.cloud.StorageClient;
+import com.google.firebase.database.DatabaseReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/images")
 public class ImageController {
 
-    @Value("${upload.folder}")
-    private String uploadFolder;
+    private final Storage storage;
+    private final DatabaseReference databaseReference;
 
+    public ImageController(Storage storage, DatabaseReference databaseReference) {
+        this.storage = storage;
+        this.databaseReference = databaseReference;
+    }
 
-    // Ensure your Spring Boot application is configured to serve static content
-    // from the 'uploads' folder. See step 4 below.
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/upload")
     public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            // Ensure the upload folder exists
-            Path uploadPath = Paths.get(uploadFolder).toAbsolutePath().normalize(); // Use absolute path and normalize
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File is empty");
             }
 
-            // Save the file locally
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = uploadPath.resolve(fileName).normalize(); // Normalize file path
+            String originalFilename = file.getOriginalFilename();
+            String safeFilename = originalFilename.replaceAll("[^a-zA-Z0-9.\\-_]", "_");
+            String uniqueFileName = System.currentTimeMillis() + "_" + safeFilename;
+            String storagePath = "product_images/" + uniqueFileName;
 
-            // Basic security check: Prevent directory traversal
-            if (!filePath.startsWith(uploadPath)) {
-                throw new IOException("Invalid file path");
+            BlobId blobId = BlobId.of(StorageClient.getInstance().bucket().getName(), storagePath);
+            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                    .setContentType(file.getContentType())
+                    .build();
+
+            storage.create(blobInfo, file.getInputStream());
+
+            String downloadUrl = "https://firebasestorage.googleapis.com/v0/b/"
+                    + URLEncoder.encode(StorageClient.getInstance().bucket().getName(), StandardCharsets.UTF_8)
+                    + "/o/"
+                    + URLEncoder.encode(storagePath, StandardCharsets.UTF_8).replace("+", "%20")
+                    + "?alt=media";
+
+            // Save the image URL to Firebase Realtime Database
+            String imageId = databaseReference.child("images").push().getKey();
+            if (imageId != null) {
+                databaseReference.child("images").child(imageId).setValueAsync(downloadUrl);
             }
 
+            return ResponseEntity.ok(downloadUrl);
 
-            file.transferTo(filePath.toFile());
-
-            // Generate the file URL
-            // Assumes your application serves static content from /uploads mapping to the uploadFolder
-            String fileUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/uploads/") // This MUST match your static resource configuration path
-                    .path(fileName)
-                    .toUriString();
-
-            // Return the file URL
-            return ResponseEntity.ok(fileUrl);
         } catch (IOException e) {
-            e.printStackTrace(); // Log the error for debugging
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace(); // Log other potential errors
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred during file upload: " + e.getMessage());
         }
     }
 }
