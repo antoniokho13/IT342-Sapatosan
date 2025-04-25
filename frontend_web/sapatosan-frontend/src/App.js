@@ -6,6 +6,7 @@ import AdminProduct from './pages/AdminProduct';
 import AdminUsers from './pages/AdminUsers';
 import Basketball from './pages/Basketball';
 import Casual from './pages/Casual';
+import Checkout from './pages/Checkout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -25,6 +26,7 @@ function App() {
           <Route path="/casual" element={<Casual />} />
           <Route path="/running" element={<Running />} />
           <Route path="/profile" element={<UserInformation />} />
+          <Route path="/checkout" element={<Checkout />} />
           
           {/* Admin Routes */}
           <Route path="/admin/users" element={<AdminUsers />} />

@@ -725,6 +725,8 @@ body {
     transition: background-color 0.2s;
 }
 
+
+
 @keyframes fadeIn {
     from { 
         opacity: 0; 
@@ -735,3 +737,4 @@ body {
         transform: translateY(0) scale(1); 
     }
 }
+

@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/Login.css';
-import { authService } from '../assets/services/authService';
 import logo from '../assets/images/logo.png'; // Import the logo
+import { authService } from '../assets/services/authService';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -31,6 +31,7 @@ const Login = () => {
             localStorage.setItem('token', response.token);
             localStorage.setItem('userId', response.userId);
             localStorage.setItem('userRole', response.role);
+            localStorage.setItem('email', formData.email); // Store email for profile access
             
             // Redirect based on role
             if (response.role === 'ADMIN') {
