@@ -119,37 +119,30 @@ const UserInformation = () => {
                 email: userData.email
             };
             
-            // Handle password separately - but make sure we're not sending the placeholder
+            // Handle password separately
             if (userData.password !== '********') {
                 if (userData.password !== userData.confirmPassword) {
                     alert("Passwords don't match!");
                     return;
                 }
-                
-                // Add password to the request object
                 userDataToUpdate.password = userData.password;
             }
             
-            console.log('Sending update:', userDataToUpdate);
+            // Store the current email BEFORE updating
+            const oldEmail = localStorage.getItem('email');
+            const emailChanged = oldEmail !== userData.email;
             
             // Call API to update user
-            const response = await axios.put(`http://localhost:8080/api/users/${userData.id}`, userDataToUpdate, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            const response = await axios.put(
+                `http://localhost:8080/api/users/${userData.id}`, 
+                userDataToUpdate, 
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 }
-            });
-            
-            console.log('Update response:', response);
-            
-            // Very important: Store the current email BEFORE updating localStorage
-            const oldEmail = localStorage.getItem('email');
-            
-            // Update localStorage with the new email if it changed
-            if (oldEmail !== userData.email) {
-                localStorage.setItem('email', userData.email);
-                console.log(`Email updated from ${oldEmail} to ${userData.email}`);
-            }
+            );
             
             // Exit edit mode
             setIsEditing(false);
@@ -157,32 +150,35 @@ const UserInformation = () => {
             // Show success message
             alert('Profile updated successfully!');
             
-            // If we changed the password, prompt the user to note it down
-            if (userData.password !== '********') {
-                alert('Your password has been updated. Please remember your new password!');
-            }
-            
-            // If we changed the email, let the user know
-            if (oldEmail !== userData.email) {
-                alert(`Your email has been changed from ${oldEmail} to ${userData.email}. Please use your new email for future logins.`);
+            // Handle email or password changes
+            if (emailChanged || userData.password !== '********') {
+                // Clear localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('email');
+                
+                // Inform user they need to log in again
+                alert('Your credentials have been updated. Please log in again with your new information.');
+                
+                // Redirect to login page
+                navigate('/login');
+            } else {
+                // Just update email in localStorage if nothing critical changed
+                localStorage.setItem('email', userData.email);
             }
             
         } catch (error) {
             console.error('Error updating user:', error);
             
-            // Provide more detailed error feedback
             let errorMessage = 'Failed to update profile. ';
             
             if (error.response) {
-                // Server responded with an error status
                 errorMessage += error.response.data?.message || 
                                `Server error: ${error.response.status}`;
-                console.log('Server error response:', error.response.data);
             } else if (error.request) {
-                // Request was made but no response
                 errorMessage += 'No response from server. Check your internet connection.';
             } else {
-                // Error in request setup
                 errorMessage += error.message;
             }
             

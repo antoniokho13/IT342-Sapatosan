@@ -15,7 +15,11 @@ import { default as casual8, default as casual9 } from '../assets/images/casual/
 import casual10 from '../assets/images/casual/Supreme Nike SB Dunk Low Rammellzee.png';
 
 const Casual = () => {
-    const [cart, setCart] = useState([]);
+    // Update the cart state to load from localStorage
+    const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem('sapatosanCart');
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
     const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
@@ -121,7 +125,10 @@ const Casual = () => {
 
     const addToCart = (shoe, size = null) => {
         const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
-        setCart([...cart, shoeWithSize]);
+        const newCart = [...cart, shoeWithSize];
+        setCart(newCart);
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
+        
         // Show a temporary "Added to cart" message
         const shoeCard = document.getElementById(`shoe-${shoe.id}`);
         if (shoeCard) {
@@ -141,6 +148,7 @@ const Casual = () => {
         const newCart = [...cart];
         newCart.splice(index, 1);
         setCart(newCart);
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
     };
 
     const calculateTotal = () => {
@@ -227,6 +235,43 @@ const Casual = () => {
             document.body.style.overflow = 'auto';
         };
     }, [quickViewShoe, showCart]);
+
+    // Add this to your existing useEffect or create a new one
+useEffect(() => {
+    // Function to handle storage events
+    const handleStorageChange = (e) => {
+        if (e.key === 'sapatosanCart') {
+            const updatedCart = e.newValue ? JSON.parse(e.newValue) : [];
+            setCart(updatedCart);
+        }
+    };
+    
+    // Add event listener
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Cleanup function
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+}, []);
+
+// Add similar code to Basketball.js and Running.js
+
+    // Add this function near the other handler functions in Casual.js
+const handleCheckout = () => {
+  // Check if user is logged in
+  if (!localStorage.getItem('token')) {
+    // Redirect to login page with return URL
+    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+    return;
+  }
+
+  // Save cart to session for checkout page
+  localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
+  
+  // Navigate to checkout page
+  window.location.href = '/checkout';
+};
 
     return (
         <div className="casual-page">
@@ -493,9 +538,9 @@ const Casual = () => {
                                         >
                                             Continue Shopping
                                         </button>
-                                        <button className="checkout">
-                                            Proceed to Checkout
-                                        </button>
+                                        <button className="checkout" onClick={handleCheckout}>
+  Proceed to Checkout
+</button>
                                     </div>
                                 </div>
                             </>

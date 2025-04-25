@@ -16,7 +16,12 @@ import basketshoe9 from '../assets/images/basketball/Nike Womens Sabrina 2 EP.pn
 import basketshoe10 from '../assets/images/basketball/Nike Zoom Freak 1 All Star Employee Of The Month.png';
 
 const Basketball = () => {
-    const [cart, setCart] = useState([]);
+    // Replace the current cart state with one that loads from localStorage
+    const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem('sapatosanCart');
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
+    
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
     const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
@@ -118,9 +123,13 @@ const Basketball = () => {
         }
     ];
 
+    // Update addToCart to save to localStorage
     const addToCart = (shoe, size = null) => {
         const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
-        setCart([...cart, shoeWithSize]);
+        const newCart = [...cart, shoeWithSize];
+        setCart(newCart);
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
+        
         // Show a temporary "Added to cart" message
         const shoeCard = document.getElementById(`shoe-${shoe.id}`);
         if (shoeCard) {
@@ -136,10 +145,12 @@ const Basketball = () => {
         }
     };
 
+    // Update removeFromCart to save to localStorage
     const removeFromCart = (index) => {
         const newCart = [...cart];
         newCart.splice(index, 1);
         setCart(newCart);
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
     };
 
     const calculateTotal = () => {
@@ -171,6 +182,21 @@ const Basketball = () => {
         localStorage.removeItem('email');
         setUserInfo({ email: '' });
     };
+
+    const handleCheckout = () => {
+        // Check if user is logged in
+        if (!localStorage.getItem('token')) {
+          // Redirect to login page with return URL
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+          return;
+        }
+      
+        // Save cart to session for checkout page
+        localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
+        
+        // Navigate to checkout page
+        window.location.href = '/checkout';
+      };
 
     // Close modals when clicking outside
     useEffect(() => {
@@ -492,7 +518,7 @@ const Basketball = () => {
                                         >
                                             Continue Shopping
                                         </button>
-                                        <button className="checkout">
+                                        <button className="checkout" onClick={handleCheckout}>
                                             Proceed to Checkout
                                         </button>
                                     </div>
