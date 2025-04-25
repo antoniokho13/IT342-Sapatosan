@@ -3,91 +3,94 @@ package edu.cit.sapatosan.service;
 import com.google.firebase.database.*;
 import edu.cit.sapatosan.entity.OrderEntity;
 import edu.cit.sapatosan.entity.OrderProductEntity;
+import edu.cit.sapatosan.entity.ProductEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class OrderService {
     private final DatabaseReference orderRef;
+    private final DatabaseReference productRef;
     private final DatabaseReference orderProductRef;
 
     public OrderService() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         this.orderRef = database.getReference("orders");
+        this.productRef = database.getReference("products");
         this.orderProductRef = database.getReference("orderProducts");
     }
 
-    public CompletableFuture<List<OrderEntity>> getAllOrders() {
-        CompletableFuture<List<OrderEntity>> future = new CompletableFuture<>();
-        orderRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                List<OrderEntity> orders = new ArrayList<>();
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    OrderEntity order = child.getValue(OrderEntity.class);
-                    orders.add(order);
-                }
-                future.complete(orders);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                future.completeExceptionally(error.toException());
-            }
-        });
-        return future;
-    }
-
-    public CompletableFuture<Optional<OrderEntity>> getOrderById(String id) {
-        CompletableFuture<Optional<OrderEntity>> future = new CompletableFuture<>();
-        orderRef.child(id).addListenerForSingleValueEvent(new ValueEventListener() {
+    public void cancelOrder(String orderId) {
+        orderRef.child(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 OrderEntity order = snapshot.getValue(OrderEntity.class);
-                future.complete(Optional.ofNullable(order));
+                if (order != null && order.getOrderProductIds() != null) {
+                    for (String orderProductId : order.getOrderProductIds()) {
+                        incrementProductStock(orderProductId);
+                    }
+                    // Delete the order after restoring stock
+                    orderRef.child(orderId).removeValueAsync();
+                }
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                future.completeExceptionally(error.toException());
+                System.err.println("Failed to fetch order: " + error.getMessage());
             }
         });
-        return future;
     }
-    public CompletableFuture<List<OrderEntity>> getOrdersByUserId(String userId) {
-        CompletableFuture<List<OrderEntity>> future = new CompletableFuture<>();
-        orderRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+
+    private void incrementProductStock(String orderProductId) {
+        orderProductRef.child(orderProductId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                List<OrderEntity> orders = new ArrayList<>();
-                for (DataSnapshot child : snapshot.getChildren()) {
-                    OrderEntity order = child.getValue(OrderEntity.class);
-                    orders.add(order);
+                OrderProductEntity orderProduct = snapshot.getValue(OrderProductEntity.class);
+                if (orderProduct != null) {
+                    String productId = orderProduct.getProductId();
+                    int quantity = orderProduct.getQuantity();
+
+                    productRef.child(productId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot productSnapshot) {
+                            ProductEntity product = productSnapshot.getValue(ProductEntity.class);
+                            if (product != null) {
+                                int newStock = product.getStock() + quantity;
+                                product.setStock(newStock);
+                                productRef.child(productId).setValueAsync(product);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {
+                            System.err.println("Failed to update product stock: " + error.getMessage());
+                        }
+                    });
                 }
-                future.complete(orders);
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
-                future.completeExceptionally(error.toException());
+                System.err.println("Failed to fetch order product: " + error.getMessage());
             }
         });
-        return future;
     }
 
-    public void createOrder(String id, OrderEntity order) {
-        orderRef.child(id).setValueAsync(order);
-    }
+    public void associatePaymentWithOrder(String orderId, String paymentId) {
+        orderRef.child(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                OrderEntity order = snapshot.getValue(OrderEntity.class);
+                if (order != null) {
+                    order.setPaymentId(paymentId);
+                    order.setPaymentStatus(OrderEntity.PaymentStatus.PAID);
+                    orderRef.child(orderId).setValueAsync(order);
+                }
+            }
 
-    public void updateOrder(String id, OrderEntity updatedOrder) {
-        orderRef.child(id).setValueAsync(updatedOrder);
-    }
-
-    public void deleteOrder(String id) {
-        orderRef.child(id).removeValueAsync();
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Failed to associate payment with order: " + error.getMessage());
+            }
+        });
     }
 }
