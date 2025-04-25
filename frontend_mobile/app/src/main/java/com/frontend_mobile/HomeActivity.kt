@@ -2,6 +2,8 @@ package com.frontend_mobile
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -14,6 +16,10 @@ import com.frontend_mobile.models.ShoeItem
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import android.widget.ArrayAdapter
+import androidx.appcompat.widget.SearchView
+import android.content.Context
+
 
 class HomeActivity : AppCompatActivity() {
 
@@ -30,7 +36,9 @@ class HomeActivity : AppCompatActivity() {
         drawerLayout = binding.drawerLayout
 
         setupRecyclerView()
-        setupNavigation()
+        setupDrawerNavigation()
+        setupTopNavigation()
+        setupSearchAndFilter()
         fetchShoes()
 
         binding.icMenu.setOnClickListener {
@@ -40,6 +48,79 @@ class HomeActivity : AppCompatActivity() {
                 drawerLayout.openDrawer(GravityCompat.END)
             }
         }
+    }
+
+    private fun setupDrawerNavigation() {
+        // Drawer navigation setup
+        binding.drawerProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
+
+        binding.drawerLogout.setOnClickListener {
+            // Clear user session
+            val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
+            sharedPrefs.edit().clear().apply()
+
+            // Clear token from RetrofitClient
+            RetrofitClient.clearToken()
+
+            // Navigate to LoginActivity
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+
+            // Finish current activity
+            finish()
+        }
+    }
+
+    private fun setupTopNavigation() {
+        // Navigate to ProfileActivity
+        binding.drawerProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
+        // Navigate to SettingsActivity
+        binding.tvSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+    }
+
+
+    private fun setupSearchAndFilter() {
+        // Populate filter options
+        val filterOptions = listOf("All", "Basketball", "Casual", "Running")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filterOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.filterSpinner.adapter = adapter
+
+        // Set up filter spinner listener
+        binding.filterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // Handle filter selection
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // Handle no selection
+            }
+        }
+
+        // Set up search view listener
+        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                // Handle search submission
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Handle text change
+                return true
+            }
+        })
+    }
+
+    private fun searchShoes(query: String) {
+        val filteredShoes = allShoes.filter { it.name.contains(query, ignoreCase = true) }
+        shoeAdapter.updateList(filteredShoes)
     }
 
     private fun setupRecyclerView() {
@@ -55,9 +136,14 @@ class HomeActivity : AppCompatActivity() {
 
     private fun setupNavigation() {
         binding.logoImage.setOnClickListener { updateCategory("ALL") }
-        binding.btnBasketball.setOnClickListener { updateCategory("BASKETBALL") }
-        binding.btnCasual.setOnClickListener { updateCategory("CASUAL") }
-        binding.btnRunning.setOnClickListener { updateCategory("RUNNING") }
+
+        binding.tvSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        binding.drawerProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
     }
 
     private fun fetchShoes() {
@@ -78,17 +164,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun updateCategory(category: String) {
-        // Reset all button colors to default
-        binding.btnBasketball.setTextColor(getColor(R.color.black))
-        binding.btnCasual.setTextColor(getColor(R.color.black))
-        binding.btnRunning.setTextColor(getColor(R.color.black))
-
-        // Highlight the selected category button
-        when (category) {
-            "BASKETBALL" -> binding.btnBasketball.setTextColor(getColor(R.color.selected))
-            "CASUAL" -> binding.btnCasual.setTextColor(getColor(R.color.selected))
-            "RUNNING" -> binding.btnRunning.setTextColor(getColor(R.color.selected))
-        }
 
         // Filter shoes based on the selected category
         val filteredShoes = if (category == "ALL") {

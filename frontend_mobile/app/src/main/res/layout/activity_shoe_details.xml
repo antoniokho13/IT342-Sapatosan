@@ -1,107 +1,197 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <include
-            layout="@layout/navbar_layout"
+        <!-- Navbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:background="@color/lightGray"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginBottom="80dp"
-            android:layout_marginTop="?attr/actionBarSize">
+            <ImageView
+                android:id="@+id/shoeLogo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/logo"
+                android:contentDescription="Shoe Logo"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="start" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/shoeNameToolbar"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="16dp">
+                android:text="Shoe Details"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_gravity="center" />
 
-                <ImageView
-                    android:id="@+id/shoeImage"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:scaleType="centerCrop"
-                    android:layout_marginBottom="16dp" />
 
-                <TextView
-                    android:id="@+id/shoeName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:paddingBottom="8dp"
-                    android:gravity="center" />
+            <ImageView
+                android:id="@+id/icMenu"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_margin="12dp"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="Menu"
+                android:scaleType="fitCenter"
+                android:layout_gravity="end" />
+        </androidx.appcompat.widget.Toolbar>
 
-                <TextView
-                    android:id="@+id/shoeBrand"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingBottom="4dp"
-                    android:gravity="center" />
+        <!-- Enlarged Shoe Image -->
+        <ImageView
+            android:id="@+id/shoeImage"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            android:contentDescription="Shoe Image"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-                <TextView
-                    android:id="@+id/shoePrice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingBottom="4dp"
-                    android:gravity="center" />
-
-                <TextView
-                    android:id="@+id/shoeStock"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingBottom="16dp"
-                    android:gravity="center" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Select Size:"
-                    android:textStyle="bold"
-                    android:paddingBottom="8dp"
-                    android:gravity="center" />
-
-                <LinearLayout
-                    android:id="@+id/sizeButtonsContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginBottom="16dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Select Quantity:"
-                    android:textStyle="bold"
-                    android:paddingBottom="8dp"
-                    android:gravity="center" />
-
-                <Spinner
-                    android:id="@+id/quantitySpinner"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp" />
-            </LinearLayout>
-        </ScrollView>
-
-        <Button
-            android:id="@+id/btnAddToCart"
+        <!-- Shoe Details -->
+        <TextView
+            android:id="@+id/shoeName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="16dp"
+            android:text="Shoe Name"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/shoeImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/shoeBrand"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Brand: "
+            app:layout_constraintTop_toBottomOf="@id/shoeName"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/shoePrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Price: "
+            app:layout_constraintTop_toBottomOf="@id/shoeBrand"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/shoeStock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stock: "
+            app:layout_constraintTop_toBottomOf="@id/shoePrice"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+
+        <!-- Size Buttons -->
+        <GridLayout
+            android:id="@+id/sizeButtonsContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:columnCount="4"
+            android:padding="16dp"
+            app:layout_constraintTop_toBottomOf="@id/shoeStock"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <!-- Quantity Label -->
+        <TextView
+            android:id="@+id/quantityLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Quantity:"
+            app:layout_constraintTop_toBottomOf="@id/sizeButtonsContainer"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp" />
+
+        <!-- Quantity Spinner -->
+        <Spinner
+            android:id="@+id/quantitySpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/spinner_background"
+            app:layout_constraintTop_toBottomOf="@id/sizeButtonsContainer"
+            app:layout_constraintStart_toEndOf="@id/quantityLabel"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <!-- Add to Cart Button -->
+        <Button
+            android:id="@+id/btnAddToCart"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="Add to Cart"
-            android:background="@android:color/black"
-            android:textColor="@android:color/white" />
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+            android:backgroundTint="@android:color/holo_red_dark"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:padding="16dp"
+            app:layout_constraintTop_toBottomOf="@id/quantitySpinner"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Side Drawer -->
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/drawer_profile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profile"
+            android:textSize="18sp"
+            android:padding="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Shopping Cart"
+            android:textSize="18sp"
+            android:padding="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="18sp"
+            android:padding="8dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="About Us"
+            android:textSize="18sp"
+            android:padding="8dp" />
+        <TextView
+            android:id="@+id/drawer_logout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textSize="18sp"
+            android:padding="8dp" />
+    </LinearLayout>
 </androidx.drawerlayout.widget.DrawerLayout>
