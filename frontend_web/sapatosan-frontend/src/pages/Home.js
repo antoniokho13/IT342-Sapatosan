@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from 'axios'; // Add this import for axios
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Home.css'; // Import the CSS file for styling
@@ -19,6 +19,14 @@ const Home = () => {
     const [userInfo, setUserInfo] = useState({ email: '', name: '' });
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
+    
+    // Update cart state to match other pages
+    const [cart, setCart] = useState(() => {
+        const savedCart = localStorage.getItem('sapatosanCart');
+        return savedCart ? JSON.parse(savedCart) : [];
+    });
+    const [showCart, setShowCart] = useState(false);
+    // Remove cartCount state as we'll use cart.length directly
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -158,81 +166,226 @@ const Home = () => {
         }
     };
 
+    // Update the cart methods to match other pages
+    const toggleCart = () => {
+        setShowCart(!showCart);
+    };
+
+    const removeFromCart = (index) => {
+        const newCart = [...cart];
+        newCart.splice(index, 1);
+        setCart(newCart);
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
+    };
+
+    const calculateTotal = () => {
+        return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
+    };
+
+    const handleCheckout = () => {
+        // Check if user is logged in
+        if (!localStorage.getItem('token')) {
+            // Redirect to login page with return URL
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return;
+        }
+      
+        // Save cart to session for checkout page
+        localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
+        
+        // Navigate to checkout page
+        window.location.href = '/checkout';
+    };
+
+    // Add this useEffect to handle storage events (when cart changes in other tabs)
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'sapatosanCart') {
+                const updatedCart = e.newValue ? JSON.parse(e.newValue) : [];
+                setCart(updatedCart);
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    // Update this effect for clicking outside all modals
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (showCart && !event.target.closest('.cart-modal-content') && 
+                !event.target.closest('.header-cart-icon')) {
+                setShowCart(false);
+            }
+            
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showCart, dropdownRef]);
+
+    // Prevent body scrolling when cart is open
+    useEffect(() => {
+        if (showCart) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [showCart]);
+
     return (
         <div>
             <header className="header">
-    <div className="logo-container">
-        <Link to="/">
-            <img src={logo} alt="Sapatosan Logo" className="logo" />
-        </Link>
-    </div>
-    <nav className="nav-links">
-        <Link to="/#home" className="nav-link">Home</Link>
-        <Link to="/basketball" className="nav-link">Basketball</Link>
-        <Link to="/casual" className="nav-link">Casual</Link>
-        <Link to="/running" className="nav-link">Running</Link>
-    </nav>
-    <div className="auth-buttons">
-        {localStorage.getItem('token') ? (
-            <>
-                <Link to="/basketball" className="header-cart-icon">
-                    <i className="fas fa-shopping-cart"></i>
-                    <span className="header-cart-count">0</span>
-                </Link>
-                
-                <div className="user-dropdown" ref={dropdownRef}>
-                    <button 
-                        onClick={() => setShowDropdown(!showDropdown)} 
-                        className="user-avatar-button"
-                    >
-                        <div className="user-avatar">
-                            {(userInfo.email || localStorage.getItem('email') || 'U').charAt(0)}
-                        </div>
-                    </button>
-                    
-                    {showDropdown && (
-                        <div className="dropdown-menu">
-                            <div className="dropdown-header">
-                                <div className="dropdown-header-title">Signed in as</div>
-                                <div className="dropdown-header-email">
-                                    {userInfo.email || localStorage.getItem('email')}
-                                </div>
+                <div className="logo-container">
+                    <Link to="/">
+                        <img src={logo} alt="Sapatosan Logo" className="logo" />
+                    </Link>
+                </div>
+                <nav className="nav-links">
+                    <Link to="/#home" className="nav-link">Home</Link>
+                    <Link to="/basketball" className="nav-link">Basketball</Link>
+                    <Link to="/casual" className="nav-link">Casual</Link>
+                    <Link to="/running" className="nav-link">Running</Link>
+                </nav>
+                <div className="auth-buttons">
+                    {localStorage.getItem('token') ? (
+                        <>
+                            {/* Update the cart icon to be consistent */}
+                            <div className="header-cart-icon" onClick={toggleCart}>
+                                <i className="fas fa-shopping-cart"></i>
+                                <span className="header-cart-count">{cart.length}</span>
                             </div>
                             
-                            <Link 
-                                to="/profile" 
-                                className="dropdown-item"
-                                onClick={() => setShowDropdown(false)}
-                            >
-                                <i className="fas fa-user dropdown-item-icon"></i>
-                                My Account
-                            </Link>
-                            
-                            <button 
-                                onClick={() => {
-                                    handleLogout();
-                                    setShowDropdown(false);
-                                }} 
-                                className="dropdown-item-button"
-                            >
-                                <i className="fas fa-sign-out-alt dropdown-item-icon"></i>
-                                Logout
-                            </button>
-                        </div>
+                            <div className="user-dropdown" ref={dropdownRef}>
+                                <button 
+                                    onClick={() => setShowDropdown(!showDropdown)} 
+                                    className="user-avatar-button"
+                                >
+                                    <div className="user-avatar">
+                                        {(userInfo.email || localStorage.getItem('email') || 'U').charAt(0)}
+                                    </div>
+                                </button>
+                                
+                                {showDropdown && (
+                                    <div className="dropdown-menu">
+                                        <div className="dropdown-header">
+                                            <div className="dropdown-header-title">Signed in as</div>
+                                            <div className="dropdown-header-email">
+                                                {userInfo.email || localStorage.getItem('email')}
+                                            </div>
+                                        </div>
+                                        
+                                        <Link 
+                                            to="/profile" 
+                                            className="dropdown-item"
+                                            onClick={() => setShowDropdown(false)}
+                                        >
+                                            <i className="fas fa-user dropdown-item-icon"></i>
+                                            My Account
+                                        </Link>
+                                        
+                                        <button 
+                                            onClick={() => {
+                                                handleLogout();
+                                                setShowDropdown(false);
+                                            }} 
+                                            className="dropdown-item-button"
+                                        >
+                                            <i className="fas fa-sign-out-alt dropdown-item-icon"></i>
+                                            Logout
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <Link to="/register" className="auth-button">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            Join Us
+                        </Link>
                     )}
                 </div>
-            </>
-        ) : (
-            <Link to="/register" className="auth-button">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                Join Us
-            </Link>
-        )}
-    </div>
-</header>
+            </header>
+
+            {/* Replace the cart modal with the style from other pages */}
+            {showCart && (
+                <div className="cart-modal">
+                    <div className="cart-modal-content">
+                        <button className="close-modal" onClick={() => setShowCart(false)}>×</button>
+                        <h2>Your Shopping Cart</h2>
+                        
+                        {cart.length === 0 ? (
+                            <div className="empty-cart">
+                                <i className="fas fa-shopping-cart"></i>
+                                <p>Your cart is empty</p>
+                                <button 
+                                    className="continue-shopping" 
+                                    onClick={() => setShowCart(false)}
+                                >
+                                    Continue Shopping
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="cart-items">
+                                    {cart.map((item, index) => (
+                                        <div key={index} className="cart-item">
+                                            <div className="cart-item-image">
+                                                <img src={item.image} alt={item.name} />
+                                            </div>
+                                            <div className="cart-item-details">
+                                                <h3>{item.name}</h3>
+                                                <p className="cart-item-brand">{item.brand}</p>
+                                                <p className="cart-item-size">
+                                                    Size: US {item.selectedSize}
+                                                </p>
+                                                <p className="cart-item-price">${item.price.toFixed(2)}</p>
+                                            </div>
+                                            <button 
+                                                className="remove-item" 
+                                                onClick={() => removeFromCart(index)}
+                                            >
+                                                <i className="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="cart-summary">
+                                    <div className="cart-total">
+                                        <span>Total:</span>
+                                        <span>${calculateTotal()}</span>
+                                    </div>
+                                    <div className="cart-actions">
+                                        <button 
+                                            className="continue-shopping" 
+                                            onClick={() => setShowCart(false)}
+                                        >
+                                            Continue Shopping
+                                        </button>
+                                        <button className="checkout" onClick={handleCheckout}>
+                                            Proceed to Checkout
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <section>
                 <div className="video-container1">
                     <video className="video-teaser" autoPlay loop muted>
