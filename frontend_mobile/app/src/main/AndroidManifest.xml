@@ -50,5 +50,11 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Frontend_mobile" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Frontend_mobile" />
     </application>
 </manifest>
