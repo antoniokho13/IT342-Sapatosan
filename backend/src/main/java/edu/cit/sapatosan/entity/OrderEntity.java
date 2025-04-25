@@ -4,12 +4,27 @@ import java.util.Date;
 import java.util.List;
 
 public class OrderEntity {
+    public enum PaymentStatus {
+        PENDING, PAID, UNPAID
+    }
+
     private String id;
     private String userId; // Reference to User
     private Date orderDate;
     private Double totalAmount;
-    private String status;
+    private String status; // Order status (e.g., ACTIVE, CANCELLED)
     private List<String> orderProductIds; // References to OrderProductEntity
+    private String paymentId; // Reference to PaymentEntity
+    private PaymentStatus paymentStatus; // Enum for payment status
+
+    // User details
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String address;
+    private String postalCode;
+    private String country;
+    private String contactNumber;
 
     public OrderEntity() {
         // Default constructor for Firebase
@@ -62,5 +77,77 @@ public class OrderEntity {
 
     public void setOrderProductIds(List<String> orderProductIds) {
         this.orderProductIds = orderProductIds;
+    }
+
+    public String getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(String paymentId) {
+        this.paymentId = paymentId;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
+    }
+
+    public String getCountry() {
+        return country;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
     }
 }
