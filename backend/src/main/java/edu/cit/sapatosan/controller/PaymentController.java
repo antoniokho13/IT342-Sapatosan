@@ -19,4 +19,10 @@ public class PaymentController {
         paymentService.createPayment(orderId, payment);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{paymentId}")
+    public ResponseEntity<Void> deletePayment(@PathVariable String paymentId) {
+        paymentService.deletePayment(paymentId);
+        return ResponseEntity.noContent().build();
+    }
 }
