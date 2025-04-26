@@ -49,4 +49,10 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<ProductEntity>> getProductsByCategory(@PathVariable String categoryId) throws ExecutionException, InterruptedException {
+        List<ProductEntity> products = productService.getProductsByCategory(categoryId).get();
+        return ResponseEntity.ok(products);
+    }
 }
