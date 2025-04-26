@@ -19,6 +19,18 @@ public class OrderService {
         this.orderProductRef = database.getReference("orderProducts");
     }
 
+    public void createOrder(OrderEntity order) {
+        String orderId = orderRef.push().getKey();
+        if (orderId != null) {
+            order.setId(orderId);
+            orderRef.child(orderId).setValueAsync(order);
+        }
+    }
+
+    public void updateOrder(String orderId, OrderEntity updatedOrder) {
+        orderRef.child(orderId).setValueAsync(updatedOrder);
+    }
+
     public void cancelOrder(String orderId) {
         orderRef.child(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -90,6 +102,24 @@ public class OrderService {
             @Override
             public void onCancelled(DatabaseError error) {
                 System.err.println("Failed to associate payment with order: " + error.getMessage());
+            }
+        });
+    }
+
+    public void updateOrderStatus(String orderId, String status) {
+        orderRef.child(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                OrderEntity order = snapshot.getValue(OrderEntity.class);
+                if (order != null) {
+                    order.setStatus(status);
+                    orderRef.child(orderId).setValueAsync(order);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Failed to update order status: " + error.getMessage());
             }
         });
     }
