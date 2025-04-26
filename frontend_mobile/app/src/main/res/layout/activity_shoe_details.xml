@@ -177,6 +177,7 @@
             android:padding="8dp" />
 
         <TextView
+            android:id="@+id/drawer_shopping_cart"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Shopping Cart"
@@ -184,16 +185,10 @@
             android:padding="8dp" />
 
         <TextView
+            android:id="@+id/tvSettings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Settings"
-            android:textSize="18sp"
-            android:padding="8dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="About Us"
             android:textSize="18sp"
             android:padding="8dp" />
 

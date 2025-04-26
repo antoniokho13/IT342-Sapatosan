@@ -1,26 +1,28 @@
 package com.frontend_mobile
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.Toast
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
-import com.bumptech.glide.Glide
-import com.frontend_mobile.databinding.ActivityShoeDetailsBinding
-import com.frontend_mobile.models.ShoeItem
-import android.widget.ArrayAdapter
-import android.widget.TextView
-import android.widget.Spinner
-import android.view.View
-import android.widget.AdapterView
 import androidx.gridlayout.widget.GridLayout
-
+import com.bumptech.glide.Glide
+import com.frontend_mobile.api.RetrofitClient
+import com.frontend_mobile.databinding.ActivityShoeDetailsBinding
+import com.frontend_mobile.models.CartItem
+import com.frontend_mobile.models.CartManager
+import com.frontend_mobile.models.ShoeItem
 
 class ShoeDetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityShoeDetailsBinding
     private var allShoes: List<ShoeItem> = emptyList()
     private var selectedShoe: ShoeItem? = null
+    private var selectedSize: String? = null
+    private var selectedQuantity: Int = 1
     private var selectedSizeButton: Button? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,15 +30,12 @@ class ShoeDetailsActivity : AppCompatActivity() {
         binding = ActivityShoeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Retrieve data passed from HomeActivity
         allShoes = intent.getParcelableArrayListExtra("allShoes") ?: emptyList()
         selectedShoe = intent.getParcelableExtra("selectedShoe")
 
-        // Set up the navbar
         binding.shoeNameToolbar.text = selectedShoe?.name ?: "Shoe Details"
         Glide.with(this).load(R.drawable.logo).into(binding.shoeLogo)
 
-        // Hamburger menu functionality
         binding.icMenu.setOnClickListener {
             val drawerLayout = binding.drawerLayout
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
@@ -46,14 +45,50 @@ class ShoeDetailsActivity : AppCompatActivity() {
             }
         }
 
-        // Display shoe details
         selectedShoe?.let { displayShoeDetails(it) }
         setupSizeButtons()
         setupQuantitySpinner()
 
-        // Add to cart button functionality
         binding.btnAddToCart.setOnClickListener {
-            Toast.makeText(this, "${selectedShoe?.name} added to cart!", Toast.LENGTH_SHORT).show()
+            addToCart()
+        }
+    }
+
+    private fun setupToolbar() {
+        binding.icMenu.setOnClickListener {
+            if (binding.drawerLayout.isDrawerOpen(GravityCompat.END)) {
+                binding.drawerLayout.closeDrawer(GravityCompat.END)
+            } else {
+                binding.drawerLayout.openDrawer(GravityCompat.END)
+            }
+        }
+
+        // Set up drawer navigation items
+        binding.drawerProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
+
+        binding.drawerShoppingCart.setOnClickListener {
+            startActivity(Intent(this, ShoppingCartActivity::class.java))
+        }
+
+        binding.tvSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        binding.drawerLogout.setOnClickListener {
+            // Clear user session
+            val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
+            sharedPrefs.edit().clear().apply()
+
+            // Clear token from RetrofitClient
+            RetrofitClient.clearToken()
+
+            // Navigate to LoginActivity
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
         }
     }
 
@@ -80,16 +115,22 @@ class ShoeDetailsActivity : AppCompatActivity() {
                 background = resources.getDrawable(R.drawable.size_button_background2, null)
 
                 setOnClickListener {
-                    // Reset previous selection
-                    selectedSizeButton?.background = resources.getDrawable(R.drawable.size_button_background2, null)
+                    selectedSizeButton?.background =
+                        resources.getDrawable(R.drawable.size_button_background2, null)
                     selectedSizeButton?.setTextColor(resources.getColor(android.R.color.black))
 
-                    // Highlight this button
-                    background = resources.getDrawable(R.drawable.size_button_selected_background, null)
+                    background =
+                        resources.getDrawable(R.drawable.size_button_selected_background, null)
                     setTextColor(resources.getColor(android.R.color.white))
 
                     selectedSizeButton = this
+                    selectedSize = size // Save selected size!
 
+                    Toast.makeText(
+                        this@ShoeDetailsActivity,
+                        "Selected Size US $size",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
@@ -106,37 +147,60 @@ class ShoeDetailsActivity : AppCompatActivity() {
     }
 
     private fun setupQuantitySpinner() {
-        // Create a list of quantities from 1 to 10
         val quantities = (1..10).toList()
 
-        // Create the adapter for the spinner, using the custom spinner item layout
         val adapter = object : ArrayAdapter<Int>(this, R.layout.custom_spinner_item, quantities) {
-            override fun getDropDownView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
+            override fun getDropDownView(
+                position: Int,
+                convertView: View?,
+                parent: ViewGroup
+            ): View {
                 val view = super.getDropDownView(position, convertView, parent)
-                // Customize the dropdown item view
                 view.setBackgroundColor(resources.getColor(android.R.color.white))
                 (view as TextView).setTextColor(resources.getColor(android.R.color.black))
-                view.textAlignment = android.view.View.TEXT_ALIGNMENT_CENTER
+                view.textAlignment = View.TEXT_ALIGNMENT_CENTER
                 return view
             }
         }
 
-        // Set the adapter to the spinner
         binding.quantitySpinner.adapter = adapter
 
-        // Set the OnItemSelectedListener to detect item selection
-        binding.quantitySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parentView: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                // Get the selected quantity
-                val selectedQuantity = quantities[position]
-                // For demonstration, show the selected quantity in a Toast
-                Toast.makeText(applicationContext, "Selected Quantity: $selectedQuantity", Toast.LENGTH_SHORT).show()
-            }
+        binding.quantitySpinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    selectedQuantity = quantities[position] // Save selected quantity!
+                }
 
-            override fun onNothingSelected(parentView: AdapterView<*>?) {
-                // Optionally handle when nothing is selected (do nothing for now)
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
-        }
     }
 
+    private fun addToCart() {
+        if (selectedSize == null) {
+            Toast.makeText(this, "Please select a size.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val shoe = selectedShoe ?: return
+
+        val cartItem = CartItem(
+            shoe = shoe,
+            selectedSize = selectedSize!!,
+            selectedQuantity = selectedQuantity
+        )
+
+        CartManager.addItem(cartItem)
+        Toast.makeText(
+            this,
+            "${shoe.name} (Size US $selectedSize x$selectedQuantity) added to cart!",
+            Toast.LENGTH_SHORT
+        ).show()
+        val intent = Intent(this, ShoppingCartActivity::class.java)
+        startActivity(intent)
+    }
 }
