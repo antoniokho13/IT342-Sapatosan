@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawerLayout"
@@ -10,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Navbar -->
+        <!-- Navbar with Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -35,7 +36,6 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_gravity="center" />
-
 
             <ImageView
                 android:id="@+id/icMenu"
@@ -103,53 +103,60 @@
             android:layout_marginTop="8dp" />
 
         <!-- Size Buttons -->
-        <GridLayout
+        <androidx.gridlayout.widget.GridLayout
             android:id="@+id/sizeButtonsContainer"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:columnCount="4"
             android:padding="16dp"
+            app:columnCount="4"
             app:layout_constraintTop_toBottomOf="@id/shoeStock"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="16dp" />
 
-        <!-- Quantity Label -->
-        <TextView
-            android:id="@+id/quantityLabel"
+        <!-- Quantity Container (Label + Spinner) -->
+        <LinearLayout
+            android:id="@+id/quantityContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Quantity:"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             app:layout_constraintTop_toBottomOf="@id/sizeButtonsContainer"
             app:layout_constraintStart_toStartOf="parent"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="8dp" />
-
-        <!-- Quantity Spinner -->
-        <Spinner
-            android:id="@+id/quantitySpinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/spinner_background"
-            app:layout_constraintTop_toBottomOf="@id/sizeButtonsContainer"
-            app:layout_constraintStart_toEndOf="@id/quantityLabel"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:id="@+id/quantityLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Quantity:"
+                android:textSize="16sp"
+                android:layout_marginEnd="8dp" />
+
+            <Spinner
+                android:id="@+id/quantitySpinner"
+                android:layout_width="80dp"
+                android:layout_height="40dp"
+                android:background="@drawable/spinner_background"
+                android:padding="8dp" />
+        </LinearLayout>
 
         <!-- Add to Cart Button -->
         <Button
             android:id="@+id/btnAddToCart"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Add to Cart"
-            android:backgroundTint="@android:color/holo_red_dark"
+            android:text="ADD TO CART"
+            android:backgroundTint="@android:color/black"
             android:textColor="@android:color/white"
             android:textSize="18sp"
             android:padding="16dp"
-            app:layout_constraintTop_toBottomOf="@id/quantitySpinner"
+            app:layout_constraintTop_toBottomOf="@id/quantityContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="24dp" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Side Drawer -->
@@ -168,24 +175,28 @@
             android:text="Profile"
             android:textSize="18sp"
             android:padding="8dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Shopping Cart"
             android:textSize="18sp"
             android:padding="8dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Settings"
             android:textSize="18sp"
             android:padding="8dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="About Us"
             android:textSize="18sp"
             android:padding="8dp" />
+
         <TextView
             android:id="@+id/drawer_logout"
             android:layout_width="wrap_content"
@@ -194,4 +205,5 @@
             android:textSize="18sp"
             android:padding="8dp" />
     </LinearLayout>
+
 </androidx.drawerlayout.widget.DrawerLayout>
