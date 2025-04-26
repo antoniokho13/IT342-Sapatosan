@@ -174,4 +174,27 @@ public class ProductService {
             return false;
         }
     }
+    public CompletableFuture<List<ProductEntity>> getProductsByCategory(String categoryId) {
+        CompletableFuture<List<ProductEntity>> future = new CompletableFuture<>();
+        productRef.orderByChild("categoryId").equalTo(categoryId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                List<ProductEntity> products = new ArrayList<>();
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    ProductEntity product = child.getValue(ProductEntity.class);
+                    if (product != null) {
+                        product.setId(child.getKey());
+                        products.add(product);
+                    }
+                }
+                future.complete(products);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(new RuntimeException("Firebase operation failed", error.toException()));
+            }
+        });
+        return future;
+    }
 }
