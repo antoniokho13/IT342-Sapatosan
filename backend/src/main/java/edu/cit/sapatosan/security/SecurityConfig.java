@@ -1,10 +1,11 @@
 package edu.cit.sapatosan.security;
 
+import java.util.Arrays;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity; // Note: @EnableGlobalMethodSecurity is deprecated, prefer @EnableMethodSecurity
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration; // Note: @EnableGlobalMethodSecurity is deprecated, prefer @EnableMethodSecurity
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // Use this instead of EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,8 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-
-import java.util.Arrays;
 
 @Configuration
 // @EnableGlobalMethodSecurity(prePostEnabled = true) // Deprecated
@@ -47,6 +46,8 @@ public class SecurityConfig {
                         // Keep your existing API rules below the permitAll rule
                         .requestMatchers("/api/auth/**").permitAll() // Assuming auth endpoints should be public
                         .requestMatchers("/api/users").permitAll() // Adjust based on whether /api/users should be public or protected
+                        .requestMatchers("/api/products/**").permitAll()
+                        .requestMatchers("/api/categories/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("ADMIN", "USER")
 

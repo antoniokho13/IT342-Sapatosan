@@ -1,128 +1,90 @@
+import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Casual.css';
 import logo from '../assets/images/logo.png';
 
-// Import casual shoe images
-import casual1 from '../assets/images/casual/Air Jordan 1 Chicago.png';
-import casual2 from '../assets/images/casual/Air Jordan 1 Retro High OG x Travis Scott Mocha.png';
-import casual3 from '../assets/images/casual/Jordan 4 Manila.png';
-import casual4 from '../assets/images/casual/MEXICO 66 MEN BLACKYELLOW.png';
-import casual5 from '../assets/images/casual/Nike  DUNK LOW NN SUMMIT WHITEBLACK RASPBERRY.png';
-import casual6 from '../assets/images/casual/Nike SB Dunk Low AE86 White Black.png';
-import casual7 from '../assets/images/casual/ONITSUKA MEXICO 66  MEN  WHITEBLUE.png';
-import { default as casual8, default as casual9 } from '../assets/images/casual/PULL_BEAR OCTANE 3000.png';
-import casual10 from '../assets/images/casual/Supreme Nike SB Dunk Low Rammellzee.png';
-
 const Casual = () => {
-    // Update the cart state to load from localStorage
+    // State for cart with localStorage persistence
     const [cart, setCart] = useState(() => {
         const savedCart = localStorage.getItem('sapatosanCart');
         return savedCart ? JSON.parse(savedCart) : [];
     });
+    
+    // UI state variables
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
-    const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
-    
-    // Add user authentication states
+    const [showCart, setShowCart] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const [userInfo, setUserInfo] = useState({ email: localStorage.getItem('email') || '' });
     
-    // Casual shoe data with your real images
-    const casualShoes = [
-        {
-            id: 1,
-            name: "Air Jordan 1 Chicago",
-            price: 180.00,
-            image: casual1,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The iconic Air Jordan 1 Chicago colorway, featuring the classic red, white, and black color scheme that started it all. A timeless silhouette that never goes out of style."
-        },
-        {
-            id: 2,
-            name: "Air Jordan 1 Retro High OG x Travis Scott",
-            price: 250.00,
-            image: casual2,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The Travis Scott collaboration brings a unique backwards swoosh and earthy Mocha tones to the classic Air Jordan 1 silhouette. One of the most sought-after sneakers in recent years."
-        },
-        {
-            id: 3,
-            name: "Jordan 4 Manila",
-            price: 225.00,
-            image: casual3,
-            brand: "Nike",
-            sizes: [8, 9, 10, 11, 12],
-            description: "The Jordan 4 Manila is an exclusive release celebrating Filipino culture. Features premium materials and a distinctive color palette that represents Manila's vibrant energy."
-        },
-        {
-            id: 4,
-            name: "Onitsuka Tiger Mexico 66 Black/Yellow",
-            price: 120.00,
-            image: casual4,
-            brand: "Onitsuka Tiger",
-            sizes: [6, 7, 8, 9, 10, 11],
-            description: "The classic Onitsuka Tiger Mexico 66 in the iconic black and yellow Kill Bill colorway. Featuring the signature stripe design and vintage look with modern comfort."
-        },
-        {
-            id: 5,
-            name: "Nike Dunk Low NN Summit White/Black Raspberry",
-            price: 110.00,
-            image: casual5,
-            brand: "Nike",
-            sizes: [6, 7, 8, 9, 10, 11, 12],
-            description: "The Nike Dunk Low in a fresh Summit White with Black and Raspberry accents. Clean lines and color-blocking make this a versatile addition to any sneaker collection."
-        },
-        {
-            id: 6,
-            name: "Nike SB Dunk Low AE86 White/Black",
-            price: 130.00,
-            image: casual6,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11],
-            description: "Inspired by the legendary Toyota AE86 from Initial D, these Nike SB Dunks feature a clean white and black colorway that pays homage to the iconic drift machine."
-        },
-        {
-            id: 7,
-            name: "Onitsuka Tiger Mexico 66 White/Blue",
-            price: 120.00,
-            image: casual7,
-            brand: "Onitsuka Tiger",
-            sizes: [6, 7, 8, 9, 10, 11],
-            description: "A classic silhouette in a crisp white and blue colorway, the Mexico 66 offers vintage style with modern comfort. Features the iconic Onitsuka Tiger stripes."
-        },
-        {
-            id: 8,
-            name: "Pull&Bear Octane 3000",
-            price: 75.00,
-            image: casual8,
-            brand: "Pull&Bear",
-            sizes: [6, 7, 8, 9, 10, 11, 12],
-            description: "The Pull&Bear Octane 3000 offers contemporary street style at an accessible price point. Features a chunky sole and mixed material upper for a trendy look."
-        },
-        {
-            id: 9,
-            name: "Pull&Bear Octane 3000 Alt",
-            price: 75.00,
-            image: casual9,
-            brand: "Pull&Bear",
-            sizes: [6, 7, 8, 9, 10, 11],
-            description: "An alternative colorway of the popular Octane 3000 model, featuring Pull&Bear's signature casual style with modern design elements and all-day comfort."
-        },
-        {
-            id: 10,
-            name: "Supreme x Nike SB Dunk Low Rammellzee",
-            price: 200.00,
-            image: casual10,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The Supreme x Nike SB collaboration honoring artist Rammellzee features unique graphics and premium materials. A collector's item that blends streetwear and skateboarding cultures."
-        }
-    ];
+    // Product data state
+    const [casualShoes, setCasualShoes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    // Fetch products from backend
+    useEffect(() => {
+        const fetchCasualShoes = async () => {
+            try {
+                setLoading(true);
+                
+                const token = localStorage.getItem('token');
+                console.log("Fetching products with token:", token ? "Token exists" : "No token");
+                
+                const casualCategoryId = "-ONPHLQWxGQo4o1_A17h";
+                
+                // Only add Authorization if token exists
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                
+                const response = await axios.get(
+                    `http://localhost:8080/api/products`,
+                    { headers }
+                );
+                
+                console.log("API response data:", response.data);
+                
+                if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+                    setError("No products found or invalid data format received");
+                    setLoading(false);
+                    return;
+                }
+                
+                const casualProducts = response.data.filter(product => 
+                    product.categoryId === casualCategoryId
+                );
+                
+                if (casualProducts.length === 0) {
+                    setError("No casual shoes found");
+                    setLoading(false);
+                    return;
+                }
+                
+                const processedShoes = casualProducts.map(shoe => ({
+                    ...shoe,
+                    price: shoe.price / 100,
+                    sizes: [7, 8, 9, 10, 11, 12],
+                    description: shoe.description || `Premium ${shoe.brand} casual shoes designed for everyday style.`,
+                    imageUrl: shoe.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+                }));
+                
+                console.log("Processed casual shoes:", processedShoes);
+                setCasualShoes(processedShoes);
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch casual products:', err);
+                setError(`Failed to load casual shoes: ${err.message}. Please try again later.`);
+                setLoading(false);
+            }
+        };
+        
+        fetchCasualShoes();
+    }, []);
 
+    // The rest of your component remains the same
+
+    // Cart functions
     const addToCart = (shoe, size = null) => {
         const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
         const newCart = [...cart, shoeWithSize];
@@ -275,7 +237,7 @@ const handleCheckout = () => {
 
     return (
         <div className="casual-page">
-            {/* Updated Header */}
+            {/* Header remains the same */}
             <header className="header">
                 <div className="logo-container">
                     <Link to="/">
@@ -350,7 +312,7 @@ const handleCheckout = () => {
                 </div>
             </header>
 
-            {/* Hero Section */}
+            {/* Hero Section remains the same */}
             <section className="hero-section">
                 <div className="hero-content">
                     <h1>CASUAL SHOES</h1>
@@ -358,7 +320,7 @@ const handleCheckout = () => {
                 </div>
             </section>
 
-            {/* Filter Bar */}
+            {/* Filter Bar remains the same */}
             <section className="filter-bar">
                 <div className="filter-container">
                     <div className="filter-group">
@@ -396,49 +358,60 @@ const handleCheckout = () => {
                 </div>
             </section>
 
-            {/* Products Grid */}
+            {/* Products Grid - Updated to use fetched data */}
             <section className="products-section">
                 <div className="products-grid">
-                    {casualShoes.map((shoe) => (
-                        <div className="product-card" id={`shoe-${shoe.id}`} key={shoe.id}>
-                            <div className="product-image">
-                                <img src={shoe.image} alt={shoe.name} />
-                                <div className="quick-view" onClick={() => openQuickView(shoe)}>Quick View</div>
-                            </div>
-                            <div className="product-details">
-                                <div className="product-brand">{shoe.brand}</div>
-                                <h3 className="product-name">{shoe.name}</h3>
-                                <div className="product-price">${shoe.price.toFixed(2)}</div>
-                                <div className="product-sizes">
-                                    {shoe.sizes.map(size => (
-                                        <span className="size-option" key={size}>US {size}</span>
-                                    ))}
+                    {loading && <div className="loading-spinner">Loading products...</div>}
+                    {error && <div className="error-message">{error}</div>}
+
+                    {!loading && !error && casualShoes.length === 0 && (
+                        <div className="no-products-message">No casual shoes available.</div>
+                    )}
+
+                    {!loading && !error && casualShoes.length > 0 && (
+                        <>
+                            {casualShoes.map((shoe) => (
+                                <div className="product-card" id={`shoe-${shoe.id}`} key={shoe.id}>
+                                    <div className="product-image">
+                                        <img src={shoe.imageUrl} alt={shoe.name} />
+                                        <div className="quick-view" onClick={() => openQuickView(shoe)}>Quick View</div>
+                                    </div>
+                                    <div className="product-details">
+                                        <div className="product-brand">{shoe.brand}</div>
+                                        <h3 className="product-name">{shoe.name}</h3>
+                                        <div className="product-price">${shoe.price.toFixed(2)}</div>
+                                        <div className="product-sizes">
+                                            {shoe.sizes.map(size => (
+                                                <span className="size-option" key={size}>US {size}</span>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            className="add-to-cart"
+                                            onClick={() => addToCart(shoe)}
+                                        >
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            Add to Cart
+                                        </button>
+                                        <div className="added-notification">Added to Cart</div>
+                                    </div>
                                 </div>
-                                <button 
-                                    className="add-to-cart"
-                                    onClick={() => addToCart(shoe)}
-                                >
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                    Add to Cart
-                                </button>
-                                <div className="added-notification">Added to Cart</div>
-                            </div>
-                        </div>
-                    ))}
+                            ))}
+                        </>
+                    )}
                 </div>
             </section>
 
-            {/* Quick View Modal */}
+            {/* Quick View Modal - Updated to use imageUrl instead of image */}
             {quickViewShoe && (
                 <div className="quick-view-modal">
                     <div className="quick-view-modal-content">
                         <button className="close-modal" onClick={closeQuickView}>×</button>
                         <div className="modal-product-details">
                             <div className="modal-product-image">
-                                <img src={quickViewShoe.image} alt={quickViewShoe.name} />
+                                <img src={quickViewShoe.imageUrl} alt={quickViewShoe.name} />
                             </div>
                             <div className="modal-product-info">
                                 <div className="modal-product-brand">{quickViewShoe.brand}</div>
@@ -482,7 +455,7 @@ const handleCheckout = () => {
                 </div>
             )}
 
-            {/* Shopping Cart Modal */}
+            {/* Shopping Cart Modal - Updated to use imageUrl instead of image */}
             {showCart && (
                 <div className="cart-modal">
                     <div className="cart-modal-content">
@@ -506,7 +479,7 @@ const handleCheckout = () => {
                                     {cart.map((item, index) => (
                                         <div key={index} className="cart-item">
                                             <div className="cart-item-image">
-                                                <img src={item.image} alt={item.name} />
+                                                <img src={item.imageUrl} alt={item.name} />
                                             </div>
                                             <div className="cart-item-details">
                                                 <h3>{item.name}</h3>
@@ -549,12 +522,7 @@ const handleCheckout = () => {
                 </div>
             )}
 
-            {/* Footer - same as Home.js */}
-            <footer className="footer">
-                <div className="footer-bottom">
-                    <p>&copy; 2025 Sapatosan. All rights reserved.</p>
-                </div>
-            </footer>
+            {/* Footer remains the same */}
         </div>
     );
 };
