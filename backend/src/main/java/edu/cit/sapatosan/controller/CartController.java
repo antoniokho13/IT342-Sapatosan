@@ -29,6 +29,12 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{userId}/add-product")
+    public ResponseEntity<Void> addProductToCart(@PathVariable String userId, @RequestParam String productId, @RequestParam int quantity) throws ExecutionException, InterruptedException {
+        cartService.addProductToCart(userId, productId, quantity);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateCart(@PathVariable String id, @RequestBody CartEntity updatedCart) {
         cartService.updateCart(id, updatedCart);
