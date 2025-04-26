@@ -1,129 +1,88 @@
+import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Running.css';
 import logo from '../assets/images/logo.png';
 
-// Import running shoe images
-import running1 from '../assets/images/running/Nike InfinityRN 4 Mens Road.png';
-import running2 from '../assets/images/running/Nike Interact Run SE Mens Road.png';
-import running3 from '../assets/images/running/Nike Invincible 3 Mens Road.png';
-import running4 from '../assets/images/running/Nike Pegasus 41 Electric Older Kids Road.png';
-import running5 from '../assets/images/running/Nike Pegasus 41 Mens Road.png';
-import running6 from '../assets/images/running/Nike Pegasus 41 Premium Mens Road.png';
-import running7 from '../assets/images/running/Nike Pegasus Easy On Blueprint.png';
-import running8 from '../assets/images/running/Nike Revolution 7 EasyOn Womens Easy On Off Road.png';
-import running9 from '../assets/images/running/Nike Revolution 7 Mens Road.png';
-import running10 from '../assets/images/running/Nike Zoom Air Running Shoes.png';
-
 const Running = () => {
-    // Update the cart state to load from localStorage
+    // State for cart with localStorage persistence
     const [cart, setCart] = useState(() => {
         const savedCart = localStorage.getItem('sapatosanCart');
         return savedCart ? JSON.parse(savedCart) : [];
     });
+    
+    // UI state variables
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
-    const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
-    
-    // Add user authentication states
+    const [showCart, setShowCart] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const [userInfo, setUserInfo] = useState({ email: localStorage.getItem('email') || '' });
     
-    // Running shoe data with your real images
-    const runningShoes = [
-        {
-            id: 1,
-            name: "Nike InfinityRN 4 Mens Road",
-            price: 160.00,
-            image: running1,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "The Nike InfinityRN 4 delivers exceptional stability and cushioning for everyday runs. Featuring Nike React foam for responsive support and a cushioned feel with every stride."
-        },
-        {
-            id: 2,
-            name: "Nike Interact Run SE Mens Road",
-            price: 120.00,
-            image: running2,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The Nike Interact Run SE combines lightweight design with adaptive cushioning. Perfect for casual runners seeking comfort and responsive performance on road surfaces."
-        },
-        {
-            id: 3,
-            name: "Nike Invincible 3 Mens Road",
-            price: 180.00,
-            image: running3,
-            brand: "Nike",
-            sizes: [8, 9, 10, 11, 12],
-            description: "The Nike Invincible 3 offers ultimate cushioning with ZoomX foam for maximum shock absorption. Designed for long training runs with enhanced stability and comfort."
-        },
-        {
-            id: 4,
-            name: "Nike Pegasus 41 Electric Older Kids Road",
-            price: 110.00,
-            image: running4,
-            brand: "Nike",
-            sizes: [3, 4, 5, 6, 7],
-            description: "The Nike Pegasus 41 Electric is designed specifically for growing runners. Features responsive cushioning and durable construction in a vibrant colorway that kids will love."
-        },
-        {
-            id: 5,
-            name: "Nike Pegasus 41 Mens Road",
-            price: 130.00,
-            image: running5,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "The Nike Pegasus 41 continues the legacy of the workhorse with versatile performance. Nike React foam and Zoom Air unit provide responsive cushioning for everyday runs."
-        },
-        {
-            id: 6,
-            name: "Nike Pegasus 41 Premium Mens Road",
-            price: 150.00,
-            image: running6,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The Nike Pegasus 41 Premium elevates the classic design with premium materials and enhanced comfort features. Perfect balance of cushioning and responsiveness for serious runners."
-        },
-        {
-            id: 7,
-            name: "Nike Pegasus Easy On Blueprint",
-            price: 140.00,
-            image: running7,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "The Nike Pegasus Easy On Blueprint features a FlyEase entry system for quick, hands-free access. Maintains the Pegasus cushioning and support with added accessibility."
-        },
-        {
-            id: 8,
-            name: "Nike Revolution 7 EasyOn Womens Easy On Off Road",
-            price: 85.00,
-            image: running8,
-            brand: "Nike",
-            sizes: [5, 6, 7, 8, 9, 10, 11],
-            description: "The Nike Revolution 7 EasyOn provides a hands-free entry system designed specifically for women. Lightweight cushioning with a soft, breathable upper for comfortable daily runs."
-        },
-        {
-            id: 9,
-            name: "Nike Revolution 7 Mens Road",
-            price: 80.00,
-            image: running9,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "The Nike Revolution 7 offers lightweight cushioning at an affordable price point. Breathable mesh upper and soft foam midsole provide comfort for everyday running and training."
-        },
-        {
-            id: 10,
-            name: "Nike Zoom Air Running Shoes",
-            price: 170.00,
-            image: running10,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The Nike Zoom Air Running Shoes feature responsive Zoom Air cushioning for explosive propulsion. Engineered for speed with a lightweight design and secure fit for race day performance."
-        }
-    ];
+    // Product data state
+    const [runningShoes, setRunningShoes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    // Fetch products from backend
+    useEffect(() => {
+        const fetchRunningShoes = async () => {
+            try {
+                setLoading(true);
+                
+                const token = localStorage.getItem('token');
+                console.log("Fetching products with token:", token ? "Token exists" : "No token");
+                
+                const runningCategoryId = "-ONPHD1YnHGCH_07BXTO";
+                
+                // Only add Authorization if token exists
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                
+                const response = await axios.get(
+                    `http://localhost:8080/api/products`,
+                    { headers }
+                );
+                
+                console.log("API response data:", response.data);
+                
+                if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+                    setError("No products found or invalid data format received");
+                    setLoading(false);
+                    return;
+                }
+                
+                const runningProducts = response.data.filter(product => 
+                    product.categoryId === runningCategoryId
+                );
+                
+                if (runningProducts.length === 0) {
+                    setError("No running shoes found");
+                    setLoading(false);
+                    return;
+                }
+                
+                const processedShoes = runningProducts.map(shoe => ({
+                    ...shoe,
+                    price: shoe.price / 100,
+                    sizes: [7, 8, 9, 10, 11, 12],
+                    description: shoe.description || `Premium ${shoe.brand} running shoes designed for performance and comfort.`,
+                    imageUrl: shoe.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+                }));
+                
+                console.log("Processed running shoes:", processedShoes);
+                setRunningShoes(processedShoes);
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch running products:', err);
+                setError(`Failed to load running shoes: ${err.message}. Please try again later.`);
+                setLoading(false);
+            }
+        };
+        
+        fetchRunningShoes();
+    }, []);
 
+    // Cart functions
     const addToCart = (shoe, size = null) => {
         const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
         const newCart = [...cart, shoeWithSize];
@@ -183,7 +142,23 @@ const Running = () => {
         setUserInfo({ email: '' });
     };
 
-    // Close modals when clicking outside - update to include dropdown
+    // Checkout handler
+    const handleCheckout = () => {
+        // Check if user is logged in
+        if (!localStorage.getItem('token')) {
+            // Redirect to login page with return URL
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return;
+        }
+
+        // Save cart to session for checkout page
+        localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
+        
+        // Navigate to checkout page
+        window.location.href = '/checkout';
+    };
+
+    // Close modals when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
@@ -237,27 +212,25 @@ const Running = () => {
         };
     }, [quickViewShoe, showCart]);
 
-    // Add this function near the other handler functions in Running.js
-const handleCheckout = () => {
-  // Check if user is logged in
-  if (!localStorage.getItem('token')) {
-    // Redirect to login page with return URL
-    window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-    return;
-  }
-
-  // Save cart to session for checkout page
-  localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
-  
-  // Navigate to checkout page
-  window.location.href = '/checkout';
-};
-
-
+    // Handle storage changes for cart sync
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'sapatosanCart') {
+                const updatedCart = e.newValue ? JSON.parse(e.newValue) : [];
+                setCart(updatedCart);
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
 
     return (
         <div className="running-page">
-            {/* Updated Header */}
+            {/* Header */}
             <header className="header">
                 <div className="logo-container">
                     <Link to="/">
@@ -386,35 +359,46 @@ const handleCheckout = () => {
             {/* Products Grid */}
             <section className="products-section">
                 <div className="products-grid">
-                    {runningShoes.map((shoe) => (
-                        <div className="product-card" id={`shoe-${shoe.id}`} key={shoe.id}>
-                            <div className="product-image">
-                                <img src={shoe.image} alt={shoe.name} />
-                                <div className="quick-view" onClick={() => openQuickView(shoe)}>Quick View</div>
-                            </div>
-                            <div className="product-details">
-                                <div className="product-brand">{shoe.brand}</div>
-                                <h3 className="product-name">{shoe.name}</h3>
-                                <div className="product-price">${shoe.price.toFixed(2)}</div>
-                                <div className="product-sizes">
-                                    {shoe.sizes.map(size => (
-                                        <span className="size-option" key={size}>US {size}</span>
-                                    ))}
+                    {loading && <div className="loading-spinner">Loading products...</div>}
+                    {error && <div className="error-message">{error}</div>}
+
+                    {!loading && !error && runningShoes.length === 0 && (
+                        <div className="no-products-message">No running shoes available.</div>
+                    )}
+
+                    {!loading && !error && runningShoes.length > 0 && (
+                        <>
+                            {runningShoes.map((shoe) => (
+                                <div className="product-card" id={`shoe-${shoe.id}`} key={shoe.id}>
+                                    <div className="product-image">
+                                        <img src={shoe.imageUrl} alt={shoe.name} />
+                                        <div className="quick-view" onClick={() => openQuickView(shoe)}>Quick View</div>
+                                    </div>
+                                    <div className="product-details">
+                                        <div className="product-brand">{shoe.brand}</div>
+                                        <h3 className="product-name">{shoe.name}</h3>
+                                        <div className="product-price">${shoe.price.toFixed(2)}</div>
+                                        <div className="product-sizes">
+                                            {shoe.sizes.map(size => (
+                                                <span className="size-option" key={size}>US {size}</span>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            className="add-to-cart"
+                                            onClick={() => addToCart(shoe)}
+                                        >
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            Add to Cart
+                                        </button>
+                                        <div className="added-notification">Added to Cart</div>
+                                    </div>
                                 </div>
-                                <button 
-                                    className="add-to-cart"
-                                    onClick={() => addToCart(shoe)}
-                                >
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                    Add to Cart
-                                </button>
-                                <div className="added-notification">Added to Cart</div>
-                            </div>
-                        </div>
-                    ))}
+                            ))}
+                        </>
+                    )}
                 </div>
             </section>
 
@@ -425,7 +409,7 @@ const handleCheckout = () => {
                         <button className="close-modal" onClick={closeQuickView}>×</button>
                         <div className="modal-product-details">
                             <div className="modal-product-image">
-                                <img src={quickViewShoe.image} alt={quickViewShoe.name} />
+                                <img src={quickViewShoe.imageUrl} alt={quickViewShoe.name} />
                             </div>
                             <div className="modal-product-info">
                                 <div className="modal-product-brand">{quickViewShoe.brand}</div>
@@ -493,7 +477,7 @@ const handleCheckout = () => {
                                     {cart.map((item, index) => (
                                         <div key={index} className="cart-item">
                                             <div className="cart-item-image">
-                                                <img src={item.image} alt={item.name} />
+                                                <img src={item.imageUrl || item.image} alt={item.name} />
                                             </div>
                                             <div className="cart-item-details">
                                                 <h3>{item.name}</h3>
@@ -526,8 +510,8 @@ const handleCheckout = () => {
                                             Continue Shopping
                                         </button>
                                         <button className="checkout" onClick={handleCheckout}>
-  Proceed to Checkout
-</button>
+                                            Proceed to Checkout
+                                        </button>
                                     </div>
                                 </div>
                             </>
@@ -536,7 +520,7 @@ const handleCheckout = () => {
                 </div>
             )}
 
-            {/* Footer - same as Home.js */}
+            {/* Footer */}
             <footer className="footer">
                 <div className="footer-bottom">
                     <p>&copy; 2025 Sapatosan. All rights reserved.</p>

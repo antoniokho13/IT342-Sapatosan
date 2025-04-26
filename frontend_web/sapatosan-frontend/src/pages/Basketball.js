@@ -1,129 +1,89 @@
+import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Basketball.css';
 import logo from '../assets/images/logo.png';
 
-// Import basketball shoe images
-import basketshoe1 from '../assets/images/basketball/Anthony Edwards 1.png';
-import basketshoe2 from '../assets/images/basketball/Harden Volume 8 Unisex.png';
-import basketshoe3 from '../assets/images/basketball/Kobe A.D. Igloo.png';
-import basketshoe4 from '../assets/images/basketball/Nike KD16 Ember Glow.png';
-import basketshoe5 from '../assets/images/basketball/Nike KD17 Flight To Paris Deep Royal Blue.png';
-import basketshoe6 from '../assets/images/basketball/Nike LeBron 21 World Is Your Oyster.png';
-import basketshoe7 from '../assets/images/basketball/Nike Mens G.T. Cut Academy.png';
-import basketshoe8 from '../assets/images/basketball/NIKE PRECISION 7 MENS.png';
-import basketshoe9 from '../assets/images/basketball/Nike Womens Sabrina 2 EP.png';
-import basketshoe10 from '../assets/images/basketball/Nike Zoom Freak 1 All Star Employee Of The Month.png';
-
 const Basketball = () => {
-    // Replace the current cart state with one that loads from localStorage
+    // State for cart with localStorage persistence
     const [cart, setCart] = useState(() => {
         const savedCart = localStorage.getItem('sapatosanCart');
         return savedCart ? JSON.parse(savedCart) : [];
     });
     
+    // UI state variables
     const [quickViewShoe, setQuickViewShoe] = useState(null);
     const [selectedSize, setSelectedSize] = useState(null);
-    const [showCart, setShowCart] = useState(false); // State to control cart modal visibility
+    const [showCart, setShowCart] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const [userInfo, setUserInfo] = useState({ email: localStorage.getItem('email') || '' });
+    
+    // Product data state
+    const [basketballShoes, setBasketballShoes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
+    // Fetch products from backend
+    useEffect(() => {
+        const fetchBasketballShoes = async () => {
+            try {
+                setLoading(true);
+                
+                const token = localStorage.getItem('token');
+                console.log("Fetching products with token:", token ? "Token exists" : "No token");
+                
+                const basketballCategoryId = "-ONPH8PwLI0VAM52ptuq";
+                
+                // Only add Authorization if token exists
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                
+                const response = await axios.get(
+                    `http://localhost:8080/api/products`,
+                    { headers }
+                );
+                
+                console.log("API response data:", response.data);
+                
+                if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+                    setError("No products found or invalid data format received");
+                    setLoading(false);
+                    return;
+                }
+                
+                const basketballProducts = response.data.filter(product => 
+                    product.categoryId === basketballCategoryId
+                );
+                
+                if (basketballProducts.length === 0) {
+                    setError("No basketball shoes found");
+                    setLoading(false);
+                    return;
+                }
+                
+                const processedShoes = basketballProducts.map(shoe => ({
+                    ...shoe,
+                    price: shoe.price / 100,
+                    sizes: [7, 8, 9, 10, 11, 12],
+                    description: shoe.description || `Premium ${shoe.brand} basketball shoes designed for performance.`,
+                    imageUrl: shoe.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+                }));
+                
+                console.log("Processed basketball shoes:", processedShoes);
+                setBasketballShoes(processedShoes);
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch basketball products:', err);
+                setError(`Failed to load basketball shoes: ${err.message}. Please try again later.`);
+                setLoading(false);
+            }
+        };
+        
+        fetchBasketballShoes();
+    }, []);
+    
 
-    // Basketball shoe data with your real images (ratings removed)
-    const basketballShoes = [
-        {
-            id: 1,
-            name: "Nike Anthony Edwards 1",
-            price: 120.00,
-            image: basketshoe1,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "The Nike Anthony Edwards 1 is the first signature shoe for the rising NBA star. Featuring responsive cushioning and excellent court feel."
-        },
-        {
-            id: 2,
-            name: "Harden Volume 8 Unisex",
-            price: 140.00,
-            image: basketshoe2,
-            brand: "Adidas",
-            sizes: [7, 8, 9, 10, 11, 12],
-            description: "The Harden Volume 8 is designed for James Harden's deceptive, change-of-pace game. Enhanced traction pattern for explosive moves."
-        },
-        {
-            id: 3,
-            name: "Kobe A.D. 'Igloo'",
-            price: 160.00,
-            image: basketshoe3,
-            brand: "Nike",
-            sizes: [8, 9, 10, 11, 12],
-            description: "The Kobe A.D. 'Igloo' offers a lightweight, responsive design with Zoom Air cushioning. Perfect for players seeking agility and speed."
-        },
-        {
-            id: 4,
-            name: "Nike KD16 Ember Glow",
-            price: 150.00,
-            image: basketshoe4,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "The KD16 Ember Glow features a full-length Zoom Air Strobel unit directly stitched to the upper for maximum responsiveness."
-        },
-        {
-            id: 5,
-            name: "Nike KD17 Flight To Paris",
-            price: 180.00,
-            image: basketshoe5,
-            brand: "Nike",
-            sizes: [8, 9, 10, 11, 12],
-            description: "The KD17 Flight To Paris edition celebrates the 2024 Olympics with a special colorway and enhanced cushioning system."
-        },
-        {
-            id: 6,
-            name: "Nike LeBron 21 World Is Your Oyster",
-            price: 200.00,
-            image: basketshoe6,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11],
-            description: "The LeBron 21 features a dual-chambered Air unit and a Zoom Air unit in the forefoot for ultimate impact protection and responsiveness."
-        },
-        {
-            id: 7,
-            name: "Nike Men's G.T. Cut Academy",
-            price: 160.00,
-            image: basketshoe7,
-            brand: "Nike",
-            sizes: [8, 9, 10, 11, 12, 13],
-            description: "The G.T. Cut Academy is designed for cutting and changing direction with multidirectional traction and low-to-the-ground feel."
-        },
-        {
-            id: 8,
-            name: "NIKE PRECISION 7 MEN'S",
-            price: 90.00,
-            image: basketshoe8,
-            brand: "Nike",
-            sizes: [7.5, 8, 9, 10, 11, 12],
-            description: "The Precision 7 offers reliable traction and cushioning at an affordable price point. Perfect for indoor and outdoor courts."
-        },
-        {
-            id: 9,
-            name: "Nike Women's Sabrina 2 EP",
-            price: 130.00,
-            image: basketshoe9,
-            brand: "Nike",
-            sizes: [5, 6, 7, 8, 9, 10],
-            description: "Sabrina Ionescu's signature shoe built for quick cuts and explosive first steps. Features React foam for all-day comfort."
-        },
-        {
-            id: 10,
-            name: "Nike Zoom Freak 1 All Star",
-            price: 170.00,
-            image: basketshoe10,
-            brand: "Nike",
-            sizes: [7, 8, 9, 10, 11, 12, 13],
-            description: "Giannis Antetokounmpo's first signature shoe with double-stacked Zoom Air units in the heel for explosive power and stability."
-        }
-    ];
-
-    // Update addToCart to save to localStorage
+    // Cart functions
     const addToCart = (shoe, size = null) => {
         const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
         const newCart = [...cart, shoeWithSize];
@@ -145,7 +105,6 @@ const Basketball = () => {
         }
     };
 
-    // Update removeFromCart to save to localStorage
     const removeFromCart = (index) => {
         const newCart = [...cart];
         newCart.splice(index, 1);
@@ -157,6 +116,7 @@ const Basketball = () => {
         return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
     };
 
+    // UI control functions
     const toggleCart = () => {
         setShowCart(!showCart);
         // If we're opening the cart, close any other modals
@@ -177,26 +137,28 @@ const Basketball = () => {
         setSelectedSize(null);
     };
 
+    // Add logout handler
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('email');
         setUserInfo({ email: '' });
     };
 
+    // Checkout handler
     const handleCheckout = () => {
         // Check if user is logged in
         if (!localStorage.getItem('token')) {
-          // Redirect to login page with return URL
-          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-          return;
+            // Redirect to login page with return URL
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return;
         }
-      
+
         // Save cart to session for checkout page
         localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
         
         // Navigate to checkout page
         window.location.href = '/checkout';
-      };
+    };
 
     // Close modals when clicking outside
     useEffect(() => {
@@ -204,7 +166,7 @@ const Basketball = () => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
                 closeQuickView();
             }
-            if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-indicator')) {
+            if (showCart && !event.target.closest('.cart-modal-content')) {
                 setShowCart(false);
             }
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -252,9 +214,25 @@ const Basketball = () => {
         };
     }, [quickViewShoe, showCart]);
 
+    // Handle storage changes for cart sync
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'sapatosanCart') {
+                const updatedCart = e.newValue ? JSON.parse(e.newValue) : [];
+                setCart(updatedCart);
+            }
+        };
+        
+        window.addEventListener('storage', handleStorageChange);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
     return (
         <div className="basketball-page">
-            {/* Header - same as Home.js */}
+            {/* Header */}
             <header className="header">
                 <div className="logo-container">
                     <Link to="/">
@@ -333,7 +311,7 @@ const Basketball = () => {
             <section className="hero-section">
                 <div className="hero-content">
                     <h1>BASKETBALL SHOES</h1>
-                    <p>Elevate your game with our premium selection of basketball shoes.</p>
+                    <p>Performance footwear designed for the court and beyond.</p>
                 </div>
             </section>
 
@@ -346,30 +324,28 @@ const Basketball = () => {
                             <option value="">All Brands</option>
                             <option value="Nike">Nike</option>
                             <option value="Adidas">Adidas</option>
+                            <option value="Under Armour">Under Armour</option>
                         </select>
                     </div>
                     <div className="filter-group">
                         <label>Size:</label>
                         <select>
                             <option value="">All Sizes</option>
-                            <option value="5">US 5</option>
-                            <option value="6">US 6</option>
                             <option value="7">US 7</option>
                             <option value="8">US 8</option>
                             <option value="9">US 9</option>
                             <option value="10">US 10</option>
                             <option value="11">US 11</option>
                             <option value="12">US 12</option>
-                            <option value="13">US 13</option>
                         </select>
                     </div>
                     <div className="filter-group">
                         <label>Price:</label>
                         <select>
                             <option value="">All Prices</option>
-                            <option value="90-130">$90 - $130</option>
-                            <option value="130-160">$130 - $160</option>
-                            <option value="160-200">$160 - $200</option>
+                            <option value="70-120">$70 - $120</option>
+                            <option value="120-180">$120 - $180</option>
+                            <option value="180-250">$180 - $250</option>
                         </select>
                     </div>
                     <button className="filter-button">Apply Filters</button>
@@ -379,35 +355,46 @@ const Basketball = () => {
             {/* Products Grid */}
             <section className="products-section">
                 <div className="products-grid">
-                    {basketballShoes.map((shoe) => (
-                        <div className="product-card" id={`shoe-${shoe.id}`} key={shoe.id}>
-                            <div className="product-image">
-                                <img src={shoe.image} alt={shoe.name} />
-                                <div className="quick-view" onClick={() => openQuickView(shoe)}>Quick View</div>
-                            </div>
-                            <div className="product-details">
-                                <div className="product-brand">{shoe.brand}</div>
-                                <h3 className="product-name">{shoe.name}</h3>
-                                <div className="product-price">${shoe.price.toFixed(2)}</div>
-                                <div className="product-sizes">
-                                    {shoe.sizes.map(size => (
-                                        <span className="size-option" key={size}>US {size}</span>
-                                    ))}
+                    {loading && <div className="loading-spinner">Loading products...</div>}
+                    {error && <div className="error-message">{error}</div>}
+
+                    {!loading && !error && basketballShoes.length === 0 && (
+                        <div className="no-products-message">No basketball shoes available.</div>
+                    )}
+
+                    {!loading && !error && basketballShoes.length > 0 && (
+                        <>
+                            {basketballShoes.map((shoe) => (
+                                <div className="product-card" id={`shoe-${shoe.id}`} key={shoe.id}>
+                                    <div className="product-image">
+                                        <img src={shoe.imageUrl} alt={shoe.name} />
+                                        <div className="quick-view" onClick={() => openQuickView(shoe)}>Quick View</div>
+                                    </div>
+                                    <div className="product-details">
+                                        <div className="product-brand">{shoe.brand}</div>
+                                        <h3 className="product-name">{shoe.name}</h3>
+                                        <div className="product-price">${shoe.price.toFixed(2)}</div>
+                                        <div className="product-sizes">
+                                            {shoe.sizes.map(size => (
+                                                <span className="size-option" key={size}>US {size}</span>
+                                            ))}
+                                        </div>
+                                        <button 
+                                            className="add-to-cart"
+                                            onClick={() => addToCart(shoe)}
+                                        >
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            Add to Cart
+                                        </button>
+                                        <div className="added-notification">Added to Cart</div>
+                                    </div>
                                 </div>
-                                <button 
-                                    className="add-to-cart"
-                                    onClick={() => addToCart(shoe)}
-                                >
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                    Add to Cart
-                                </button>
-                                <div className="added-notification">Added to Cart</div>
-                            </div>
-                        </div>
-                    ))}
+                            ))}
+                        </>
+                    )}
                 </div>
             </section>
 
@@ -418,7 +405,7 @@ const Basketball = () => {
                         <button className="close-modal" onClick={closeQuickView}>×</button>
                         <div className="modal-product-details">
                             <div className="modal-product-image">
-                                <img src={quickViewShoe.image} alt={quickViewShoe.name} />
+                                <img src={quickViewShoe.imageUrl} alt={quickViewShoe.name} />
                             </div>
                             <div className="modal-product-info">
                                 <div className="modal-product-brand">{quickViewShoe.brand}</div>
@@ -486,7 +473,7 @@ const Basketball = () => {
                                     {cart.map((item, index) => (
                                         <div key={index} className="cart-item">
                                             <div className="cart-item-image">
-                                                <img src={item.image} alt={item.name} />
+                                                <img src={item.imageUrl} alt={item.name} />
                                             </div>
                                             <div className="cart-item-details">
                                                 <h3>{item.name}</h3>
@@ -529,7 +516,7 @@ const Basketball = () => {
                 </div>
             )}
 
-            {/* Footer - same as Home.js */}
+            {/* Footer */}
             <footer className="footer">
                 <div className="footer-bottom">
                     <p>&copy; 2025 Sapatosan. All rights reserved.</p>
