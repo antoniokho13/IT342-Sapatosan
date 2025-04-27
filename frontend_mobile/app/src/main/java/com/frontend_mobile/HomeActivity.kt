@@ -56,6 +56,14 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, ProfileActivity::class.java))
         }
 
+        binding.drawerShoppingCart.setOnClickListener {
+            startActivity(Intent(this, ShoppingCartActivity::class.java))
+        }
+
+        binding.tvSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
         binding.drawerLogout.setOnClickListener {
             // Clear user session
             val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
@@ -143,6 +151,10 @@ class HomeActivity : AppCompatActivity() {
 
         binding.drawerProfile.setOnClickListener {
             startActivity(Intent(this, ProfileActivity::class.java))
+        }
+
+        binding.drawerShoppingCart.setOnClickListener {
+            startActivity(Intent(this, ShoppingCartActivity::class.java))
         }
     }
 
