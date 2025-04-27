@@ -173,13 +173,13 @@ const Home = () => {
 
     const removeFromCart = (index) => {
         const newCart = [...cart];
-        newCart.splice(index, 1);
-        setCart(newCart);
-        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
+        newCart.splice(index, 1); // Remove the item at the specified index
+        setCart(newCart); // Update the state
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart)); // Sync with localStorage
     };
 
     const calculateTotal = () => {
-        return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
     };
 
     const handleCheckout = () => {
@@ -189,7 +189,7 @@ const Home = () => {
             window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
             return;
         }
-      
+
         // Save cart to session for checkout page
         localStorage.setItem('checkoutItems', localStorage.getItem('sapatosanCart'));
         
@@ -241,6 +241,47 @@ const Home = () => {
             document.body.style.overflow = 'auto';
         };
     }, [showCart]);
+
+    useEffect(() => {
+        const fetchCartData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const savedCart = localStorage.getItem('sapatosanCart');
+                const cartItems = savedCart ? JSON.parse(savedCart) : [];
+
+                if (token && cartItems.length > 0) {
+                    // Fetch all products from the backend
+                    const response = await axios.get('http://localhost:8080/api/products', {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    if (response.data && Array.isArray(response.data)) {
+                        // Map cart items to include product details
+                        const updatedCart = cartItems.map((cartItem) => {
+                            const product = response.data.find((p) => p.id === cartItem.id);
+                            return product
+                                ? {
+                                      ...cartItem,
+                                      name: product.name,
+                                      brand: product.brand,
+                                      image: product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image',
+                                      price: product.price / 100,
+                                  }
+                                : cartItem; // Keep the original cart item if no match is found
+                        });
+
+                        setCart(updatedCart);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching cart data:', error);
+            }
+        };
+
+        fetchCartData();
+    }, []);
 
     return (
         <div>
@@ -343,15 +384,16 @@ const Home = () => {
                                     {cart.map((item, index) => (
                                         <div key={index} className="cart-item">
                                             <div className="cart-item-image">
-                                                <img src={item.image} alt={item.name} />
+                                                <img src={item.image || 'https://via.placeholder.com/300x300?text=No+Image'} alt={item.name} />
                                             </div>
                                             <div className="cart-item-details">
                                                 <h3>{item.name}</h3>
                                                 <p className="cart-item-brand">{item.brand}</p>
-                                                <p className="cart-item-size">
-                                                    Size: US {item.selectedSize}
+                                                <p className="cart-item-size">Size: US {item.selectedSize}</p>
+                                                <p className="cart-item-quantity">Quantity: {item.quantity}</p>
+                                                <p className="cart-item-price">
+                                                    ${item.price.toFixed(2)} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
                                                 </p>
-                                                <p className="cart-item-price">${item.price.toFixed(2)}</p>
                                             </div>
                                             <button 
                                                 className="remove-item" 

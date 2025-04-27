@@ -85,36 +85,75 @@ const Casual = () => {
     // The rest of your component remains the same
 
     // Cart functions
-    const addToCart = (shoe, size = null) => {
-        const shoeWithSize = size ? {...shoe, selectedSize: size} : {...shoe, selectedSize: shoe.sizes[0]};
-        const newCart = [...cart, shoeWithSize];
-        setCart(newCart);
-        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
-        
-        // Show a temporary "Added to cart" message
-        const shoeCard = document.getElementById(`shoe-${shoe.id}`);
-        if (shoeCard) {
-            shoeCard.classList.add('added-to-cart');
-            setTimeout(() => {
-                shoeCard.classList.remove('added-to-cart');
-            }, 1000);
+    const addToCart = async (shoe, size, quantity) => {
+        // Check if user is logged in
+        if (!localStorage.getItem('token')) {
+            // Redirect to login page with return URL
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return;
         }
-        // Close modal if open
-        if (quickViewShoe) {
-            setQuickViewShoe(null);
-            setSelectedSize(null);
+
+        // Prepare the cart product data
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId'); // Ensure userId is stored in localStorage
+        const shoeWithDetails = { ...shoe, selectedSize: size, quantity };
+        const cartProduct = {
+            productId: shoeWithDetails.id,
+            quantity: shoeWithDetails.quantity, // Quantity selected by the user
+            cartId: userId, // Use userId as cartId
+        };
+
+        try {
+            // Send the cart product to the backend
+            const response = await axios.post(
+                'http://localhost:8080/api/carts/products',
+                cartProduct,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (response.status === 200) {
+                // Update the local cart state
+                const existingProductIndex = cart.findIndex(
+                    (item) => item.id === shoeWithDetails.id && item.selectedSize === size
+                );
+
+                if (existingProductIndex !== -1) {
+                    // Update quantity if the product already exists in the cart
+                    const updatedCart = [...cart];
+                    updatedCart[existingProductIndex].quantity += quantity;
+                    setCart(updatedCart);
+                    localStorage.setItem('sapatosanCart', JSON.stringify(updatedCart));
+                } else {
+                    // Add new product to the cart
+                    const newCart = [...cart, shoeWithDetails];
+                    setCart(newCart);
+                    localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
+                }
+
+                // Close the modal
+                setQuickViewShoe(null);
+                setSelectedSize(null);
+            } else {
+                console.error('Failed to add to cart:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
         }
     };
 
     const removeFromCart = (index) => {
         const newCart = [...cart];
-        newCart.splice(index, 1);
-        setCart(newCart);
-        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
+        newCart.splice(index, 1); // Remove the item at the specified index
+        setCart(newCart); // Update the state
+        localStorage.setItem('sapatosanCart', JSON.stringify(newCart)); // Sync with localStorage
     };
 
     const calculateTotal = () => {
-        return cart.reduce((total, item) => total + item.price, 0).toFixed(2);
+        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
     };
 
     const toggleCart = () => {
@@ -127,9 +166,8 @@ const Casual = () => {
 
     const openQuickView = (shoe) => {
         setQuickViewShoe(shoe);
-        setSelectedSize(null);
-        // Close cart if open
-        setShowCart(false);
+        setSelectedSize(null); // Reset the selected size
+        setShowCart(false); // Close the cart if it's open
     };
 
     const closeQuickView = () => {
@@ -320,43 +358,6 @@ const handleCheckout = () => {
                 </div>
             </section>
 
-            {/* Filter Bar remains the same */}
-            <section className="filter-bar">
-                <div className="filter-container">
-                    <div className="filter-group">
-                        <label>Brand:</label>
-                        <select>
-                            <option value="">All Brands</option>
-                            <option value="Nike">Nike</option>
-                            <option value="Onitsuka Tiger">Onitsuka Tiger</option>
-                            <option value="Pull&Bear">Pull&Bear</option>
-                        </select>
-                    </div>
-                    <div className="filter-group">
-                        <label>Size:</label>
-                        <select>
-                            <option value="">All Sizes</option>
-                            <option value="6">US 6</option>
-                            <option value="7">US 7</option>
-                            <option value="8">US 8</option>
-                            <option value="9">US 9</option>
-                            <option value="10">US 10</option>
-                            <option value="11">US 11</option>
-                            <option value="12">US 12</option>
-                        </select>
-                    </div>
-                    <div className="filter-group">
-                        <label>Price:</label>
-                        <select>
-                            <option value="">All Prices</option>
-                            <option value="70-120">$70 - $120</option>
-                            <option value="120-180">$120 - $180</option>
-                            <option value="180-250">$180 - $250</option>
-                        </select>
-                    </div>
-                    <button className="filter-button">Apply Filters</button>
-                </div>
-            </section>
 
             {/* Products Grid - Updated to use fetched data */}
             <section className="products-section">
@@ -387,7 +388,7 @@ const handleCheckout = () => {
                                         </div>
                                         <button 
                                             className="add-to-cart"
-                                            onClick={() => addToCart(shoe)}
+                                            onClick={() => openQuickView(shoe)} // Open the Quick View Modal
                                         >
                                             <span></span>
                                             <span></span>
@@ -433,10 +434,21 @@ const handleCheckout = () => {
                                         ))}
                                     </div>
                                 </div>
+
+                                <div className="modal-quantity-selection">
+                                    <h3>Select Quantity:</h3>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        value={quickViewShoe.quantity || 1}
+                                        onChange={(e) => setQuickViewShoe({ ...quickViewShoe, quantity: parseInt(e.target.value) })}
+                                    />
+                                </div>
                                 
                                 <button 
                                     className={`modal-add-to-cart ${!selectedSize ? 'disabled' : ''}`}
-                                    onClick={() => selectedSize ? addToCart(quickViewShoe, selectedSize) : null}
+                                    onClick={() => selectedSize ? addToCart(quickViewShoe, selectedSize, quickViewShoe.quantity || 1) : null}
                                     disabled={!selectedSize}
                                 >
                                     <span></span>
@@ -484,10 +496,11 @@ const handleCheckout = () => {
                                             <div className="cart-item-details">
                                                 <h3>{item.name}</h3>
                                                 <p className="cart-item-brand">{item.brand}</p>
-                                                <p className="cart-item-size">
-                                                    Size: US {item.selectedSize}
+                                                <p className="cart-item-size">Size: US {item.selectedSize}</p>
+                                                <p className="cart-item-quantity">Quantity: {item.quantity}</p>
+                                                <p className="cart-item-price">
+                                                    ${item.price.toFixed(2)} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
                                                 </p>
-                                                <p className="cart-item-price">${item.price.toFixed(2)}</p>
                                             </div>
                                             <button 
                                                 className="remove-item" 
@@ -512,8 +525,8 @@ const handleCheckout = () => {
                                             Continue Shopping
                                         </button>
                                         <button className="checkout" onClick={handleCheckout}>
-  Proceed to Checkout
-</button>
+                                            Proceed to Checkout
+                                        </button>
                                     </div>
                                 </div>
                             </>

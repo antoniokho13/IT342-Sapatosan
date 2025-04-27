@@ -48,6 +48,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users").permitAll() // Adjust based on whether /api/users should be public or protected
                         .requestMatchers("/api/products/**").permitAll()
                         .requestMatchers("/api/categories/**").permitAll()
+                        .requestMatchers("/api/carts/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("ADMIN", "USER")
 
