@@ -819,6 +819,25 @@
     animation-delay: 0.75s;
 }
 
+.modal-quantity-selection {
+    margin-top: 20px;
+}
+
+.modal-quantity-selection h3 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.modal-quantity-selection input {
+    width: 60px;
+    padding: 5px;
+    font-size: 1rem;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .products-grid {

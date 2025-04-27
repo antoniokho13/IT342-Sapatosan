@@ -1,12 +1,9 @@
 package edu.cit.sapatosan.security;
 
-import com.google.firebase.database.DatabaseError;
-import edu.cit.sapatosan.entity.UserEntity;
-import edu.cit.sapatosan.service.TokenBlacklistService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,9 +11,12 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
+import edu.cit.sapatosan.entity.UserEntity;
+import edu.cit.sapatosan.service.TokenBlacklistService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -50,9 +50,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 boolean isBlacklisted = tokenBlacklistService.isTokenBlacklisted(token).get();
                 if (isBlacklisted) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("Token is blacklisted. Please log in again.");
                     return;
                 }
 
+                // Validate the token
                 if (jwtUtil.validateToken(token)) {
                     UserEntity userDetails = new UserEntity(); // Replace with actual user fetching logic
                     String role = jwtUtil.extractRole(token);
@@ -63,6 +65,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                } else {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.getWriter().write("Invalid token. Please log in again.");
+                    return;
                 }
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
