@@ -1,6 +1,10 @@
 package edu.cit.sapatosan.service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -152,6 +156,33 @@ public class CartService {
                 });
 
         return future;
+    }
+
+    public void removeEntireProductFromCart(String userId, String productId) throws ExecutionException, InterruptedException {
+        Optional<CartEntity> cartOptional = getCartByUserId(userId).get();
+    
+        if (cartOptional.isPresent()) {
+            CartEntity cart = cartOptional.get();
+            String cartId = cart.getId();
+    
+            if (cart.getCartProductIds() != null) {
+                Map<String, Integer> cartProducts = cart.getCartProductIds();
+    
+                if (cartProducts.containsKey(productId)) {
+                    // Remove the product entirely, regardless of quantity
+                    cartProducts.remove(productId);
+                    cart.setCartProductIds(cartProducts);
+                    cartRef.child(cartId).setValueAsync(cart).get();
+                    System.out.println("Removed entire product from cart: " + productId);
+                } else {
+                    System.out.println("Product not found in cart.");
+                }
+            } else {
+                System.out.println("Cart is empty.");
+            }
+        } else {
+            System.out.println("Cart not found for userId: " + userId);
+        }
     }
 
     public void removeProductFromCart(String userId, String productId) throws ExecutionException, InterruptedException {

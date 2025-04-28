@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import edu.cit.sapatosan.dto.AddProductToCartRequest; // Import the DTO
 import edu.cit.sapatosan.entity.CartEntity;
 import edu.cit.sapatosan.service.CartService;
-import edu.cit.sapatosan.dto.AddProductToCartRequest; // Import the DTO
 
 @RestController
 @RequestMapping("/api/carts")
@@ -88,7 +88,7 @@ public class CartController {
             @PathVariable String userId,
             @PathVariable String productId) {
         try {
-            cartService.removeProductFromCart(userId, productId);
+            cartService.removeEntireProductFromCart(userId, productId);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             e.printStackTrace();
