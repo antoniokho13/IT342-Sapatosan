@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">Sapatosan</string>
+    <string name="shipping_address_hint">Enter complete shipping address</string>
+    <string name="confirm_order_button">CONFIRM ORDER</string>
+    <string name="order_items_label">Order Items</string>
+    <string name="payment_method_label">Payment Method</string>
+
+    <string-array name="payment_methods">
+        <item>Credit Card</item>
+        <item>GCash</item>
+        <item>Maya</item>
+        <item>Cash on Delivery</item>
+    </string-array>
 </resources>

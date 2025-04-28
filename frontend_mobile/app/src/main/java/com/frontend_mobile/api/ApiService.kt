@@ -1,16 +1,23 @@
 // ApiService.kt
 package com.frontend_mobile.api
 
+import com.frontend_mobile.models.CartEntity
 import com.frontend_mobile.models.CartItem
+import com.frontend_mobile.models.OrderRequest
+import com.frontend_mobile.models.ProductDTO
 import com.frontend_mobile.models.User
 import com.frontend_mobile.models.ShoeItem
+import okhttp3.Response
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.POST
 import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class RegisterRequest(
     val firstName: String,
@@ -30,7 +37,35 @@ data class ApiResponse(
     val message: String
 )
 
+data class LoginResponse(
+    val token: String,
+    val userId: String,
+    val email: String,
+    val role: String
+)
+
+data class CartResponse(
+    val id: String,
+    val userId: String,
+    val products: List<CartItem>
+)
+
+data class UserRequest(
+    val email: String,
+    val password: String
+)
+
+data class UserResponse(
+    val id: String,
+    val firstName: String,
+    val lastName: String,
+    val email: String,
+    val role: String // Include the user's role
+)
+
+
 interface ApiService {
+    //LOGIN
     @POST("/api/users")
     fun registerUser(@Body request: RegisterRequest): Call<ApiResponse>
 
@@ -42,27 +77,55 @@ interface ApiService {
 
     @PUT("/api/users/{id}")
     fun updateUserDetails(@Path("id") userId: String, @Body user: User): Call<ApiResponse>
-
+    //PRODUCTS
     @GET("/api/products")
     fun getProducts(): Call<List<ShoeItem>>
+    //CART
+    @GET("/api/carts/{id}")
+    fun getCartById(@Path("id") cartId: String): Call<CartEntity>
 
-    // Fetch cart items
-    @GET("/cart")
-    fun fetchCart(): Call<List<CartItem>>
+    @POST("/api/carts")
+    fun createCart(@Body cart: CartEntity): Call<Void>
 
-    // Add product to cart
-    @POST("/cart")
-    fun addProductToCart(@Body cartItem: CartItem): Call<Void>
+    @POST("/api/carts/{userId}/add-product")
+    fun addProductToCart(
+        @Path("userId") userId: String,
+        @Query("productId") productId: String,
+        @Query("quantity") quantity: Int
+    ): Call<ApiResponse>
 
-    // Create a new cart (if needed)
-    @POST("/cart/create")
-    fun createCart(): Call<Void>
+    @PUT("/api/carts/{id}")
+    fun updateCart(@Path("id") cartId: String, @Body updatedCart: CartEntity): Call<Void>
 
-    // Update cart item
-    @PUT("/cart/{id}")
-    fun updateCartItem(@Path("id") id: String, @Body cartItem: CartItem): Call<Void>
+    @DELETE("/api/carts/{id}")
+    fun deleteCart(@Path("id") cartId: String): Call<Void>
 
-    // Delete cart item
-    @DELETE("/cart/{id}")
-    fun deleteCart(@Path("id") id: String): Call<Void>
+    @DELETE("/api/carts/{id}")
+    fun clearCart(@Path("id") cartId: String): Call<Void>
+
+    @POST("/api/orders")
+    fun createOrder(@Body order: OrderRequest): Call<Void>
+
+    // Update existing commented-out endpoints to match your controller
+    @PUT("/api/orders/{orderId}/payment/{paymentId}")
+    fun associatePaymentWithOrder(
+        @Path("orderId") orderId: String,
+        @Path("paymentId") paymentId: String
+    ): Call<Void>
+
+    @PUT("/api/orders/{orderId}")
+    fun updateOrder(
+        @Path("orderId") orderId: String,
+        @Body updatedOrder: OrderRequest
+    ): Call<Void>
+
+    @DELETE("/api/orders/{orderId}")
+    fun cancelOrder(@Path("orderId") orderId: String): Call<Void>
+
+    @PATCH("/api/orders/{orderId}")
+    fun updateOrderStatus(
+        @Path("orderId") orderId: String,
+        @Body status: String
+    ): Call<Void>
 }
+

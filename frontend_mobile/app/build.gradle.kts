@@ -40,12 +40,15 @@ android {
     buildFeatures {
         compose = true
         viewBinding = true
+        dataBinding = true
     }
 }
 
 dependencies {
 
+    implementation("androidx.drawerlayout:drawerlayout:1.1.1")
     implementation ("androidx.gridlayout:gridlayout:1.0.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -65,6 +68,7 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.android)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.appcompat)
+    implementation(libs.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -75,6 +79,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.github.bumptech.glide:glide:4.15.1")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
     kapt("com.github.bumptech.glide:compiler:4.15.1")
 
 }

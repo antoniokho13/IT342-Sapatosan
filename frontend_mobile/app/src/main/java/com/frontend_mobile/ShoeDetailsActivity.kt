@@ -10,15 +10,22 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.gridlayout.widget.GridLayout
 import com.bumptech.glide.Glide
+import com.frontend_mobile.api.ApiResponse
+import com.frontend_mobile.api.ApiService
 import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.databinding.ActivityShoeDetailsBinding
-import com.frontend_mobile.models.CartItem
-import com.frontend_mobile.models.CartManager
 import com.frontend_mobile.models.ShoeItem
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 class ShoeDetailsActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityShoeDetailsBinding
+    private lateinit var apiService: ApiService
+    private lateinit var token: String // This should be retrieved from SharedPreferences or wherever you store it
+    private lateinit var userId: String // This should also come from SharedPreferences or your app logic
     private var allShoes: List<ShoeItem> = emptyList()
     private var selectedShoe: ShoeItem? = null
     private var selectedSize: String? = null
@@ -33,9 +40,7 @@ class ShoeDetailsActivity : AppCompatActivity() {
         allShoes = intent.getParcelableArrayListExtra("allShoes") ?: emptyList()
         selectedShoe = intent.getParcelableExtra("selectedShoe")
 
-        binding.shoeNameToolbar.text = selectedShoe?.name ?: "Shoe Details"
-        Glide.with(this).load(R.drawable.logo).into(binding.shoeLogo)
-
+        // Setup toolbar menu button
         binding.icMenu.setOnClickListener {
             val drawerLayout = binding.drawerLayout
             if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
@@ -45,50 +50,33 @@ class ShoeDetailsActivity : AppCompatActivity() {
             }
         }
 
+        // Drawer navigation
+        binding.drawerProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
+        }
+        binding.drawerShoppingCart.setOnClickListener {
+            startActivity(Intent(this, ShoppingCartActivity::class.java))
+        }
+        binding.tvSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+        binding.drawerLogout.setOnClickListener {
+            // Clear user session
+            val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
+            sharedPrefs.edit().clear().apply()
+            RetrofitClient.clearToken()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
+
         selectedShoe?.let { displayShoeDetails(it) }
         setupSizeButtons()
         setupQuantitySpinner()
 
         binding.btnAddToCart.setOnClickListener {
             addToCart()
-        }
-    }
-
-    private fun setupToolbar() {
-        binding.icMenu.setOnClickListener {
-            if (binding.drawerLayout.isDrawerOpen(GravityCompat.END)) {
-                binding.drawerLayout.closeDrawer(GravityCompat.END)
-            } else {
-                binding.drawerLayout.openDrawer(GravityCompat.END)
-            }
-        }
-
-        // Set up drawer navigation items
-        binding.drawerProfile.setOnClickListener {
-            startActivity(Intent(this, ProfileActivity::class.java))
-        }
-
-        binding.drawerShoppingCart.setOnClickListener {
-            startActivity(Intent(this, ShoppingCartActivity::class.java))
-        }
-
-        binding.tvSettings.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
-
-        binding.drawerLogout.setOnClickListener {
-            // Clear user session
-            val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
-            sharedPrefs.edit().clear().apply()
-
-            // Clear token from RetrofitClient
-            RetrofitClient.clearToken()
-
-            // Navigate to LoginActivity
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
         }
     }
 
@@ -125,12 +113,6 @@ class ShoeDetailsActivity : AppCompatActivity() {
 
                     selectedSizeButton = this
                     selectedSize = size // Save selected size!
-
-                    Toast.makeText(
-                        this@ShoeDetailsActivity,
-                        "Selected Size US $size",
-                        Toast.LENGTH_SHORT
-                    ).show()
                 }
             }
 
@@ -149,7 +131,7 @@ class ShoeDetailsActivity : AppCompatActivity() {
     private fun setupQuantitySpinner() {
         val quantities = (1..10).toList()
 
-        val adapter = object : ArrayAdapter<Int>(this, R.layout.custom_spinner_item, quantities) {
+        val adapter = object : ArrayAdapter<Int>(this, com.bumptech.glide.R.layout.support_simple_spinner_dropdown_item, quantities) {
             override fun getDropDownView(
                 position: Int,
                 convertView: View?,
@@ -181,26 +163,34 @@ class ShoeDetailsActivity : AppCompatActivity() {
     }
 
     private fun addToCart() {
-        if (selectedSize == null) {
-            Toast.makeText(this, "Please select a size.", Toast.LENGTH_SHORT).show()
+        val userId = RetrofitClient.getUserIdFromPrefs()
+        val shoe = selectedShoe ?: run {
+            Toast.makeText(this, "No shoe selected", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val size = selectedSize ?: run {
+            Toast.makeText(this, "Please select a size", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val shoe = selectedShoe ?: return
+        RetrofitClient.instance.addProductToCart(
+            userId = userId,
+            productId = shoe.id,
+            quantity = selectedQuantity
+        ).enqueue(object : Callback<ApiResponse> {
+            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@ShoeDetailsActivity, "Product added to cart!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@ShoeDetailsActivity, ShoppingCartActivity::class.java))
+                } else {
+                    Toast.makeText(this@ShoeDetailsActivity, "Failed to add product to cart.", Toast.LENGTH_SHORT).show()
+                }
+            }
 
-        val cartItem = CartItem(
-            shoe = shoe,
-            selectedSize = selectedSize!!,
-            selectedQuantity = selectedQuantity
-        )
-
-        CartManager.addItem(cartItem)
-        Toast.makeText(
-            this,
-            "${shoe.name} (Size US $selectedSize x$selectedQuantity) added to cart!",
-            Toast.LENGTH_SHORT
-        ).show()
-        val intent = Intent(this, ShoppingCartActivity::class.java)
-        startActivity(intent)
+            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                Toast.makeText(this@ShoeDetailsActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }
+

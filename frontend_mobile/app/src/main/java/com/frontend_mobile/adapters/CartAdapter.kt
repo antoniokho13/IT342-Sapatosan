@@ -3,14 +3,11 @@ package com.frontend_mobile.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
+import android.widget.*
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.frontend_mobile.R
 import com.frontend_mobile.models.CartItem
-import com.frontend_mobile.models.CartManager
 
 class CartAdapter(
     private val cartItems: MutableList<CartItem>,
@@ -23,6 +20,8 @@ class CartAdapter(
         val shoeQuantity: TextView = itemView.findViewById(R.id.selectedQuantity)
         val shoePrice: TextView = itemView.findViewById(R.id.shoePrice)
         val shoeImage: ImageView = itemView.findViewById(R.id.shoeImage)
+        val btnIncrease: Button = itemView.findViewById(R.id.btnIncrease)
+        val btnDecrease: Button = itemView.findViewById(R.id.btnDecrease)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CartViewHolder {
@@ -32,31 +31,53 @@ class CartAdapter(
 
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
         val item = cartItems[position]
-        holder.shoeName.text = item.shoe.name
+        holder.shoeName.text = item.product
         holder.shoeSize.text = "Size: US ${item.selectedSize}"
-        holder.shoeQuantity.text = "Qty: ${item.selectedQuantity}"
-        holder.shoePrice.text = "₱${item.shoe.price * item.selectedQuantity}"
+        holder.shoeQuantity.text = item.selectedQuantity.toString()
+        holder.shoePrice.text = "₱${item.price * item.selectedQuantity}"
 
         Glide.with(holder.shoeImage.context)
-            .load(item.shoe.imageUrl)
+            .load(item.imageUrl)
             .into(holder.shoeImage)
 
-        holder.itemView.setOnLongClickListener {
-            AlertDialog.Builder(holder.itemView.context)
-                .setTitle("Remove Item")
-                .setMessage("Are you sure you want to remove ${item.shoe.name} (Size ${item.selectedSize})?")
-                .setPositiveButton("Yes") { _, _ ->
-                    CartManager.removeItem(item)
-                    cartItems.removeAt(position)
-                    notifyItemRemoved(position)
-                    notifyItemRangeChanged(position, cartItems.size)
-                    onCartUpdated()
-                }
-                .setNegativeButton("No", null)
-                .show()
-            true
+        holder.btnIncrease.setOnClickListener {
+            item.selectedQuantity++
+            notifyItemChanged(position)
+            onCartUpdated()
+        }
+        holder.btnDecrease.setOnClickListener {
+            if (item.selectedQuantity > 1) {
+                item.selectedQuantity--
+                notifyItemChanged(position)
+                onCartUpdated()
+            } else {
+                cartItems.removeAt(position)
+                notifyItemRemoved(position)
+                notifyItemRangeChanged(position, cartItems.size)
+                onCartUpdated()
+            }
         }
     }
 
     override fun getItemCount(): Int = cartItems.size
+
+    fun getCartItems(): List<CartItem> {
+        return cartItems
+    }
+
+    fun getTotalPrice(): Double {
+        return cartItems.sumOf { it.price * it.selectedQuantity }
+    }
+
+    fun updateItems(newItems: List<CartItem>) {
+        cartItems.clear()
+        cartItems.addAll(newItems)
+        notifyDataSetChanged()
+    }
+
+    fun clearCart() {
+        cartItems.clear()
+        notifyDataSetChanged()
+        onCartUpdated()
+    }
 }

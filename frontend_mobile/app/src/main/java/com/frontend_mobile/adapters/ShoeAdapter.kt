@@ -1,10 +1,11 @@
-package com.frontend_mobile.models
+package com.frontend_mobile.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.frontend_mobile.databinding.ItemShoeBinding
+import com.frontend_mobile.models.ShoeItem
 
 class ShoeAdapter(
     private val items: MutableList<ShoeItem>,
