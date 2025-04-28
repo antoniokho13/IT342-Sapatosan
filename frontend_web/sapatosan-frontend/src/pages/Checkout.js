@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/Checkout.css';
@@ -14,52 +15,177 @@ const Checkout = () => {
         city: '',
         postalCode: '',
         country: 'Philippines',
-        paymentMethod: 'credit_card',
-        cardNumber: '',
-        cardName: '',
-        cardExpiry: '',
-        cardCVC: '',
+        contactNumber: '',
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderComplete, setOrderComplete] = useState(false);
     const [orderId, setOrderId] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [paymentInfo, setPaymentInfo] = useState(null);
+    const [fetchingPayment, setFetchingPayment] = useState(false);
 
-    // Load cart data from localStorage
+    // Load cart data from backend and fetch user data
     useEffect(() => {
-        const savedCart = localStorage.getItem('sapatosanCart');
-        if (savedCart) {
-            setCart(JSON.parse(savedCart));
-        } else {
-            // Redirect to home if cart is empty
-            navigate('/');
-        }
+        const fetchUserAndCartData = async () => {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            const email = localStorage.getItem('email');
+            
+            if (!token || !userId) {
+                // If user is not logged in, redirect to login page
+                navigate('/login?redirect=/checkout');
+                return;
+            }
+            
+            try {
+                // Fetch user data
+                const userResponse = await axios.get('http://localhost:8080/api/users', {
+                    headers: {
+                        authorization: `Bearer ${token}`
+                    }
+                });
+                
+                const currentUser = userResponse.data.find(user => user.email === email);
+                
+                if (currentUser) {
+                    setFormData(prev => ({ 
+                        ...prev, 
+                        firstName: currentUser.firstName || '',
+                        lastName: currentUser.lastName || '',
+                        email: currentUser.email || ''
+                    }));
+                } else {
+                    // If user not found but has email in localStorage
+                    setFormData(prev => ({ ...prev, email: email || '' }));
+                }
+
+                // Fetch cart data
+                await fetchCartItems(token, userId);
+                
+            } catch (error) {
+                console.error('Error fetching user or cart data:', error);
+                // If we can't fetch user data, at least try to use the email from localStorage
+                if (email) {
+                    setFormData(prev => ({ ...prev, email }));
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
         
-        // Pre-fill email if user is logged in
-        const savedEmail = localStorage.getItem('email');
-        if (savedEmail) {
-            setFormData(prev => ({ ...prev, email: savedEmail }));
-        }
+        fetchUserAndCartData();
     }, [navigate]);
+
+    // Function to fetch cart items from backend
+    const fetchCartItems = async (token, userId) => {
+        try {
+            // First, get the cart data
+            const cartResponse = await axios.get(
+                `http://localhost:8080/api/carts/user/${userId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (cartResponse.status !== 200 || !cartResponse.data) {
+                console.log('No cart found or empty cart');
+                navigate('/'); // Redirect to home if cart is empty
+                return;
+            }
+
+            const cartData = cartResponse.data;
+            const cartProductIds = Object.keys(cartData.cartProductIds || {});
+            
+            if (cartProductIds.length === 0) {
+                console.log('Cart is empty');
+                navigate('/'); // Redirect to home if cart is empty
+                return;
+            }
+            
+            // Next, fetch ALL products to find the ones in the cart
+            const productsResponse = await axios.get(
+                `http://localhost:8080/api/products`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (!productsResponse.data || !Array.isArray(productsResponse.data)) {
+                console.error("Failed to fetch products for cart");
+                return;
+            }
+            
+            // Create a map of all products by ID for easy lookup
+            const productsMap = {};
+            productsResponse.data.forEach(product => {
+                productsMap[product.id] = {
+                    ...product,
+                    price: product.price / 100,
+                    sizes: [7, 8, 9, 10, 11, 12],
+                    description: product.description || `Premium ${product.brand} shoes.`,
+                    imageUrl: product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+                };
+            });
+            
+            // Get the saved sizes from localStorage
+            const savedCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+            const sizeMap = {};
+            savedCart.forEach(item => {
+                const key = item.id;
+                sizeMap[key] = item.selectedSize;
+            });
+            
+            // Build the cart items with complete product details
+            const cartItems = cartProductIds.map(productId => {
+                const product = productsMap[productId] || {};
+                const quantity = cartData.cartProductIds[productId] || 1;
+                const savedSize = sizeMap[productId] || 7;
+                
+                return {
+                    ...product,
+                    id: productId,
+                    quantity: quantity,
+                    price: product.price || 0,
+                    selectedSize: savedSize
+                };
+            });
+            
+            setCart(cartItems);
+            localStorage.setItem('sapatosanCart', JSON.stringify(cartItems));
+        } catch (error) {
+            console.error('Error fetching cart items:', error);
+            const savedCart = localStorage.getItem('sapatosanCart');
+            if (savedCart) {
+                // Fallback to local storage if API fails
+                setCart(JSON.parse(savedCart));
+            } else {
+                navigate('/'); // Redirect to home if no cart data available
+            }
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value,
-        });
-        
-        // Clear error when user starts typing
-        if (errors[name]) {
-            setErrors({
-                ...errors,
-                [name]: null
+        // Don't allow changes to firstName, lastName, or email
+        if (name !== 'firstName' && name !== 'lastName' && name !== 'email') {
+            setFormData({
+                ...formData,
+                [name]: value,
             });
+            
+            // Clear error when user starts typing
+            if (errors[name]) {
+                setErrors({
+                    ...errors,
+                    [name]: null
+                });
+            }
         }
     };
 
     const calculateSubtotal = () => {
-        return cart.reduce((total, item) => total + item.price, 0);
+        return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
 
     const calculateTax = () => {
@@ -79,24 +205,8 @@ const Checkout = () => {
         if (!formData.email.trim()) newErrors.email = "Email is required";
         else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
         if (!formData.address.trim()) newErrors.address = "Address is required";
-        if (!formData.city.trim()) newErrors.city = "City is required";
         if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
-        
-        // Payment validation
-        if (formData.paymentMethod === 'credit_card') {
-            if (!formData.cardNumber.trim()) newErrors.cardNumber = "Card number is required";
-            else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) 
-                newErrors.cardNumber = "Card number should be 16 digits";
-                
-            if (!formData.cardName.trim()) newErrors.cardName = "Name on card is required";
-            if (!formData.cardExpiry.trim()) newErrors.cardExpiry = "Expiry date is required";
-            else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(formData.cardExpiry)) 
-                newErrors.cardExpiry = "Format should be MM/YY";
-                
-            if (!formData.cardCVC.trim()) newErrors.cardCVC = "CVC is required";
-            else if (!/^\d{3,4}$/.test(formData.cardCVC)) 
-                newErrors.cardCVC = "CVC should be 3-4 digits";
-        }
+        if (!formData.contactNumber.trim()) newErrors.contactNumber = "Contact number is required";
         
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -109,20 +219,100 @@ const Checkout = () => {
         
         setIsSubmitting(true);
         
-        // Simulate API call with timeout
-        setTimeout(() => {
-            // Generate random order ID
-            const generatedOrderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-            setOrderId(generatedOrderId);
-            setOrderComplete(true);
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+        
+        // Prepare the order data that matches the backend OrderEntity structure
+        const orderData = {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            address: formData.address,
+            postalCode: formData.postalCode,
+            country: formData.country,
+            contactNumber: formData.contactNumber
+        };
+        
+        try {
+            // Make the API call to create an order
+            const response = await axios.post(
+                `http://localhost:8080/api/orders/from-cart/${userId}`,
+                orderData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
             
-            // Clear cart from localStorage
-            localStorage.removeItem('sapatosanCart');
-            
+            if (response.status === 200) {
+                // Use the order ID from the response
+                const orderId = response.data || 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+                setOrderId(orderId);
+                setOrderComplete(true);
+                
+                // Clear cart from localStorage
+                localStorage.removeItem('sapatosanCart');
+            } else {
+                setErrors({ submit: 'Failed to place order. Please try again.' });
+            }
+        } catch (error) {
+            console.error('Error creating order:', error);
+            setErrors({ submit: 'Failed to place order: ' + (error.response?.data || error.message) });
+        } finally {
             setIsSubmitting(false);
-        }, 2000);
+        }
     };
 
+    // Add a function to fetch payment information
+    const fetchPaymentInfo = async (orderId) => {
+        if (!orderId) return;
+        
+        setFetchingPayment(true);
+        const token = localStorage.getItem('token');
+        
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/payments/order/${orderId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            if (response.status === 200 && response.data) {
+                setPaymentInfo(response.data);
+            } else {
+                console.error('No payment information found');
+            }
+        } catch (error) {
+            console.error('Error fetching payment information:', error);
+        } finally {
+            setFetchingPayment(false);
+        }
+    };
+
+    // Handle payment button click
+    const handlePayNowClick = async () => {
+        if (!paymentInfo) {
+            await fetchPaymentInfo(orderId);
+        }
+        
+        // If we have payment link, navigate to it
+        if (paymentInfo && paymentInfo.link) {
+            window.open(paymentInfo.link, '_blank');
+        } else {
+            alert('Payment link not available. Please try again later.');
+        }
+    };
+
+    if (isLoading) {
+        return <div className="loading">Loading checkout information...</div>;
+    }
+
+    // Modify your orderComplete render section
     if (orderComplete) {
         return (
             <div className="checkout-page">
@@ -150,7 +340,7 @@ const Checkout = () => {
                                     <div className="item-name">
                                         {item.name} <span>(US {item.selectedSize})</span>
                                     </div>
-                                    <div className="item-price">${item.price.toFixed(2)}</div>
+                                    <div className="item-price">${(item.price * item.quantity).toFixed(2)}</div>
                                 </div>
                             ))}
                         </div>
@@ -173,9 +363,35 @@ const Checkout = () => {
                             </div>
                         </div>
                     </div>
-                    <Link to="/" className="return-home">
-                        Return to Home
-                    </Link>
+                    
+                    {/* Payment Section */}
+                    <div className="payment-section">
+                        <h3>Complete Your Purchase</h3>
+                        <div className="payment-info">
+                            <p>Your order is ready for payment. Please click the button below to proceed to our secure payment gateway.</p>
+                            
+                            <div className="payment-methods">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png" alt="Google Pay" />
+                                <img src="https://1000logos.net/wp-content/uploads/2021/05/Grab-logo.png" alt="GrabPay" />
+                            </div>
+                        </div>
+                        
+                        <div className="payment-actions">
+                            <button 
+                                onClick={handlePayNowClick} 
+                                className="pay-now-btn"
+                                disabled={fetchingPayment}
+                            >
+                                {fetchingPayment ? 'Loading Payment...' : 'Pay Now'}
+                            </button>
+                            
+                            <Link to="/" className="continue-shopping-link">
+                                Continue Shopping
+                            </Link>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -212,8 +428,8 @@ const Checkout = () => {
                                     id="firstName" 
                                     name="firstName" 
                                     value={formData.firstName}
-                                    onChange={handleInputChange}
-                                    className={errors.firstName ? 'error' : ''}
+                                    disabled={true}
+                                    className={errors.firstName ? 'error disabled' : 'disabled'}
                                 />
                                 {errors.firstName && <span className="error-message">{errors.firstName}</span>}
                             </div>
@@ -225,8 +441,8 @@ const Checkout = () => {
                                     id="lastName" 
                                     name="lastName" 
                                     value={formData.lastName}
-                                    onChange={handleInputChange}
-                                    className={errors.lastName ? 'error' : ''}
+                                    disabled={true}
+                                    className={errors.lastName ? 'error disabled' : 'disabled'}
                                 />
                                 {errors.lastName && <span className="error-message">{errors.lastName}</span>}
                             </div>
@@ -239,10 +455,23 @@ const Checkout = () => {
                                 id="email" 
                                 name="email" 
                                 value={formData.email}
-                                onChange={handleInputChange}
-                                className={errors.email ? 'error' : ''}
+                                disabled={true}
+                                className={errors.email ? 'error disabled' : 'disabled'}
                             />
                             {errors.email && <span className="error-message">{errors.email}</span>}
+                        </div>
+                        
+                        <div className="form-group">
+                            <label htmlFor="contactNumber">Contact Number</label>
+                            <input 
+                                type="text" 
+                                id="contactNumber" 
+                                name="contactNumber" 
+                                value={formData.contactNumber}
+                                onChange={handleInputChange}
+                                className={errors.contactNumber ? 'error' : ''}
+                            />
+                            {errors.contactNumber && <span className="error-message">{errors.contactNumber}</span>}
                         </div>
                         
                         <div className="form-group">
@@ -260,19 +489,6 @@ const Checkout = () => {
                         
                         <div className="form-row">
                             <div className="form-group">
-                                <label htmlFor="city">City</label>
-                                <input 
-                                    type="text" 
-                                    id="city" 
-                                    name="city" 
-                                    value={formData.city}
-                                    onChange={handleInputChange}
-                                    className={errors.city ? 'error' : ''}
-                                />
-                                {errors.city && <span className="error-message">{errors.city}</span>}
-                            </div>
-                            
-                            <div className="form-group">
                                 <label htmlFor="postalCode">Postal Code</label>
                                 <input 
                                     type="text" 
@@ -284,54 +500,34 @@ const Checkout = () => {
                                 />
                                 {errors.postalCode && <span className="error-message">{errors.postalCode}</span>}
                             </div>
-                        </div>
-                        
-                        <div className="form-group">
-                            <label htmlFor="country">Country</label>
-                            <select 
-                                id="country" 
-                                name="country"
-                                value={formData.country}
-                                onChange={handleInputChange}
-                            >
-                                <option value="Philippines">Philippines</option>
-                                <option value="United States">United States</option>
-                                <option value="Japan">Japan</option>
-                                <option value="South Korea">South Korea</option>
-                            </select>
+                            
+                            <div className="form-group">
+                                <label htmlFor="country">Country</label>
+                                <select 
+                                    id="country" 
+                                    name="country"
+                                    value={formData.country}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="Philippines">Philippines</option>
+                                    <option value="United States">United States</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="South Korea">South Korea</option>
+                                </select>
+                            </div>
                         </div>
                         
                         <h2>Payment</h2>
                         <p className="payment-secure-text">All transactions are secure and encrypted.</p>
 
-                        <div className="payment-container">
-                            <div className="payment-header">
-                                <span className="payment-provider">Secure Payments via PayMongo</span>
-                                <div className="payment-icons">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png" alt="Google Pay" />
-                                    <img src="https://1000logos.net/wp-content/uploads/2021/05/Grab-logo.png" alt="GrabPay" />
-                                    <span className="more-payment-methods">+8</span>
-                                </div>
-                            </div>
-                            
-                            <div className="payment-redirect-info">
-                                <div className="redirect-icon">
-                                    <img src="https://cdn-icons-png.flaticon.com/512/6295/6295417.png" alt="Redirect" />
-                                </div>
-                                <p className="redirect-text">
-                                    After clicking "Pay now", you will be redirected to Secure Payments via PayMongo to complete your purchase securely.
-                                </p>
-                            </div>
-                        </div>
+                        {errors.submit && <div className="error-message submit-error">{errors.submit}</div>}
 
                         <button 
                             type="submit" 
                             className="place-order-btn" 
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Processing...' : 'Pay now'}
+                            {isSubmitting ? 'Processing...' : 'Place Order'}
                         </button>
                     </form>
                 </div>
@@ -343,12 +539,13 @@ const Checkout = () => {
                         {cart.map((item, index) => (
                             <div key={index} className="summary-item">
                                 <div className="summary-item-image">
-                                    <img src={item.image} alt={item.name} />
+                                    <img src={item.imageUrl} alt={item.name} />
                                 </div>
                                 <div className="summary-item-details">
                                     <h3>{item.name}</h3>
                                     <p className="summary-item-size">Size: US {item.selectedSize}</p>
-                                    <p className="summary-item-price">${item.price.toFixed(2)}</p>
+                                    <p className="summary-item-quantity">Quantity: {item.quantity}</p>
+                                    <p className="summary-item-price">${(item.price * item.quantity).toFixed(2)}</p>
                                 </div>
                             </div>
                         ))}
