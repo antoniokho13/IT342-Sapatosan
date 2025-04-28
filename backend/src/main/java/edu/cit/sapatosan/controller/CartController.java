@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.sapatosan.entity.CartEntity;
@@ -82,5 +81,18 @@ public class CartController {
     public ResponseEntity<Void> deleteCart(@PathVariable String id) {
         cartService.deleteCart(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{userId}/remove-product/{productId}")
+    public ResponseEntity<Void> removeProductFromCart(
+            @PathVariable String userId,
+            @PathVariable String productId) {
+        try {
+            cartService.removeProductFromCart(userId, productId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
