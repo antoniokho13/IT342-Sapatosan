@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class PaymentService {
@@ -69,6 +71,30 @@ public class PaymentService {
             // Save the payment to Firebase
             paymentRef.child(paymentId).setValueAsync(payment);
         }
+    }
+
+    public CompletableFuture<Optional<PaymentEntity>> getPaymentByOrderId(String orderId) {
+        CompletableFuture<Optional<PaymentEntity>> future = new CompletableFuture<>();
+        paymentRef.orderByChild("orderId").equalTo(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    PaymentEntity payment = child.getValue(PaymentEntity.class);
+                    if (payment != null) {
+                        payment.setId(child.getKey());
+                        future.complete(Optional.of(payment));
+                        return;
+                    }
+                }
+                future.complete(Optional.empty());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
+            }
+        });
+        return future;
     }
 
     private String getAuthorizationHeader() {
