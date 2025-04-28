@@ -3,25 +3,30 @@ package com.frontend_mobile.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.frontend_mobile.R
-import com.frontend_mobile.models.CartItem
+import com.frontend_mobile.models.ProductDTO
+import com.frontend_mobile.models.ProductEntity
 
 class CartAdapter(
-    private val cartItems: MutableList<CartItem>,
-    private val onCartUpdated: () -> Unit
+    private val products: MutableList<ProductEntity>,
+    private val onCartUpdated: () -> Unit,
+    onQuantityChange: () -> Unit
 ) : RecyclerView.Adapter<CartAdapter.CartViewHolder>() {
 
     inner class CartViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val shoeName: TextView = itemView.findViewById(R.id.shoeName)
-        val shoeSize: TextView = itemView.findViewById(R.id.selectedSize)
-        val shoeQuantity: TextView = itemView.findViewById(R.id.selectedQuantity)
-        val shoePrice: TextView = itemView.findViewById(R.id.shoePrice)
-        val shoeImage: ImageView = itemView.findViewById(R.id.shoeImage)
+        val productName: TextView = itemView.findViewById(R.id.shoeName)
+        val productQuantity: TextView = itemView.findViewById(R.id.selectedQuantity)
+        val productPrice: TextView = itemView.findViewById(R.id.shoePrice)
+        val productImage: ImageView = itemView.findViewById(R.id.shoeImage)
         val btnIncrease: Button = itemView.findViewById(R.id.btnIncrease)
         val btnDecrease: Button = itemView.findViewById(R.id.btnDecrease)
+        val shoeSize: TextView = itemView.findViewById(R.id.shoeSize)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CartViewHolder {
@@ -30,54 +35,58 @@ class CartAdapter(
     }
 
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
-        val item = cartItems[position]
-        holder.shoeName.text = item.product
-        holder.shoeSize.text = "Size: US ${item.selectedSize}"
-        holder.shoeQuantity.text = item.selectedQuantity.toString()
-        holder.shoePrice.text = "₱${item.price * item.selectedQuantity}"
+        val product = products[position]
+        holder.productName.text = product.name
+        holder.productQuantity.text = product.quantity.toString()
+        holder.productPrice.text = "₱${product.price * product.quantity}"
 
-        Glide.with(holder.shoeImage.context)
-            .load(item.imageUrl)
-            .into(holder.shoeImage)
+        // Add size if available
+        product.size?.let { size ->
+            holder.shoeSize.text = "Size: $size"
+            holder.shoeSize.visibility = View.VISIBLE
+        } ?: run {
+            holder.shoeSize.visibility = View.GONE
+        }
+
+        // Load image using Glide
+        Glide.with(holder.productImage.context)
+            .load(product.imageUrl)
+            .into(holder.productImage)
 
         holder.btnIncrease.setOnClickListener {
-            item.selectedQuantity++
-            notifyItemChanged(position)
-            onCartUpdated()
-        }
-        holder.btnDecrease.setOnClickListener {
-            if (item.selectedQuantity > 1) {
-                item.selectedQuantity--
+            if (product.quantity < product.stock) {
+                product.quantity += 1
                 notifyItemChanged(position)
                 onCartUpdated()
             } else {
-                cartItems.removeAt(position)
+                Toast.makeText(holder.itemView.context, "Stock limit reached", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        holder.btnDecrease.setOnClickListener {
+            if (product.quantity > 1) {
+                product.quantity -= 1
+                notifyItemChanged(position)
+                onCartUpdated()
+            } else {
+                products.removeAt(position)
                 notifyItemRemoved(position)
-                notifyItemRangeChanged(position, cartItems.size)
+                notifyItemRangeChanged(position, products.size)
                 onCartUpdated()
             }
         }
     }
 
-    override fun getItemCount(): Int = cartItems.size
+    override fun getItemCount(): Int = products.size
 
-    fun getCartItems(): List<CartItem> {
-        return cartItems
+
+    fun clearCart() {
+        products.clear()
+        notifyDataSetChanged()
+        onCartUpdated()
     }
 
     fun getTotalPrice(): Double {
-        return cartItems.sumOf { it.price * it.selectedQuantity }
-    }
-
-    fun updateItems(newItems: List<CartItem>) {
-        cartItems.clear()
-        cartItems.addAll(newItems)
-        notifyDataSetChanged()
-    }
-
-    fun clearCart() {
-        cartItems.clear()
-        notifyDataSetChanged()
-        onCartUpdated()
+        return products.sumOf { it.price * it.quantity }
     }
 }

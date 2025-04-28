@@ -8,5 +8,4 @@ data class ProductDTO(
     val stock: Int,
     val imageUrl: String,
     val categoryId: String,
-    val quantity: Int  // ✅ Include quantity here!
 )

@@ -6,22 +6,22 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.frontend_mobile.R
-import com.frontend_mobile.models.CartItem
+import com.frontend_mobile.models.ProductEntity
 
 class CartItemAdapter(
-    private val cartItems: MutableList<CartItem>,
+    private val products: MutableList<ProductEntity>,
     private val onItemChanged: (() -> Unit)? = null
 ) : RecyclerView.Adapter<CartItemAdapter.CartViewHolder>() {
 
     inner class CartViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val shoeName: TextView = itemView.findViewById(R.id.shoeName)
-        val shoeSize: TextView = itemView.findViewById(R.id.selectedSize)
-        val shoeQuantity: TextView = itemView.findViewById(R.id.selectedQuantity)
-        val shoePrice: TextView = itemView.findViewById(R.id.shoePrice)
-        val shoeImage: ImageView = itemView.findViewById(R.id.shoeImage)
+        val productName: TextView = itemView.findViewById(R.id.shoeName)
+        val productQuantity: TextView = itemView.findViewById(R.id.selectedQuantity)
+        val productPrice: TextView = itemView.findViewById(R.id.shoePrice)
+        val productImage: ImageView = itemView.findViewById(R.id.shoeImage)
         val btnIncrease: Button = itemView.findViewById(R.id.btnIncrease)
         val btnDecrease: Button = itemView.findViewById(R.id.btnDecrease)
     }
@@ -32,47 +32,50 @@ class CartItemAdapter(
     }
 
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
-        val item = cartItems[position]
-        holder.shoeName.text = item.name
-        holder.shoeSize.text = "Size: US ${item.selectedSize}"
-        holder.shoeQuantity.text = item.selectedQuantity.toString()
-        holder.shoePrice.text = "₱${item.price * item.selectedQuantity}"
+        val product = products[position]
+        holder.productName.text = product.name
+        holder.productQuantity.text = product.stock.toString()
+        holder.productPrice.text = "₱${product.price * product.stock}"
 
-        Glide.with(holder.shoeImage.context)
-            .load(item.imageUrl)
-            .into(holder.shoeImage)
+        Glide.with(holder.productImage.context)
+            .load(product.imageUrl)
+            .into(holder.productImage)
 
         holder.btnIncrease.setOnClickListener {
-            item.selectedQuantity += 1
-            notifyItemChanged(position)
-            onItemChanged?.invoke()
-        }
-        holder.btnDecrease.setOnClickListener {
-            if (item.selectedQuantity > 1) {
-                item.selectedQuantity -= 1
+            if (product.stock < 10) { // Assuming 10 is the max stock for simplicity
+                product.stock += 1
                 notifyItemChanged(position)
                 onItemChanged?.invoke()
             } else {
-                cartItems.removeAt(position)
+                Toast.makeText(holder.itemView.context, "Stock limit reached", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        holder.btnDecrease.setOnClickListener {
+            if (product.stock > 1) {
+                product.stock -= 1
+                notifyItemChanged(position)
+                onItemChanged?.invoke()
+            } else {
+                products.removeAt(position)
                 notifyItemRemoved(position)
-                notifyItemRangeChanged(position, cartItems.size)
+                notifyItemRangeChanged(position, products.size)
                 onItemChanged?.invoke()
             }
         }
     }
 
+    override fun getItemCount(): Int = products.size
 
-    override fun getItemCount(): Int = cartItems.size
-
-    fun updateCartItems(newItems: List<CartItem>) {
-        cartItems.clear()
-        cartItems.addAll(newItems)
+    fun updateProducts(newProducts: List<ProductEntity>) {
+        products.clear()
+        products.addAll(newProducts)
         notifyDataSetChanged()
         onItemChanged?.invoke()
     }
 
     fun clearCart() {
-        cartItems.clear()
+        products.clear()
         notifyDataSetChanged()
         onItemChanged?.invoke()
     }

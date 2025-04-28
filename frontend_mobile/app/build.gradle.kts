@@ -36,6 +36,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+
     }
     buildFeatures {
         compose = true
@@ -46,6 +47,7 @@ android {
 
 dependencies {
 
+    implementation ("org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.0")
     implementation("androidx.drawerlayout:drawerlayout:1.1.1")
     implementation ("androidx.gridlayout:gridlayout:1.0.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

@@ -4,9 +4,9 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.frontend_mobile.databinding.ItemOrderConfirmationBinding
-import com.frontend_mobile.models.CartItem
+import com.frontend_mobile.models.ProductEntity
 
-class OrderConfirmationAdapter(val items: List<CartItem>) :
+class OrderConfirmationAdapter(private val items: List<ProductEntity>) :
     RecyclerView.Adapter<OrderConfirmationAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemOrderConfirmationBinding) :
@@ -25,7 +25,7 @@ class OrderConfirmationAdapter(val items: List<CartItem>) :
         val item = items[position]
         holder.binding.apply {
             productName.text = item.name
-            quantity.text = "Quantity: ${item.selectedQuantity}"
+            quantity.text = "Quantity: ${item.stock}" // Assuming stock represents quantity
             price.text = "₱${"%.2f".format(item.price)}"
         }
     }

@@ -5,9 +5,9 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class OrderProductEntity(
-    val productId: String,
-    val product: String,
-    val quantity: Int,
-    val price: Double,
-
+    val id: String = "",
+    val orderId: String = "",
+    val productId: String = "",
+    val quantity: Int = 0,
+    val price: Double = 0.0
 ) : Parcelable

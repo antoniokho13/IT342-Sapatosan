@@ -1,196 +1,150 @@
 package com.frontend_mobile
 
-import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
-import android.view.View
-import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.GravityCompat
-import androidx.gridlayout.widget.GridLayout
+import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
-import com.frontend_mobile.api.ApiResponse
-import com.frontend_mobile.api.ApiService
 import com.frontend_mobile.api.RetrofitClient
-import com.frontend_mobile.databinding.ActivityShoeDetailsBinding
+import com.frontend_mobile.models.AddProductToCartRequest
+import com.frontend_mobile.models.ProductEntity
 import com.frontend_mobile.models.ShoeItem
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-
+import kotlin.compareTo
 
 class ShoeDetailsActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityShoeDetailsBinding
-    private lateinit var apiService: ApiService
-    private lateinit var token: String // This should be retrieved from SharedPreferences or wherever you store it
-    private lateinit var userId: String // This should also come from SharedPreferences or your app logic
-    private var allShoes: List<ShoeItem> = emptyList()
+    private lateinit var shoeImage: ImageView
+    private lateinit var shoeName: TextView
+    private lateinit var shoeBrand: TextView
+    private lateinit var shoePrice: TextView
+    private lateinit var shoeStock: TextView
+    private lateinit var quantitySpinner: Spinner
+    private lateinit var addToCartButton: Button
+    private lateinit var sizeButtonsContainer: androidx.gridlayout.widget.GridLayout
     private var selectedShoe: ShoeItem? = null
-    private var selectedSize: String? = null
-    private var selectedQuantity: Int = 1
-    private var selectedSizeButton: Button? = null
+    private var selectedSize: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityShoeDetailsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_shoe_details)
 
-        allShoes = intent.getParcelableArrayListExtra("allShoes") ?: emptyList()
-        selectedShoe = intent.getParcelableExtra("selectedShoe")
+        shoeImage = findViewById(R.id.shoeImage)
+        shoeName = findViewById(R.id.shoeName)
+        shoeBrand = findViewById(R.id.shoeBrand)
+        shoePrice = findViewById(R.id.shoePrice)
+        shoeStock = findViewById(R.id.shoeStock)
+        quantitySpinner = findViewById(R.id.quantitySpinner)
+        addToCartButton = findViewById(R.id.btnAddToCart)
+        sizeButtonsContainer = findViewById(R.id.sizeButtonsContainer)
 
-        // Setup toolbar menu button
-        binding.icMenu.setOnClickListener {
-            val drawerLayout = binding.drawerLayout
-            if (drawerLayout.isDrawerOpen(GravityCompat.END)) {
-                drawerLayout.closeDrawer(GravityCompat.END)
-            } else {
-                drawerLayout.openDrawer(GravityCompat.END)
-            }
-        }
-
-        // Drawer navigation
-        binding.drawerProfile.setOnClickListener {
-            startActivity(Intent(this, ProfileActivity::class.java))
-        }
-        binding.drawerShoppingCart.setOnClickListener {
-            startActivity(Intent(this, ShoppingCartActivity::class.java))
-        }
-        binding.tvSettings.setOnClickListener {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        }
-        binding.drawerLogout.setOnClickListener {
-            // Clear user session
-            val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
-            sharedPrefs.edit().clear().apply()
-            RetrofitClient.clearToken()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
-        }
-
-        selectedShoe?.let { displayShoeDetails(it) }
         setupSizeButtons()
-        setupQuantitySpinner()
 
-        binding.btnAddToCart.setOnClickListener {
+        selectedShoe = intent.getParcelableExtra("selectedShoe")
+        selectedShoe?.let { shoe ->
+            displayShoeDetails(shoe)
+        }
+
+        addToCartButton.setOnClickListener {
             addToCart()
         }
     }
 
-    private fun displayShoeDetails(shoe: ShoeItem) {
-        binding.shoeName.text = shoe.name
-        binding.shoeBrand.text = "Brand: ${shoe.brand}"
-        binding.shoePrice.text = "Price: ₱${shoe.price}"
-        binding.shoeStock.text = "Stock: ${shoe.stock}"
-        Glide.with(this).load(shoe.imageUrl).into(binding.shoeImage)
-    }
-
     private fun setupSizeButtons() {
-        val sizes = listOf("5", "6", "7", "8", "9", "10", "11", "12")
-        val gridLayout = findViewById<GridLayout>(R.id.sizeButtonsContainer)
-        gridLayout.removeAllViews()
-
-        sizes.forEach { size ->
+        for (size in 5..12) {
             val button = Button(this).apply {
-                text = "US $size"
-                setPadding(0, 16, 0, 16)
+                text = size.toString()
+                layoutParams = androidx.gridlayout.widget.GridLayout.LayoutParams().apply {
+                    width = resources.getDimensionPixelSize(R.dimen.size_button_width)
+                    height = resources.getDimensionPixelSize(R.dimen.size_button_height)
+                    setMargins(8, 8, 8, 8)
+                }
+                background = ContextCompat.getDrawable(context, R.drawable.size_button_selector)
+                setTextColor(ColorStateList.valueOf(getColor(android.R.color.black)))
                 textSize = 14f
-                setAllCaps(false)
-                setTextColor(resources.getColor(android.R.color.black))
-                background = resources.getDrawable(R.drawable.size_button_background2, null)
-
+                isAllCaps = false
                 setOnClickListener {
-                    selectedSizeButton?.background =
-                        resources.getDrawable(R.drawable.size_button_background2, null)
-                    selectedSizeButton?.setTextColor(resources.getColor(android.R.color.black))
-
-                    background =
-                        resources.getDrawable(R.drawable.size_button_selected_background, null)
-                    setTextColor(resources.getColor(android.R.color.white))
-
-                    selectedSizeButton = this
-                    selectedSize = size // Save selected size!
+                    updateSizeSelection(this, size)
                 }
             }
-
-            val params = GridLayout.LayoutParams().apply {
-                width = 0
-                height = GridLayout.LayoutParams.WRAP_CONTENT
-                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                setMargins(8, 8, 8, 8)
-            }
-
-            button.layoutParams = params
-            gridLayout.addView(button)
+            sizeButtonsContainer.addView(button)
         }
     }
 
-    private fun setupQuantitySpinner() {
-        val quantities = (1..10).toList()
-
-        val adapter = object : ArrayAdapter<Int>(this, com.bumptech.glide.R.layout.support_simple_spinner_dropdown_item, quantities) {
-            override fun getDropDownView(
-                position: Int,
-                convertView: View?,
-                parent: ViewGroup
-            ): View {
-                val view = super.getDropDownView(position, convertView, parent)
-                view.setBackgroundColor(resources.getColor(android.R.color.white))
-                (view as TextView).setTextColor(resources.getColor(android.R.color.black))
-                view.textAlignment = View.TEXT_ALIGNMENT_CENTER
-                return view
-            }
+    private fun updateSizeSelection(clickedButton: Button, size: Int) {
+        // Reset all buttons
+        for (i in 0 until sizeButtonsContainer.childCount) {
+            val button = sizeButtonsContainer.getChildAt(i) as Button
+            button.isSelected = false
+            button.setTextColor(getColor(android.R.color.black))
         }
+        // Highlight selected button
+        clickedButton.isSelected = true
+        clickedButton.setTextColor(getColor(android.R.color.white))
+        selectedSize = size
+    }
 
-        binding.quantitySpinner.adapter = adapter
+    private fun displayShoeDetails(shoe: ShoeItem) {
+        Glide.with(this).load(shoe.imageUrl).into(shoeImage)
+        shoeName.text = shoe.name
+        shoeBrand.text = "Brand: ${shoe.brand}"
+        shoePrice.text = "Price: ₱${shoe.price}"
+        shoeStock.text = "Stock: ${shoe.stock}"
 
-        binding.quantitySpinner.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    selectedQuantity = quantities[position] // Save selected quantity!
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-            }
+        // Fix for quantity spinner
+        val quantities = if (shoe.stock > 10) (1..shoe.stock).toList() else listOf(1)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, quantities)
+        quantitySpinner.adapter = adapter
     }
 
     private fun addToCart() {
-        val userId = RetrofitClient.getUserIdFromPrefs()
-        val shoe = selectedShoe ?: run {
-            Toast.makeText(this, "No shoe selected", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val size = selectedSize ?: run {
+        if (selectedSize == null) {
             Toast.makeText(this, "Please select a size", Toast.LENGTH_SHORT).show()
             return
         }
 
-        RetrofitClient.instance.addProductToCart(
-            userId = userId,
-            productId = shoe.id,
-            quantity = selectedQuantity
-        ).enqueue(object : Callback<ApiResponse> {
-            override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+        val quantity = quantitySpinner.selectedItem as Int
+        val shoe = selectedShoe ?: return
+
+        val userId = RetrofitClient.getUserIdFromPrefs()
+        val request = AddProductToCartRequest(productId = shoe.id, quantity = quantity)
+
+        // Store the selected size temporarily
+        val productWithSize = shoe.copy().also {
+            (it as? ShoeItem)?.let { shoeItem ->
+                ProductEntity(
+                    id = shoeItem.id,
+                    name = shoeItem.name,
+                    brand = shoeItem.brand,
+                    price = shoeItem.price,
+                    stock = shoeItem.stock,
+                    imageUrl = shoeItem.imageUrl,
+                    categoryId = shoeItem.categoryId,
+                    quantity = quantity,
+                    size = selectedSize.toString()
+                )
+            }
+        }
+
+        RetrofitClient.instance.addProductToCart(userId, request).enqueue(object : Callback<Void> {
+            override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 if (response.isSuccessful) {
-                    Toast.makeText(this@ShoeDetailsActivity, "Product added to cart!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this@ShoeDetailsActivity, ShoppingCartActivity::class.java))
+                    Toast.makeText(this@ShoeDetailsActivity, "Added to cart!", Toast.LENGTH_SHORT).show()
+                    val intent = Intent(this@ShoeDetailsActivity, ShoppingCartActivity::class.java)
+                    startActivity(intent)
                 } else {
-                    Toast.makeText(this@ShoeDetailsActivity, "Failed to add product to cart.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@ShoeDetailsActivity, "Failed to add to cart.", Toast.LENGTH_SHORT).show()
                 }
             }
 
-            override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+
+            override fun onFailure(call: Call<Void>, t: Throwable) {
                 Toast.makeText(this@ShoeDetailsActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }
 }
-

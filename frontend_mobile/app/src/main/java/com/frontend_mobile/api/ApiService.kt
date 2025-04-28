@@ -1,8 +1,8 @@
 // ApiService.kt
 package com.frontend_mobile.api
 
+import com.frontend_mobile.models.AddProductToCartRequest
 import com.frontend_mobile.models.CartEntity
-import com.frontend_mobile.models.CartItem
 import com.frontend_mobile.models.OrderRequest
 import com.frontend_mobile.models.ProductDTO
 import com.frontend_mobile.models.User
@@ -47,7 +47,7 @@ data class LoginResponse(
 data class CartResponse(
     val id: String,
     val userId: String,
-    val products: List<CartItem>
+    val products: List<CartEntity>
 )
 
 data class UserRequest(
@@ -77,28 +77,32 @@ interface ApiService {
 
     @PUT("/api/users/{id}")
     fun updateUserDetails(@Path("id") userId: String, @Body user: User): Call<ApiResponse>
+
     //PRODUCTS
     @GET("/api/products")
     fun getProducts(): Call<List<ShoeItem>>
-    //CART
-    @GET("/api/carts/{id}")
-    fun getCartById(@Path("id") cartId: String): Call<CartEntity>
 
-    @POST("/api/carts")
-    fun createCart(@Body cart: CartEntity): Call<Void>
+    //CART
+    @GET("/api/carts/user/{userId}")
+    fun getCartByUserId(@Path("userId") userId: String): Call<CartEntity>
 
     @POST("/api/carts/{userId}/add-product")
     fun addProductToCart(
         @Path("userId") userId: String,
-        @Query("productId") productId: String,
-        @Query("quantity") quantity: Int
-    ): Call<ApiResponse>
+        @Body request: AddProductToCartRequest
+    ): Call<Void>
 
     @PUT("/api/carts/{id}")
     fun updateCart(@Path("id") cartId: String, @Body updatedCart: CartEntity): Call<Void>
 
     @DELETE("/api/carts/{id}")
     fun deleteCart(@Path("id") cartId: String): Call<Void>
+
+    @DELETE("/api/carts/{userId}/remove-product/{productId}")
+    fun removeProductFromCart(
+        @Path("userId") userId: String,
+        @Path("productId") productId: String
+    ): Call<Void>
 
     @DELETE("/api/carts/{id}")
     fun clearCart(@Path("id") cartId: String): Call<Void>

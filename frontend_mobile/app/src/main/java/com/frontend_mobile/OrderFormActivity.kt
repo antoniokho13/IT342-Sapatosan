@@ -7,12 +7,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import com.frontend_mobile.databinding.ActivityOrderFormBinding
-import com.frontend_mobile.models.CartItem
+import com.frontend_mobile.models.ProductEntity
 
 class OrderFormActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityOrderFormBinding
-    private var cartItems: ArrayList<CartItem> = arrayListOf()
+    private var cartItems: ArrayList<ProductEntity> = arrayListOf()
     private var totalPrice: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -2,7 +2,6 @@ package com.frontend_mobile
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -11,9 +10,8 @@ import com.frontend_mobile.adapters.CartAdapter
 import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.databinding.ActivityShoppingCartBinding
 import com.frontend_mobile.models.CartEntity
-import com.frontend_mobile.models.CartItem
-import com.frontend_mobile.models.OrderProductEntity
-import com.frontend_mobile.models.ProductDTO
+import com.frontend_mobile.models.ProductEntity
+import com.frontend_mobile.models.ShoeItem
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -22,87 +20,133 @@ class ShoppingCartActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityShoppingCartBinding
     private lateinit var cartAdapter: CartAdapter
+    private var cartItems: MutableList<ProductEntity> = mutableListOf()
+    private var totalPrice: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityShoppingCartBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupToolbar()
         setupRecyclerView()
-        loadCartItems()
-        setupCheckoutButton()
-    }
 
-    private fun setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
+        // 🔵 Check if a product was passed manually (with size)
+        val productFromIntent = intent.getParcelableExtra<ProductEntity>("productEntity")
+        if (productFromIntent != null) {
+            cartItems.add(productFromIntent)
+            cartAdapter.notifyDataSetChanged()
+            calculateTotalPrice()
+            showCartContent()
+        } else {
+            fetchCartItems()
         }
-    }
 
-    private fun setupRecyclerView() {
-        cartAdapter = CartAdapter(mutableListOf()) {
-            updateTotalPrice()
-        }
-        binding.cartRecyclerView.apply {
-            adapter = cartAdapter
-            layoutManager = LinearLayoutManager(this@ShoppingCartActivity)
-        }
-    }
-
-    private fun loadCartItems() {
-        val mockCartItems = listOf(
-            CartItem(
-                id = "1",
-                product = "Mock Product",
-                selectedSize = "Default",
-                selectedQuantity = 1,
-                name = "Mock Product",
-                price = 100.0,
-                size = "Default",
-                quantity = 1,
-                imageUrl = "https://via.placeholder.com/150",
-                brand = "Mock Brand",
-                stock = 10,
-                productId = "1",
-                isSelected = false
-            )
-        )
-        cartAdapter.updateItems(mockCartItems)
-        showCartContent()
-        updateTotalPrice()
-    }
-
-    private fun setupCheckoutButton() {
         binding.btnCheckout.setOnClickListener {
-            if (cartAdapter.itemCount > 0) {
-                checkout()
+            if (cartItems.isEmpty()) {
+                Toast.makeText(this, "Your cart is empty.", Toast.LENGTH_SHORT).show()
             } else {
-                showError("Your cart is empty")
+                proceedToCheckout()
             }
         }
     }
 
-    private fun checkout() {
-        val orderItems = cartAdapter.getCartItems().map { cartItem ->
-            OrderProductEntity(
-                productId = cartItem.productId,
-                product = cartItem.product,
-                quantity = cartItem.selectedQuantity,
-                price = cartItem.price
-            )
+    private fun setupRecyclerView() {
+        cartAdapter = CartAdapter(
+            cartItems,
+            onQuantityChange = { calculateTotalPrice() },
+            onCartUpdated = { calculateTotalPrice() }
+        )
+        binding.cartRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.cartRecyclerView.adapter = cartAdapter
+    }
+
+    private fun fetchCartItems() {
+        val userId = getSharedPreferences("user_session", MODE_PRIVATE)
+            .getString("user_id", null)
+
+        if (userId.isNullOrEmpty()) {
+            Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        startActivity(Intent(this, OrderFormActivity::class.java).apply {
-            putParcelableArrayListExtra("orderItems", ArrayList(orderItems))
-            putExtra("totalPrice", cartAdapter.getTotalPrice())
+        binding.progressBar.visibility = View.VISIBLE
+
+        RetrofitClient.instance.getCartByUserId(userId).enqueue(object : Callback<CartEntity> {
+            override fun onResponse(call: Call<CartEntity>, response: Response<CartEntity>) {
+                if (response.isSuccessful) {
+                    val cart = response.body()
+                    if (cart != null && cart.cartProductIds.isNotEmpty()) {
+                        loadProducts(cart.cartProductIds)
+                    } else {
+                        showEmptyCart()
+                    }
+                } else {
+                    showEmptyCart()
+                    Toast.makeText(this@ShoppingCartActivity, "Failed to load cart.", Toast.LENGTH_SHORT).show()
+                }
+                binding.progressBar.visibility = View.GONE
+            }
+
+            override fun onFailure(call: Call<CartEntity>, t: Throwable) {
+                showEmptyCart()
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(this@ShoppingCartActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
         })
     }
 
-    private fun showCartContent() {
-        binding.cartRecyclerView.visibility = View.VISIBLE
-        binding.cartSummaryLayout.visibility = View.VISIBLE
-        binding.emptyCartText.visibility = View.GONE
+    private fun loadProducts(cartProductIds: Map<String, Int>) {
+        RetrofitClient.instance.getProducts().enqueue(object : Callback<List<ShoeItem>> {
+            override fun onResponse(call: Call<List<ShoeItem>>, response: Response<List<ShoeItem>>) {
+                if (response.isSuccessful) {
+                    val products = response.body() ?: emptyList()
+                    cartItems.clear()
+
+                    for (shoeItem in products) {
+                        if (cartProductIds.containsKey(shoeItem.id)) {
+                            val quantity = cartProductIds[shoeItem.id] ?: 1
+
+                            // Map ShoeItem ➔ ProductEntity manually
+                            val product = ProductEntity(
+                                id = shoeItem.id,
+                                name = shoeItem.name,
+                                brand = shoeItem.brand,
+                                price = shoeItem.price,
+                                stock = shoeItem.stock,
+                                imageUrl = shoeItem.imageUrl,
+                                categoryId = shoeItem.categoryId,
+                                quantity = quantity,
+                                size = null // ❗ Loaded from backend, size is not saved
+                            )
+
+                            cartItems.add(product)
+                        }
+                    }
+
+                    cartAdapter.notifyDataSetChanged()
+                    calculateTotalPrice()
+
+                    if (cartItems.isEmpty()) {
+                        showEmptyCart()
+                    } else {
+                        showCartContent()
+                    }
+                } else {
+                    showEmptyCart()
+                    Toast.makeText(this@ShoppingCartActivity, "Failed to fetch products.", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<List<ShoeItem>>, t: Throwable) {
+                showEmptyCart()
+                Toast.makeText(this@ShoppingCartActivity, "Error fetching products: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
+    private fun calculateTotalPrice() {
+        totalPrice = cartItems.sumOf { it.price * it.quantity }
+        binding.totalPrice.text = "Total: ₱${"%.2f".format(totalPrice)}"
     }
 
     private fun showEmptyCart() {
@@ -111,12 +155,18 @@ class ShoppingCartActivity : AppCompatActivity() {
         binding.emptyCartText.visibility = View.VISIBLE
     }
 
-    private fun updateTotalPrice() {
-        binding.totalPrice.text = "Total: ₱${"%.2f".format(cartAdapter.getTotalPrice())}"
+    private fun showCartContent() {
+        binding.cartRecyclerView.visibility = View.VISIBLE
+        binding.cartSummaryLayout.visibility = View.VISIBLE
+        binding.emptyCartText.visibility = View.GONE
     }
 
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-        Log.e("ShoppingCart", message)
+    private fun proceedToCheckout() {
+        val intent = Intent(this, OrderFormActivity::class.java).apply {
+            putParcelableArrayListExtra("cartItems", ArrayList(cartItems))
+            putExtra("totalPrice", totalPrice)
+        }
+
+        startActivity(intent)
     }
 }
