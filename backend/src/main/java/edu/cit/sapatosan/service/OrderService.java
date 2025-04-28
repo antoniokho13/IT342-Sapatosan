@@ -19,12 +19,21 @@ public class OrderService {
         this.orderProductRef = database.getReference("orderProducts");
     }
 
-    public void createOrder(OrderEntity order) {
+    public String createOrder(OrderEntity order) {
         String orderId = orderRef.push().getKey();
         if (orderId != null) {
             order.setId(orderId);
             orderRef.child(orderId).setValueAsync(order);
+
+            if (order.getOrderProductIds() != null) {
+                for (String orderProductId : order.getOrderProductIds()) {
+                    reduceProductStock(orderProductId);
+                }
+            }
+
+            return orderId; // Return the orderId
         }
+        return null; // Or throw an exception if orderId cannot be generated
     }
 
     public void updateOrder(String orderId, OrderEntity updatedOrder) {
@@ -120,6 +129,42 @@ public class OrderService {
             @Override
             public void onCancelled(DatabaseError error) {
                 System.err.println("Failed to update order status: " + error.getMessage());
+            }
+        });
+    }
+
+    private void reduceProductStock(String orderProductId) {
+        DatabaseReference orderProductRef = FirebaseDatabase.getInstance().getReference("orderProducts").child(orderProductId);
+        orderProductRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                OrderProductEntity orderProduct = snapshot.getValue(OrderProductEntity.class);
+                if (orderProduct != null) {
+                    String productId = orderProduct.getProductId();
+                    int quantity = orderProduct.getQuantity();
+
+                    productRef.child(productId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot productSnapshot) {
+                            ProductEntity product = productSnapshot.getValue(ProductEntity.class);
+                            if (product != null) {
+                                int newStock = product.getStock() - quantity;
+                                product.setStock(newStock);
+                                productRef.child(productId).setValueAsync(product);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {
+                            System.err.println("Failed to update product stock: " + error.getMessage());
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                System.err.println("Failed to fetch order product: " + error.getMessage());
             }
         });
     }

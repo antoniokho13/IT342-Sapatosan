@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.sapatosan.entity.CartEntity;
 import edu.cit.sapatosan.service.CartService;
+import edu.cit.sapatosan.dto.AddProductToCartRequest; // Import the DTO
 
 @RestController
 @RequestMapping("/api/carts")
@@ -42,32 +43,27 @@ public class CartController {
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<CartEntity> getCartByUserId(@PathVariable String userId) throws ExecutionException, InterruptedException {
-        Optional<CartEntity> cartOptional = cartService.getCartByUserId(userId).get();
-        return cartOptional.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        Optional<CartEntity> cart = cartService.getCartByUserId(userId).get();
+        return cart.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping
-    public ResponseEntity<Void> createCart(@RequestBody CartEntity cart) {
-        cartService.createCart(cart.getId(), cart);
-        return ResponseEntity.ok().build();
-    }
-
+    // Modified to accept request body
     @PostMapping("/{userId}/add-product")
     public ResponseEntity<Void> addProductToCart(
             @PathVariable String userId,
-            @RequestParam String productId,
-            @RequestParam int quantity) {
+            @RequestBody AddProductToCartRequest request) { // Use the DTO
         try {
             // Validate inputs
-            if (productId == null || productId.trim().isEmpty()) {
+            if (request.getProductId() == null || request.getProductId().trim().isEmpty()) {
                 return ResponseEntity.badRequest().build();
             }
-            
+
+            int quantity = request.getQuantity();
             if (quantity <= 0) {
                 quantity = 1; // Default to 1 if invalid quantity
             }
-            
-            cartService.addProductToCart(userId, productId, quantity);
+
+            cartService.addProductToCart(userId, request.getProductId(), quantity);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             // Log the error
