@@ -1,3 +1,4 @@
+// SecurityConfig.java
 package edu.cit.sapatosan.security;
 
 import java.util.Arrays;

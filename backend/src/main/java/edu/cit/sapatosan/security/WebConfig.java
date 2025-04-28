@@ -1,3 +1,4 @@
+// WebConfig.java
 package edu.cit.sapatosan.security;
 
 import org.springframework.context.annotation.Configuration;
