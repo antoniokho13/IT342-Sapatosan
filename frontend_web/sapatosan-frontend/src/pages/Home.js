@@ -49,6 +49,7 @@ const Home = () => {
         };
     }, []);
 
+    // Update the useEffect that fetches user data to also fetch cart data
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -63,7 +64,7 @@ const Home = () => {
                         console.log("Email found in localStorage:", storedEmail);
                         setUserInfo({
                             email: storedEmail,
-                            name: ''  // We'll update this later if needed
+                            name: ''
                         });
                     }
                     
@@ -124,12 +125,16 @@ const Home = () => {
                         localStorage.setItem('email', userData.email);
                         console.log("User email set in state and localStorage:", userData.email);
                     }
+                    
+                    // After user data is fetched, fetch the cart data
+                    fetchCartWithProducts();
                 }
             } catch (error) {
                 console.error('Error fetching user info:', error);
                 if (error.response && error.response.status === 401) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('email');
+                    localStorage.removeItem('userId');
                 }
             }
         };
@@ -150,6 +155,161 @@ const Home = () => {
         };
     }, [dropdownRef]);
 
+    // Add this fetchCartWithProducts function to the Home component
+const fetchCartWithProducts = async () => {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
+
+    if (!token || !userId) {
+        console.log("No token or userId available");
+        return;
+    }
+
+    try {
+        // First, get the cart data
+        const cartResponse = await axios.get(
+            `http://localhost:8080/api/carts/user/${userId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        if (cartResponse.status !== 200 || !cartResponse.data) {
+            console.log('No cart found or empty cart');
+            setCart([]);
+            localStorage.setItem('sapatosanCart', JSON.stringify([]));
+            return;
+        }
+
+        const cartData = cartResponse.data;
+        const cartProductIds = Object.keys(cartData.cartProductIds || {});
+        
+        if (cartProductIds.length === 0) {
+            console.log('Cart is empty');
+            setCart([]);
+            localStorage.setItem('sapatosanCart', JSON.stringify([]));
+            return;
+        }
+        
+        console.log("Cart product IDs:", cartProductIds);
+        
+        // Next, fetch ALL products to find the ones in the cart
+        const productsResponse = await axios.get(
+            `http://localhost:8080/api/products`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (!productsResponse.data || !Array.isArray(productsResponse.data)) {
+            console.error("Failed to fetch products for cart");
+            return;
+        }
+        
+        // Create a map of all products by ID for easy lookup
+        const productsMap = {};
+        productsResponse.data.forEach(product => {
+            productsMap[product.id] = {
+                ...product,
+                price: product.price / 100,
+                sizes: [7, 8, 9, 10, 11, 12],
+                description: product.description || `Premium ${product.brand} shoes.`,
+                imageUrl: product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+            };
+        });
+        
+        console.log("Products map created:", Object.keys(productsMap).length, "products");
+        
+        // Get the saved sizes from localStorage
+        const savedCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+        const sizeMap = {};
+        savedCart.forEach(item => {
+            const key = item.id;
+            sizeMap[key] = item.selectedSize;
+        });
+        
+        // Build the cart items with complete product details
+        const cartItems = cartProductIds.map(productId => {
+            const product = productsMap[productId] || {};
+            const quantity = cartData.cartProductIds[productId] || 1;
+            const savedSize = sizeMap[productId] || 7;
+            
+            return {
+                ...product,
+                id: productId,
+                quantity: quantity,
+                price: product.price || 0,
+                selectedSize: savedSize
+            };
+        });
+        
+        console.log("Final cart items:", cartItems);
+        setCart(cartItems);
+        localStorage.setItem('sapatosanCart', JSON.stringify(cartItems));
+    } catch (error) {
+        console.error('Error fetching cart with products:', error);
+        setCart([]);
+        localStorage.setItem('sapatosanCart', JSON.stringify([]));
+    }
+};
+
+    // Update the toggleCart function to ensure fresh data is displayed
+    const toggleCart = () => {
+        // If we're opening the cart, refresh the data first
+        if (!showCart) {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            if (token && userId) {
+                console.log("Refreshing cart data before displaying");
+                fetchCartWithProducts();
+            }
+        }
+        
+        setShowCart(!showCart);
+    };
+
+    // Add a removeFromCart function that works with the backend
+    const removeFromCart = async (productId, selectedSize) => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+
+        if (!token || !userId) {
+            console.error('Missing authentication data');
+            return;
+        }
+
+        try {
+            const response = await axios.delete(
+                `http://localhost:8080/api/carts/user/${userId}/remove-product/${productId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                console.log('Product removed from cart successfully');
+                
+                // Also update local storage to remove the item with specific size
+                const currentCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+                const updatedCart = currentCart.filter(
+                    item => !(item.id === productId && item.selectedSize === selectedSize)
+                );
+                
+                localStorage.setItem('sapatosanCart', JSON.stringify(updatedCart));
+                setCart(updatedCart);
+                
+                fetchCartWithProducts(); // Refresh the cart after removing
+            } else {
+                console.error('Failed to remove from cart:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error removing from cart:', error);
+        }
+    };
+
+    // Update the handleLogout function to also clear cart data
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -157,9 +317,12 @@ const Home = () => {
                 await axios.post('http://localhost:8080/api/auth/logout', {}, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                localStorage.removeItem('token'); // Clear the token from localStorage
-                localStorage.removeItem('email'); // Clear the email from localStorage
-                window.location.href = '/'; // Redirect to the home page
+                localStorage.removeItem('token');
+                localStorage.removeItem('email');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('sapatosanCart');
+                setCart([]);
+                window.location.href = '/';
             }
         } catch (error) {
             console.error('Error during logout:', error);
@@ -167,17 +330,6 @@ const Home = () => {
     };
 
     // Update the cart methods to match other pages
-    const toggleCart = () => {
-        setShowCart(!showCart);
-    };
-
-    const removeFromCart = (index) => {
-        const newCart = [...cart];
-        newCart.splice(index, 1); // Remove the item at the specified index
-        setCart(newCart); // Update the state
-        localStorage.setItem('sapatosanCart', JSON.stringify(newCart)); // Sync with localStorage
-    };
-
     const calculateTotal = () => {
         return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
     };
@@ -381,28 +533,32 @@ const Home = () => {
                         ) : (
                             <>
                                 <div className="cart-items">
-                                    {cart.map((item, index) => (
-                                        <div key={index} className="cart-item">
-                                            <div className="cart-item-image">
-                                                <img src={item.image || 'https://via.placeholder.com/300x300?text=No+Image'} alt={item.name} />
+                                    {cart.length > 0 ? (
+                                        cart.map((item, index) => (
+                                            <div key={`${item.id}_${item.selectedSize}_${index}`} className="cart-item">
+                                                <div className="cart-item-image">
+                                                    <img src={item.imageUrl || 'https://via.placeholder.com/100x100?text=No+Image'} alt={item.name || 'Product'} />
+                                                </div>
+                                                <div className="cart-item-details">
+                                                    <h3>{item.name || 'Unknown Product'}</h3>
+                                                    <p className="cart-item-brand">{item.brand || 'Unknown Brand'}</p>
+                                                    <p className="cart-item-size">Size: US {item.selectedSize || '?'}</p>
+                                                    <p className="cart-item-quantity">Quantity: {item.quantity || 0}</p>
+                                                    <p className="cart-item-price">
+                                                        ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                <button 
+                                                    className="remove-item" 
+                                                    onClick={() => removeFromCart(item.id, item.selectedSize)}
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
                                             </div>
-                                            <div className="cart-item-details">
-                                                <h3>{item.name}</h3>
-                                                <p className="cart-item-brand">{item.brand}</p>
-                                                <p className="cart-item-size">Size: US {item.selectedSize}</p>
-                                                <p className="cart-item-quantity">Quantity: {item.quantity}</p>
-                                                <p className="cart-item-price">
-                                                    ${item.price.toFixed(2)} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
-                                                </p>
-                                            </div>
-                                            <button 
-                                                className="remove-item" 
-                                                onClick={() => removeFromCart(index)}
-                                            >
-                                                <i className="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        <p>No items in cart</p>
+                                    )}
                                 </div>
                                 
                                 <div className="cart-summary">

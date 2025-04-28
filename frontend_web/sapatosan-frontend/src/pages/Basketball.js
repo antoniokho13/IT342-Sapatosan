@@ -63,7 +63,7 @@ const Basketball = () => {
                 
                 const processedShoes = basketballProducts.map(shoe => ({
                     ...shoe,
-                    price: shoe.price / 100,
+                    price: shoe.price ? shoe.price / 100 : 0, // Ensure price is defined, fallback to 0 if missing
                     sizes: [7, 8, 9, 10, 11, 12],
                     description: shoe.description || `Premium ${shoe.brand} basketball shoes designed for performance.`,
                     imageUrl: shoe.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
@@ -72,6 +72,11 @@ const Basketball = () => {
                 console.log("Processed basketball shoes:", processedShoes);
                 setBasketballShoes(processedShoes);
                 setLoading(false);
+
+                // If user is logged in, fetch their cart
+                if (token) {
+                    fetchCartWithProducts();
+                }
             } catch (err) {
                 console.error('Failed to fetch basketball products:', err);
                 setError(`Failed to load basketball shoes: ${err.message}. Please try again later.`);
@@ -81,82 +86,127 @@ const Basketball = () => {
         
         fetchBasketballShoes();
     }, []);
-    
 
-    // Cart functions
-    const addToCart = async (shoe, size, quantity) => {
-        // Check if user is logged in
-        if (!localStorage.getItem('token')) {
-            // Redirect to login page with return URL
-            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+    // Fetch Cart function to sync the cart state with the backend
+    const fetchCartWithProducts = async () => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+
+        if (!token || !userId) {
+            console.log("No token or userId available");
             return;
         }
 
-        // Prepare the cart product data
-        const token = localStorage.getItem('token');
-        const userId = localStorage.getItem('userId'); // Ensure userId is stored in localStorage
-        const shoeWithDetails = { ...shoe, selectedSize: size, quantity };
-        const cartProduct = {
-            productId: shoeWithDetails.id,
-            quantity: shoeWithDetails.quantity, // Quantity selected by the user
-            cartId: userId, // Use userId as cartId
-        };
-
         try {
-            // Send the cart product to the backend
-            const response = await axios.post(
-                'http://localhost:8080/api/carts/products',
-                cartProduct,
+            // First, get the cart data
+            const cartResponse = await axios.get(
+                `http://localhost:8080/api/carts/user/${userId}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                        Authorization: `Bearer ${token}`
+                    }
                 }
             );
 
-            if (response.status === 200) {
-                // Update the local cart state
-                const existingProductIndex = cart.findIndex(
-                    (item) => item.id === shoeWithDetails.id && item.selectedSize === size
-                );
-
-                if (existingProductIndex !== -1) {
-                    // Update quantity if the product already exists in the cart
-                    const updatedCart = [...cart];
-                    updatedCart[existingProductIndex].quantity += quantity;
-                    setCart(updatedCart);
-                    localStorage.setItem('sapatosanCart', JSON.stringify(updatedCart));
-                } else {
-                    // Add new product to the cart
-                    const newCart = [...cart, shoeWithDetails];
-                    setCart(newCart);
-                    localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
-                }
-
-                // Close the modal
-                setQuickViewShoe(null);
-                setSelectedSize(null);
-            } else {
-                console.error('Failed to add to cart:', response.statusText);
+            if (cartResponse.status !== 200 || !cartResponse.data) {
+                console.log('No cart found or empty cart');
+                setCart([]);
+                localStorage.setItem('sapatosanCart', JSON.stringify([]));
+                return;
             }
+
+            const cartData = cartResponse.data;
+            const cartProductIds = Object.keys(cartData.cartProductIds || {});
+            
+            if (cartProductIds.length === 0) {
+                console.log('Cart is empty');
+                setCart([]);
+                localStorage.setItem('sapatosanCart', JSON.stringify([]));
+                return;
+            }
+            
+            console.log("Cart product IDs:", cartProductIds);
+            
+            // Next, fetch ALL products to find the ones in the cart
+            const productsResponse = await axios.get(
+                `http://localhost:8080/api/products`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (!productsResponse.data || !Array.isArray(productsResponse.data)) {
+                console.error("Failed to fetch products for cart");
+                return;
+            }
+            
+            // Create a map of all products by ID for easy lookup
+            const productsMap = {};
+            productsResponse.data.forEach(product => {
+                productsMap[product.id] = {
+                    ...product,
+                    price: product.price / 100,
+                    sizes: [7, 8, 9, 10, 11, 12],
+                    description: product.description || `Premium ${product.brand} shoes.`,
+                    imageUrl: product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+                };
+            });
+            
+            console.log("Products map created:", Object.keys(productsMap).length, "products");
+            
+            // Get the saved sizes from localStorage
+            const savedCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+            const sizeMap = {};
+            savedCart.forEach(item => {
+                const key = item.id;
+                sizeMap[key] = item.selectedSize;
+            });
+            
+            // Build the cart items with complete product details
+            const cartItems = cartProductIds.map(productId => {
+                const product = productsMap[productId] || {};
+                const quantity = cartData.cartProductIds[productId] || 1;
+                const savedSize = sizeMap[productId] || 7;
+                
+                return {
+                    ...product,
+                    id: productId,
+                    quantity: quantity,
+                    price: product.price || 0,
+                    selectedSize: savedSize
+                };
+            });
+            
+            console.log("Final cart items:", cartItems);
+            setCart(cartItems);
+            localStorage.setItem('sapatosanCart', JSON.stringify(cartItems));
         } catch (error) {
-            console.error('Error adding to cart:', error);
+            console.error('Error fetching cart with products:', error);
+            setCart([]);
+            localStorage.setItem('sapatosanCart', JSON.stringify([]));
         }
     };
 
-    const removeFromCart = (index) => {
-        const newCart = [...cart];
-        newCart.splice(index, 1);
-        setCart(newCart);
-        localStorage.setItem('sapatosanCart', JSON.stringify(newCart));
-    };
-
     const calculateTotal = () => {
-        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+        console.log("Calculating total for cart:", cart);
+        return cart.reduce((total, item) => {
+            const itemTotal = (item.price || 0) * (item.quantity || 1);
+            console.log(`Item ${item.name}: $${item.price} x ${item.quantity} = $${itemTotal}`);
+            return total + itemTotal;
+        }, 0).toFixed(2);
     };
 
     // UI control functions
     const toggleCart = () => {
+        // If we're opening the cart, refresh the data first
+        if (!showCart) {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+            if (token && userId) {
+                console.log("Refreshing cart data before displaying");
+                fetchCartWithProducts();
+            }
+        }
+        
+        console.log("Toggling cart. Current items:", cart);
         setShowCart(!showCart);
         // If we're opening the cart, close any other modals
         if (!showCart) {
@@ -180,7 +230,10 @@ const Basketball = () => {
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('email');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('sapatosanCart');
         setUserInfo({ email: '' });
+        setCart([]);
     };
 
     // Checkout handler
@@ -205,7 +258,7 @@ const Basketball = () => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
                 closeQuickView();
             }
-            if (showCart && !event.target.closest('.cart-modal-content')) {
+            if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-icon')) {
                 setShowCart(false);
             }
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -269,6 +322,122 @@ const Basketball = () => {
         };
     }, []);
 
+    // Add to Cart function
+    const addToCart = async (shoe, size, quantity) => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+
+        if (!token || !userId) {
+            window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+            return;
+        }
+
+        try {
+            // First, update the UI immediately for responsive experience
+            const currentCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+            
+            // Check if this product+size combination already exists
+            const existingItemIndex = currentCart.findIndex(
+                item => item.id === shoe.id && item.selectedSize === size
+            );
+            
+            let updatedCart;
+            if (existingItemIndex >= 0) {
+                // Update existing item
+                updatedCart = [...currentCart];
+                updatedCart[existingItemIndex].quantity += (quantity || 1);
+            } else {
+                // Add as new item with size
+                updatedCart = [...currentCart, {
+                    ...shoe,
+                    selectedSize: size,
+                    quantity: quantity || 1
+                }];
+            }
+            
+            localStorage.setItem('sapatosanCart', JSON.stringify(updatedCart));
+            setCart(updatedCart);
+
+            // Then make the API call to sync with backend
+            const cartProduct = {
+                productId: shoe.id,
+                quantity: quantity || 1,
+            };
+
+            console.log("Adding to cart:", cartProduct); // Debug
+
+            const response = await axios.post(
+                `http://localhost:8080/api/carts/${userId}/add-product`,
+                cartProduct,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (response.status === 200) {
+                console.log('Product added to cart successfully');
+            } else {
+                console.error('Failed to add to cart:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+        }
+    };
+
+    // Remove from Cart function
+    const removeFromCart = async (productId, selectedSize) => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+
+        if (!token || !userId) {
+            console.error('Missing authentication data');
+            return;
+        }
+
+        try {
+            const response = await axios.delete(
+                `http://localhost:8080/api/carts/user/${userId}/remove-product/${productId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                console.log('Product removed from cart successfully');
+                
+                // Also update local storage to remove the item with specific size
+                const currentCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+                const updatedCart = currentCart.filter(
+                    item => !(item.id === productId && item.selectedSize === selectedSize)
+                );
+                
+                localStorage.setItem('sapatosanCart', JSON.stringify(updatedCart));
+                setCart(updatedCart);
+                
+                fetchCartWithProducts(); // Refresh the cart after removing
+            } else {
+                console.error('Failed to remove from cart:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error removing from cart:', error);
+        }
+    };
+
+    // Static sizes for the frontend
+    const staticSizes = [7, 8, 9, 10, 11, 12];
+
+    // Example usage in the product card
+    <div className="product-sizes">
+        {staticSizes.map(size => (
+            <span className="size-option" key={size}>US {size}</span>
+        ))}
+    </div>
+
     return (
         <div className="basketball-page">
             {/* Header */}
@@ -287,7 +456,7 @@ const Basketball = () => {
                 <div className="auth-buttons">
                     {localStorage.getItem('token') ? (
                         <>
-                            <div className="header-cart-icon" onClick={toggleCart}>
+                            <div className="header-cart-icon cart-icon" onClick={toggleCart}>
                                 <i className="fas fa-shopping-cart"></i>
                                 <span className="header-cart-count">{cart.length}</span>
                             </div>
@@ -354,7 +523,6 @@ const Basketball = () => {
                 </div>
             </section>
 
-
             {/* Products Grid */}
             <section className="products-section">
                 <div className="products-grid">
@@ -376,9 +544,9 @@ const Basketball = () => {
                                     <div className="product-details">
                                         <div className="product-brand">{shoe.brand}</div>
                                         <h3 className="product-name">{shoe.name}</h3>
-                                        <div className="product-price">${shoe.price.toFixed(2)}</div>
+                                        <div className="product-price">${(shoe.price || 0).toFixed(2)}</div>
                                         <div className="product-sizes">
-                                            {shoe.sizes.map(size => (
+                                            {staticSizes.map(size => (
                                                 <span className="size-option" key={size}>US {size}</span>
                                             ))}
                                         </div>
@@ -441,10 +609,15 @@ const Basketball = () => {
                                         onChange={(e) => setQuickViewShoe({ ...quickViewShoe, quantity: parseInt(e.target.value) })}
                                     />
                                 </div>
-                                
+
                                 <button 
                                     className={`modal-add-to-cart ${!selectedSize ? 'disabled' : ''}`}
-                                    onClick={() => selectedSize ? addToCart(quickViewShoe, selectedSize, quickViewShoe.quantity || 1) : null}
+                                    onClick={async () => {
+                                        if (selectedSize) {
+                                            await addToCart(quickViewShoe, selectedSize, quickViewShoe.quantity || 1);
+                                            closeQuickView(); // Close the Quick View modal
+                                        }
+                                    }}
                                     disabled={!selectedSize}
                                 >
                                     <span></span>
@@ -484,28 +657,32 @@ const Basketball = () => {
                         ) : (
                             <>
                                 <div className="cart-items">
-                                    {cart.map((item, index) => (
-                                        <div key={index} className="cart-item">
-                                            <div className="cart-item-image">
-                                                <img src={item.imageUrl} alt={item.name} />
+                                    {cart.length > 0 ? (
+                                        cart.map((item, index) => (
+                                            <div key={`${item.id}_${item.selectedSize}_${index}`} className="cart-item">
+                                                <div className="cart-item-image">
+                                                    <img src={item.imageUrl || 'https://via.placeholder.com/100x100?text=No+Image'} alt={item.name || 'Product'} />
+                                                </div>
+                                                <div className="cart-item-details">
+                                                    <h3>{item.name || 'Unknown Product'}</h3>
+                                                    <p className="cart-item-brand">{item.brand || 'Unknown Brand'}</p>
+                                                    <p className="cart-item-size">Size: US {item.selectedSize || '?'}</p>
+                                                    <p className="cart-item-quantity">Quantity: {item.quantity || 0}</p>
+                                                    <p className="cart-item-price">
+                                                        ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                <button 
+                                                    className="remove-item" 
+                                                    onClick={() => removeFromCart(item.id, item.selectedSize)}
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
                                             </div>
-                                            <div className="cart-item-details">
-                                                <h3>{item.name}</h3>
-                                                <p className="cart-item-brand">{item.brand}</p>
-                                                <p className="cart-item-size">Size: US {item.selectedSize}</p>
-                                                <p className="cart-item-quantity">Quantity: {item.quantity}</p>
-                                                <p className="cart-item-price">
-                                                    ${item.price.toFixed(2)} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
-                                                </p>
-                                            </div>
-                                            <button 
-                                                className="remove-item" 
-                                                onClick={() => removeFromCart(index)}
-                                            >
-                                                <i className="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        <p>No items in cart</p>
+                                    )}
                                 </div>
                                 
                                 <div className="cart-summary">
