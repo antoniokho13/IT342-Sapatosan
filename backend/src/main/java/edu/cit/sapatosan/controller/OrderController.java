@@ -17,17 +17,6 @@ public class OrderController {
     }
 
     @PostMapping("/from-cart/{userId}")
-    public ResponseEntity<String> createOrderFromCart(@PathVariable String userId) {
-        try {
-            String orderId = orderService.createOrderFromCart(userId);
-            return ResponseEntity.ok(orderId);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(e.getMessage());
-        }
-    }
-
-    @PostMapping("/from-cart/{userId}")
     public ResponseEntity<String> createOrderFromCart(
             @PathVariable String userId,
             @RequestBody OrderEntity orderDetails) {
