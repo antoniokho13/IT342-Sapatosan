@@ -1,11 +1,11 @@
 package edu.cit.sapatosan.entity;
 
-import java.util.List;
+import java.util.Map;
 
 public class CartEntity {
     private String id;
     private String userId; // Reference to User
-    private List<String> cartProductIds; // References to CartProductEntity
+    private Map<String, Integer> cartProductIds; // <ProductId, Quantity>
     private String status;
 
     public CartEntity() {
@@ -29,11 +29,11 @@ public class CartEntity {
         this.userId = userId;
     }
 
-    public List<String> getCartProductIds() {
+    public Map<String, Integer> getCartProductIds() {
         return cartProductIds;
     }
 
-    public void setCartProductIds(List<String> cartProductIds) {
+    public void setCartProductIds(Map<String, Integer> cartProductIds) {
         this.cartProductIds = cartProductIds;
     }
 

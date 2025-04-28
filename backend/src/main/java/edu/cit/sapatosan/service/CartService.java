@@ -1,8 +1,6 @@
 package edu.cit.sapatosan.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -15,17 +13,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import edu.cit.sapatosan.entity.CartEntity;
-import edu.cit.sapatosan.entity.CartProductEntity;
 
 @Service
 public class CartService {
     private final DatabaseReference cartRef;
-    private final DatabaseReference cartProductRef;
 
     public CartService() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         this.cartRef = database.getReference("carts");
-        this.cartProductRef = database.getReference("cartProducts");
     }
 
     public CompletableFuture<Optional<CartEntity>> getCartById(String id) {
@@ -93,55 +88,37 @@ public class CartService {
             CartEntity cart = cartOptional.get();
             String cartId = cart.getId();
 
+            // Initialize cartProductIds if null
             if (cart.getCartProductIds() == null) {
-                cart.setCartProductIds(new ArrayList<>()); // Initialize if null
+                cart.setCartProductIds(new HashMap<>());
             }
 
-            Optional<CartProductEntity> existingCartProductOptional =
-                getCartProductByCartIdAndProductId(cartId, productId).get();
+            Map<String, Integer> cartProducts = cart.getCartProductIds();
 
-            if (existingCartProductOptional.isPresent()) {
-                CartProductEntity existingCartProduct = existingCartProductOptional.get();
-                int newQuantity = existingCartProduct.getQuantity() + quantity;
-                existingCartProduct.setQuantity(newQuantity);
-
-                cartProductRef.child(existingCartProduct.getId()).setValueAsync(existingCartProduct).get();
+            // Update quantity if product exists, otherwise add new product
+            if (cartProducts.containsKey(productId)) {
+                int currentQuantity = cartProducts.get(productId);
+                cartProducts.put(productId, currentQuantity + quantity);
             } else {
-                CartProductEntity cartProduct = new CartProductEntity();
-                cartProduct.setCartId(cartId);
-                cartProduct.setProductId(productId);
-                cartProduct.setQuantity(quantity);
-
-                String cartProductId = cartProductRef.push().getKey();
-                cartProduct.setId(cartProductId);
-                cartProductRef.child(cartProductId).setValueAsync(cartProduct).get();
-
-                cart.getCartProductIds().add(cartProductId);
+                cartProducts.put(productId, quantity);
             }
 
-            cartRef.child(cartId).child("cartProductIds").setValueAsync(cart.getCartProductIds()).get();
+            cartRef.child(cartId).setValueAsync(cart).get();
             System.out.println("Updated cart: " + cart); // Log the updated cart
         } else {
             CartEntity cart = new CartEntity();
             cart.setUserId(userId);
             cart.setStatus("ACTIVE");
-            cart.setCartProductIds(new ArrayList<>()); // Initialize as empty list
 
-            CartProductEntity cartProduct = new CartProductEntity();
-            cartProduct.setProductId(productId);
-            cartProduct.setQuantity(quantity);
+            // Initialize cartProductIds with the new product
+            Map<String, Integer> cartProducts = new HashMap<>();
+            cartProducts.put(productId, quantity);
+            cart.setCartProductIds(cartProducts);
 
             String cartId = cartRef.push().getKey();
             cart.setId(cartId);
 
-            String cartProductId = cartProductRef.push().getKey();
-            cartProduct.setId(cartProductId);
-            cartProduct.setCartId(cartId);
-
-            cart.getCartProductIds().add(cartProductId);
-
             cartRef.child(cartId).setValueAsync(cart).get();
-            cartProductRef.child(cartProductId).setValueAsync(cartProduct).get();
 
             System.out.println("Created new cart: " + cart); // Log the new cart
         }
@@ -149,60 +126,65 @@ public class CartService {
 
     public CompletableFuture<Optional<CartEntity>> getCartByUserId(String userId) {
         CompletableFuture<Optional<CartEntity>> future = new CompletableFuture<>();
-        
-        cartRef.orderByChild("userId").equalTo(userId).limitToFirst(1)
-            .addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot snapshot) {
-                    if (snapshot.exists()) {
-                        for (DataSnapshot cartSnapshot : snapshot.getChildren()) {
-                            CartEntity cart = cartSnapshot.getValue(CartEntity.class);
-                            cart.setId(cartSnapshot.getKey());
-                            System.out.println("Cart found for userId: " + userId + ", cart: " + cart);
-                            future.complete(Optional.of(cart));
-                            return;
-                        }
-                    }
-                    System.out.println("No cart found for userId: " + userId);
-                    future.complete(Optional.empty());
-                }
 
-                @Override
-                public void onCancelled(DatabaseError error) {
-                    System.err.println("Error fetching cart for userId: " + userId + ", error: " + error.getMessage());
-                    future.completeExceptionally(error.toException());
-                }
-            });
-        
+        cartRef.orderByChild("userId").equalTo(userId).limitToFirst(1)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            for (DataSnapshot cartSnapshot : snapshot.getChildren()) {
+                                CartEntity cart = cartSnapshot.getValue(CartEntity.class);
+                                cart.setId(cartSnapshot.getKey());
+                                System.out.println("Cart found for userId: " + userId + ", cart: " + cart);
+                                future.complete(Optional.of(cart));
+                                return;
+                            }
+                        }
+                        System.out.println("No cart found for userId: " + userId);
+                        future.complete(Optional.empty());
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        System.err.println("Error fetching cart for userId: " + userId + ", error: " + error.getMessage());
+                        future.completeExceptionally(error.toException());
+                    }
+                });
+
         return future;
     }
 
-    private CompletableFuture<Optional<CartProductEntity>> getCartProductByCartIdAndProductId(String cartId, String productId) {
-        CompletableFuture<Optional<CartProductEntity>> future = new CompletableFuture<>();
-        
-        // Query cartProducts by cartId and productId
-        cartProductRef.orderByChild("cartId").equalTo(cartId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot snapshot) {
-                for (DataSnapshot childSnapshot : snapshot.getChildren()) {
-                    CartProductEntity cartProduct = childSnapshot.getValue(CartProductEntity.class);
-                    if (cartProduct != null) {
-                        cartProduct.setId(childSnapshot.getKey());
-                        if (productId.equals(cartProduct.getProductId())) {
-                            future.complete(Optional.of(cartProduct));
-                            return;
-                        }
-                    }
-                }
-                future.complete(Optional.empty());
-            }
+    public void removeProductFromCart(String userId, String productId) throws ExecutionException, InterruptedException {
+        Optional<CartEntity> cartOptional = getCartByUserId(userId).get();
 
-            @Override
-            public void onCancelled(DatabaseError error) {
-                future.completeExceptionally(error.toException());
+        if (cartOptional.isPresent()) {
+            CartEntity cart = cartOptional.get();
+            String cartId = cart.getId();
+
+            if (cart.getCartProductIds() != null) {
+                Map<String, Integer> cartProducts = cart.getCartProductIds();
+
+                if (cartProducts.containsKey(productId)) {
+                    int currentQuantity = cartProducts.get(productId);
+                    if (currentQuantity > 1) {
+                        // Decrease the quantity by 1
+                        cartProducts.put(productId, currentQuantity - 1);
+                    } else {
+                        // Remove the product if the quantity is 1
+                        cartProducts.remove(productId);
+                    }
+
+                    cart.setCartProductIds(cartProducts);
+                    cartRef.child(cartId).setValueAsync(cart).get();
+                    System.out.println("Updated cart after removing product: " + cart);
+                } else {
+                    System.out.println("Product not found in cart.");
+                }
+            } else {
+                System.out.println("Cart is empty.");
             }
-        });
-        
-        return future;
+        } else {
+            System.out.println("Cart not found for userId: " + userId);
+        }
     }
 }
