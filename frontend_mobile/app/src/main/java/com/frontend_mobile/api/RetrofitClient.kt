@@ -16,6 +16,7 @@ object RetrofitClient {
     private const val BASE_URL = "http://10.0.2.2:8080"
     private const val PREFS_NAME = "auth_prefs"
     private const val TOKEN_KEY = "jwt_token"
+    private const val USER_ID_KEY = "user_id"
 
     private var context: Context? = null
 
@@ -60,6 +61,17 @@ object RetrofitClient {
 
     val instance: ApiService by lazy {
         retrofit.create(ApiService::class.java)
+    }
+
+    fun getUserIdFromPrefs(): String {
+        val ctx = context ?: throw IllegalStateException("RetrofitClient.init(context) must be called before usage")
+        val prefs: SharedPreferences = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(USER_ID_KEY, "") ?: ""
+    }
+
+    fun saveUserId(userId: String) {
+        val prefs = context?.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs?.edit()?.putString("user_id", userId)?.apply()
     }
 
     fun saveToken(token: String) {

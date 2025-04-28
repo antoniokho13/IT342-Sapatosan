@@ -108,17 +108,15 @@ class ProfileActivity : AppCompatActivity() {
             RetrofitClient.instance.updateUserDetails(id, updatedUser).enqueue(object : Callback<ApiResponse> {
                 override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
                     if (response.isSuccessful) {
-                        if (response.body() == null) {
-                            // Handle empty response body
-                            Toast.makeText(this@ProfileActivity, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
-                        } else {
-                            val apiResponse = response.body()
-                            if (apiResponse?.success == true) {
+                        response.body()?.let { apiResponse ->
+                            if (apiResponse.success) {
                                 Toast.makeText(this@ProfileActivity, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
                             } else {
-                                val errorMessage = apiResponse?.message ?: "Unexpected response format."
+                                val errorMessage = apiResponse.message ?: "Unexpected response format."
                                 Toast.makeText(this@ProfileActivity, "Error: $errorMessage", Toast.LENGTH_SHORT).show()
                             }
+                        } ?: run {
+                            Toast.makeText(this@ProfileActivity, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         val errorBody = response.errorBody()?.string() ?: "Unknown error."

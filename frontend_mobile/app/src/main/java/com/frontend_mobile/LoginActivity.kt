@@ -17,13 +17,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.api.LoginRequest
-import com.frontend_mobile.api.ApiResponse
 import android.content.Context
-import com.frontend_mobile.api.LoginResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.ui.graphics.Color
+import com.frontend_mobile.api.LoginResponse
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +55,7 @@ fun LoginScreenWithActions() {
                         RetrofitClient.saveToken(loginResponse.token) // Save the token
                         val prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
                         prefs.edit().putString("user_id", loginResponse.userId).apply() // Save user_id
+                        RetrofitClient.saveUserId(response.body()?.userId ?: "")
 
                         // Navigate to HomeActivity
                         context.startActivity(Intent(context, HomeActivity::class.java))

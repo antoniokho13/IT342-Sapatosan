@@ -15,13 +15,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.frontend_mobile.api.ApiResponse
 import com.frontend_mobile.api.RegisterRequest
 import com.frontend_mobile.api.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.ui.graphics.Color
+import com.frontend_mobile.api.ApiResponse
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +45,28 @@ fun RegisterScreenWithActions() {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    fun validateInputs(): Boolean {
+        return when {
+            firstName.isBlank() -> {
+                Toast.makeText(context, "First Name is required", Toast.LENGTH_SHORT).show()
+                false
+            }
+            lastName.isBlank() -> {
+                Toast.makeText(context, "Last Name is required", Toast.LENGTH_SHORT).show()
+                false
+            }
+            email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                Toast.makeText(context, "Valid Email is required", Toast.LENGTH_SHORT).show()
+                false
+            }
+            password.length < 6 -> {
+                Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                false
+            }
+            else -> true
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -54,10 +76,10 @@ fun RegisterScreenWithActions() {
     ) {
         // Logo
         Image(
-            painter = painterResource(id = R.drawable.logo), // Replace with your logo resource
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(150.dp) // Increased size
+                .size(150.dp)
                 .padding(bottom = 24.dp)
         )
 
@@ -102,34 +124,36 @@ fun RegisterScreenWithActions() {
         // Register Button
         Button(
             onClick = {
-                val request = RegisterRequest(firstName, lastName, email, password, role = "USER")
-                RetrofitClient.instance.registerUser(request).enqueue(object : Callback<ApiResponse> {
-                    override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                        if (response.isSuccessful) {
-                            val apiResponse = response.body()
-                            if (apiResponse?.success == true) {
-                                Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
-                                context.startActivity(Intent(context, LoginActivity::class.java))
-                                (context as? ComponentActivity)?.finish()
+                if (validateInputs()) {
+                    val request = RegisterRequest(firstName, lastName, email, password, role = "USER")
+                    RetrofitClient.instance.registerUser(request).enqueue(object : Callback<ApiResponse> {
+                        override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
+                            if (response.isSuccessful) {
+                                val apiResponse = response.body()
+                                if (apiResponse?.success == true) {
+                                    Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+                                    context.startActivity(Intent(context, LoginActivity::class.java))
+                                    (context as? ComponentActivity)?.finish()
+                                } else {
+                                    val errorMessage = apiResponse?.message ?: "Registration failed. Please try again."
+                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                }
                             } else {
-                                val errorMessage = apiResponse?.message ?: "Registration failed. Please try again."
-                                Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                val errorBody = response.errorBody()?.string() ?: "An unexpected error occurred."
+                                Toast.makeText(context, "Error: $errorBody", Toast.LENGTH_SHORT).show()
                             }
-                        } else {
-                            val errorBody = response.errorBody()?.string() ?: "An unexpected error occurred."
-                            Toast.makeText(context, "Error: $errorBody", Toast.LENGTH_SHORT).show()
                         }
-                    }
 
-                    override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                        Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
-                    }
-                })
+                        override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
+                            Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    })
+                }
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Red button
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
         ) {
-            Text("REGISTER", color = Color.White) // Capitalized text
+            Text("REGISTER", color = Color.White)
         }
         Spacer(modifier = Modifier.height(12.dp))
 

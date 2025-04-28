@@ -11,7 +11,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.databinding.ActivityHomeBinding
-import com.frontend_mobile.models.ShoeAdapter
+import com.frontend_mobile.adapters.ShoeAdapter
 import com.frontend_mobile.models.ShoeItem
 import retrofit2.Call
 import retrofit2.Callback
