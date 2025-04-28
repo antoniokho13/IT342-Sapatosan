@@ -31,11 +31,25 @@
                 android:id="@+id/shoeNameToolbar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Shopping Cart"
+                android:fontFamily="sans-serif-black"
+                android:text="SHOPPING CART"
+                android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_gravity="center" />
         </androidx.appcompat.widget.Toolbar>
+
+        <!-- Hamburger Icon -->
+        <ImageView
+            android:id="@+id/ic_menu"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_margin="12dp"
+            android:src="@drawable/ic_menu"
+            android:contentDescription="Menu"
+            android:scaleType="fitCenter"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <!-- Cart List -->
         <androidx.recyclerview.widget.RecyclerView
@@ -79,7 +93,66 @@
                 android:textColor="@android:color/white"
                 android:backgroundTint="@color/black"
                 android:textSize="16sp" />
-        </LinearLayout>
 
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:id="@+id/emptyCartText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Your cart is empty."
+                android:textSize="20sp"
+                android:visibility="gone"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"/>
+        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Side Drawer Content -->
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/drawer_profile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profile"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/drawer_shopping_cart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Shopping Cart"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/tvSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings"
+            android:textSize="18sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:id="@+id/drawer_logout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textSize="18sp"
+            android:padding="8dp" />
+    </LinearLayout>
 </androidx.drawerlayout.widget.DrawerLayout>
