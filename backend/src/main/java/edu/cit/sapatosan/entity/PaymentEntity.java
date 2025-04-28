@@ -6,7 +6,6 @@ public class PaymentEntity {
     private Double amount; // Total amount from the order
     private String description; // Payment description
     private String link; // Payment link (checkout_url from PayMongo)
-    private String status; // Payment status (e.g., pending, completed, failed)
 
     public PaymentEntity() {
         // Default constructor for Firebase

@@ -9,9 +9,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // CORS for API endpoints
         registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:3000")  // Your React app's URL
+                .allowedOrigins("http://localhost:3000", "https://it-342-sapatosan.vercel.app")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
