@@ -13,7 +13,7 @@ public class PaymentController {
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
-
+    //Push na ni oy
     @PostMapping("/{orderId}")
     public ResponseEntity<Void> createPayment(@PathVariable String orderId, @RequestBody PaymentEntity payment) {
         paymentService.createPayment(orderId, payment);
