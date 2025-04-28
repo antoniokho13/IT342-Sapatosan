@@ -254,22 +254,22 @@ const Running = () => {
     const removeFromCart = async (productId, selectedSize) => {
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userId');
-
+    
         if (!token || !userId) {
             console.error('Missing authentication data');
             return;
         }
-
+    
         try {
             const response = await axios.delete(
                 `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`
                     }
                 }
             );
-
+    
             if (response.status === 200) {
                 console.log('Product removed from cart successfully');
                 
@@ -282,7 +282,7 @@ const Running = () => {
                 localStorage.setItem('sapatosanCart', JSON.stringify(updatedCart));
                 setCart(updatedCart);
                 
-                fetchCartWithProducts(); // Use the new function instead of fetchCart
+                fetchCartWithProducts(); // Refresh the cart after removing
             } else {
                 console.error('Failed to remove from cart:', response.statusText);
             }

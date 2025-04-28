@@ -391,22 +391,22 @@ const Basketball = () => {
     const removeFromCart = async (productId, selectedSize) => {
         const token = localStorage.getItem('token');
         const userId = localStorage.getItem('userId');
-
+    
         if (!token || !userId) {
             console.error('Missing authentication data');
             return;
         }
-
+    
         try {
             const response = await axios.delete(
-                `http://localhost:8080/api/carts/user/${userId}/remove-product/${productId}`,
+                `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
-                        Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`
                     }
                 }
             );
-
+    
             if (response.status === 200) {
                 console.log('Product removed from cart successfully');
                 
