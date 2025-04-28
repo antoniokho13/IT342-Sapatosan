@@ -439,3 +439,85 @@
     margin: 0;
     text-align: center;
 }
+.disabled {
+    background-color: #f9f9f9;
+    cursor: not-allowed;
+    opacity: 0.8;
+  }
+
+
+
+/* Add to your Checkout.css file */
+
+.payment-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e5e5;
+    text-align: center;
+}
+
+.payment-info {
+    margin: 20px 0;
+}
+
+.payment-info p {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.payment-methods {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.payment-methods img {
+    height: 30px;
+    margin: 0 15px;
+    opacity: 0.8;
+}
+
+.payment-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.pay-now-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 15px;
+}
+
+.pay-now-btn:hover {
+    background-color: #45a049;
+}
+
+.pay-now-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.continue-shopping-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.continue-shopping-link:hover {
+    text-decoration: underline;
+}
