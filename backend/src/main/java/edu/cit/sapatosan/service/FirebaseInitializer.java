@@ -8,64 +8,78 @@ import com.google.firebase.database.FirebaseDatabase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.google.cloud.storage.Storage; // Import for Storage Bean (Optional)
-import com.google.firebase.cloud.StorageClient; // Import for StorageClient (Optional)
-
+import com.google.cloud.storage.Storage;
+import com.google.firebase.cloud.StorageClient;
 
 import javax.annotation.PostConstruct;
+import java.io.ByteArrayInputStream; // Import this for reading from a string
 import java.io.IOException;
 import java.io.InputStream;
 
 @Configuration
 public class FirebaseInitializer {
 
+    // These properties will be read from application.properties or environment variables
     @Value("${firebase.database.url}")
     private String databaseUrl;
 
-    // --- ADDED: Inject the Firebase Storage Bucket Name from application.properties ---
-    @Value("${firebase.storage.bucket-name}") // This will now read from application.properties
+    @Value("${firebase.storage.bucket-name}")
     private String storageBucketName;
-    // ---------------------------------------------------------------------------------
 
+    // --- ADDED: Define the environment variable name for the service account key ---
+    private static final String FIREBASE_ENV_VAR_NAME = "FIREBASE_SERVICE_ACCOUNT_KEY";
+    // -----------------------------------------------------------------------------
 
     @PostConstruct
     public void initialize() {
         try {
-            // Load service account file from resources folder
-            InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("firebase-config.json");
+            // --- MODIFIED: Attempt to load service account JSON from environment variable ---
+            String serviceAccountJson = System.getenv(FIREBASE_ENV_VAR_NAME);
 
-            if (serviceAccount == null) {
-                System.err.println("ERROR: firebase-config.json not found in resources folder.");
-                throw new IllegalStateException("firebase-config.json not found in resources folder.");
+            InputStream serviceAccount;
+
+            if (serviceAccountJson != null && !serviceAccountJson.isEmpty()) {
+                // If the environment variable is set, read credentials from its value
+                System.out.println("INFO: Loading Firebase credentials from environment variable: " + FIREBASE_ENV_VAR_NAME);
+                serviceAccount = new ByteArrayInputStream(serviceAccountJson.getBytes());
+            } else {
+                // --- Optional Fallback for Local Development ---
+                // If the environment variable is NOT set, try loading from resources.
+                // This is helpful for running locally without setting the env var.
+                // For production deployment, you might prefer to remove this else block
+                // to force using the environment variable and fail if it's missing.
+                System.out.println("INFO: Environment variable " + FIREBASE_ENV_VAR_NAME + " not set. Attempting to load firebase-config.json from resources.");
+                serviceAccount = getClass().getClassLoader().getResourceAsStream("firebase-config.json");
+
+                if (serviceAccount == null) {
+                    System.err.println("ERROR: Environment variable " + FIREBASE_ENV_VAR_NAME + " is not set and firebase-config.json not found in resources folder.");
+                    throw new IllegalStateException("Firebase credentials not provided via environment variable or resources file.");
+                }
+                // --- End Optional Fallback ---
             }
+            // ---------------------------------------------------------------------------------
+
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl(databaseUrl)
-                    // --- ADDED: Set the Storage Bucket Name ---
-                    // This tells the Firebase Admin SDK which storage bucket to use by default
                     .setStorageBucket(storageBucketName)
-                    // ------------------------------------------
                     .build();
 
             // Initialize FirebaseApp only if it hasn't been initialized yet
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                System.out.println("Firebase app initialized successfully."); // Added success log
+                System.out.println("Firebase app initialized successfully.");
             } else {
-                // If already initialized, you might want to check if the storage bucket is set
-                // or just log that it's already done.
-                System.out.println("Firebase app already initialized."); // Log if already initialized
-                // Optional: Verify storage bucket is set if needed
-                // if (FirebaseApp.getInstance().getOptions().getStorageBucket() == null) {
-                //     System.err.println("Warning: Firebase app was already initialized but storage bucket is not set.");
-                // }
+                System.out.println("Firebase app already initialized.");
             }
         } catch (IOException e) {
-            System.err.println("ERROR: Failed to initialize Firebase due to file/IO issue.");
+            System.err.println("ERROR: Failed to initialize Firebase due to IO issue (reading stream).");
             e.printStackTrace();
-            throw new IllegalStateException("Failed to initialize Firebase", e);
+            // It's better to throw a specific exception or re-throw to indicate the cause
+            throw new IllegalStateException("Failed to initialize Firebase credentials stream", e);
         } catch (Exception e) {
+            // Catching a general Exception is broad, consider more specific catches if possible
             System.err.println("ERROR: An unexpected error occurred during Firebase initialization.");
             e.printStackTrace();
             throw new IllegalStateException("Failed to initialize Firebase unexpectedly", e);
@@ -81,15 +95,11 @@ public class FirebaseInitializer {
         return FirebaseDatabase.getInstance().getReference();
     }
 
-    // --- Optional: Add a Bean for Firebase Storage if you need to inject it elsewhere ---
-    // This allows you to @Autowired the Storage object directly into other classes
     @Bean
     public Storage firebaseStorage() {
         if (FirebaseApp.getApps().isEmpty()) {
             throw new IllegalStateException("FirebaseApp is not initialized. Cannot get Storage instance.");
         }
-        // Get the Storage instance from the default bucket associated with the initialized app
         return StorageClient.getInstance().bucket().getStorage();
     }
-    // ------------------------------------------------------------------------------------
 }
