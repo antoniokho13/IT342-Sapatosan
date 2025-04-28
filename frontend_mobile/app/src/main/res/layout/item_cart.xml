@@ -27,10 +27,9 @@
             android:textStyle="bold"/>
 
         <TextView
-            android:id="@+id/shoeSize"
+            android:id="@+id/selectedSize"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="italic"
             android:text="Size: US 9"/>
 
         <TextView
