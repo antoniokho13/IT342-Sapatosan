@@ -36,10 +36,8 @@ const UserInformation = () => {
                 return;
             }
             
-            const response = await axios.get('http://localhost:8080/api/users', {
-                headers: {
-                    authorization: `Bearer ${token}`
-                }
+            const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
+                headers: { authorization: `Bearer ${token}` }
             });
             
             const currentUser = response.data.find(user => user.email === email);
@@ -134,14 +132,9 @@ const UserInformation = () => {
             
             // Call API to update user
             const response = await axios.put(
-                `http://localhost:8080/api/users/${userData.id}`, 
-                userDataToUpdate, 
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${userData.id}`,
+                userDataToUpdate,
+                { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
             );
             
             // Exit edit mode
