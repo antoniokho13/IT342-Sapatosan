@@ -27,6 +27,7 @@ function App() {
           <Route path="/running" element={<Running />} />
           <Route path="/profile" element={<UserInformation />} />
           <Route path="/checkout" element={<Checkout />} />
+
           
           {/* Admin Routes */}
           <Route path="/admin/users" element={<AdminUsers />} />

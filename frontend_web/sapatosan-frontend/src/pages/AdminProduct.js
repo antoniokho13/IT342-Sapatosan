@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
-import axios from 'axios';
 
 const AdminProduct = () => {
     const [products, setProducts] = useState([]);
@@ -77,7 +77,7 @@ const AdminProduct = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token'); // Clear the token from localStorage
@@ -178,7 +178,7 @@ const AdminProduct = () => {
     
                 console.log('Uploading image...'); // Debugging line
                 const uploadResponse = await axios.post(
-                    'http://localhost:8080/api/images/upload',
+                    'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/images/upload',
                     formData,
                     { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
                 );
