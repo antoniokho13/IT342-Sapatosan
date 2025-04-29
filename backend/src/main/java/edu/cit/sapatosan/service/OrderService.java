@@ -1,11 +1,27 @@
 package edu.cit.sapatosan.service;
 
-import com.google.firebase.database.*;
-import edu.cit.sapatosan.entity.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import edu.cit.sapatosan.entity.CartEntity;
+import edu.cit.sapatosan.entity.OrderEntity;
+import edu.cit.sapatosan.entity.OrderProductEntity;
+import edu.cit.sapatosan.entity.PaymentEntity;
+import edu.cit.sapatosan.entity.ProductEntity;
 
 @Service
 public class OrderService {
@@ -176,5 +192,40 @@ public class OrderService {
                 System.err.println("Failed to fetch order product: " + error.getMessage());
             }
         });
+    }
+
+    public void updatePaymentStatus(String orderId, OrderEntity.PaymentStatus paymentStatus) {
+        orderRef.child(orderId).child("paymentStatus").setValueAsync(paymentStatus);
+    }
+
+    public List<OrderEntity> getAllOrders() {
+        CompletableFuture<List<OrderEntity>> future = new CompletableFuture<>();
+        List<OrderEntity> orders = new ArrayList<>();
+
+        orderRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    OrderEntity order = snapshot.getValue(OrderEntity.class);
+                    if (order != null) {
+                        orders.add(order);
+                    }
+                }
+                future.complete(orders);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Failed to fetch orders: " + databaseError.getMessage());
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Failed to fetch orders: " + e.getMessage());
+            return Collections.emptyList();
+        }
     }
 }

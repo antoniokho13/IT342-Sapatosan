@@ -40,7 +40,7 @@ const Checkout = () => {
             
             try {
                 // Fetch user data
-                const userResponse = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
+                const userResponse = await axios.get('http://localhost:8080/api/users', {
                     headers: {
                         authorization: `Bearer ${token}`
                     }
@@ -307,29 +307,20 @@ const Checkout = () => {
     if (orderComplete) {
         return (
             <div className="checkout-page">
-                <header className="checkout-header">
-                    <div className="logo-container">
-                        <Link to="/">
-                            <img src={logo} alt="Sapatosan Logo" className="logo" />
-                        </Link>
-                    </div>
-                </header>
-                
                 <div className="order-confirmation">
                     <div className="success-icon">
                         <i className="fas fa-check-circle"></i>
                     </div>
                     <h2>Order Complete!</h2>
-                    <p>Your order has been placed successfully.</p>
-                    <p>Order ID: <span className="order-id">{orderId}</span></p>
-                    <p>A confirmation email has been sent to {formData.email}</p>
+                    <p>Order ID: <span className="order-id">{orderId}</span> • {formData.email}</p>
+                    
                     <div className="confirmation-details">
                         <h3>Order Summary</h3>
                         <div className="confirmation-items">
                             {cart.map((item, index) => (
                                 <div key={index} className="confirmation-item">
                                     <div className="item-name">
-                                        {item.name} <span>(US {item.selectedSize})</span>
+                                        {item.name} <span>({item.selectedSize})</span>
                                     </div>
                                     <div className="item-price">${(item.price * item.quantity).toFixed(2)}</div>
                                 </div>
@@ -341,7 +332,7 @@ const Checkout = () => {
                                 <span>${calculateSubtotal().toFixed(2)}</span>
                             </div>
                             <div className="total-line">
-                                <span>Tax (12%):</span>
+                                <span>Tax:</span>
                                 <span>${calculateTax().toFixed(2)}</span>
                             </div>
                             <div className="total-line">
@@ -355,17 +346,15 @@ const Checkout = () => {
                         </div>
                     </div>
                     
-                    {/* Payment Section */}
                     <div className="payment-section">
                         <h3>Complete Your Purchase</h3>
                         <div className="payment-info">
-                            <p>Your order is ready for payment. Please click the button below to proceed to our secure payment gateway.</p>
+                            <p>Click the button below for our secure payment gateway</p>
                             
                             <div className="payment-methods">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" />
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" />
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png" alt="Google Pay" />
-                                <img src="https://1000logos.net/wp-content/uploads/2021/05/Grab-logo.png" alt="GrabPay" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="payment-logo" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="payment-logo" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png" alt="Google Pay" className="payment-logo" />
                             </div>
                         </div>
                         
@@ -375,7 +364,11 @@ const Checkout = () => {
                                 className="pay-now-btn"
                                 disabled={fetchingPayment}
                             >
-                                {fetchingPayment ? 'Loading Payment...' : 'Pay Now'}
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                {fetchingPayment ? 'Loading...' : 'Pay Now'}
                             </button>
                             
                             <Link to="/" className="continue-shopping-link">

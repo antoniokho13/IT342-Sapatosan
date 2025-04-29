@@ -340,6 +340,7 @@ body {
     justify-content: space-around;
     flex-wrap: wrap;
     gap: 20px;
+    align-items: stretch; /* Make all cards stretch to the same height */
 }
 
 .card {
@@ -357,28 +358,20 @@ body {
     text-align: center;
     padding-bottom: 16px; /* Ensure there's some space at the bottom */
     width: 300px; /* Set a fixed width for the cards */
+    height: 100%; /* Make all cards the same height */
+    align-self: stretch; /* Make the card stretch to fill the container */
+    display: flex; /* Establish flex container */
+    flex-direction: column; /* Stack children vertically */
 }
 
-.card-media {
-    display: flex;
-    justify-content: center;
-    padding-top: 20px; /* Add some padding to the top of the card */
-    background-color: transparent; /* Ensure the background is transparent */
-}
-
-.card-img {
-    height: 150px;
-    width: 150px;
-    object-fit: cover;
-    border-radius: 50%; /* Make the image circular */
-    margin-top: 20px;
-    background-color: transparent; /* Ensure the image background is transparent */
-}
-
+/* Make the card content take the available space */
 .card-content {
     padding: 16px;
     background-color: var(--white); /* White background for the content */
     margin-top: 20px; /* Add a gap between the image and content */
+    flex: 1; /* Make content area expand to fill available space */
+    display: flex;
+    flex-direction: column;
 }
 
 .card-content h5 {
@@ -855,4 +848,498 @@ body {
 
 .confirm-remove:hover {
     background-color: #e0352b;
+}
+
+/* Add these responsive styles to your Home.css file */
+
+/* Base responsive rules */
+html {
+    font-size: 16px;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Media queries for different screen sizes */
+
+/* Large screens (1080p and above) */
+@media screen and (min-width: 1920px) {
+    .container, .checkout-content {
+        max-width: 1800px;
+        margin: 0 auto;
+    }
+    
+    .video-teaser {
+        width: 100%;
+        height: auto;
+    }
+    
+    .featured-brands {
+        padding: 60px 40px;
+    }
+    
+    .brands-logos {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    .brand-logo {
+        height: 220px;
+    }
+    
+    .profile-section, .about-section, .testimonials-section {
+        padding: 80px 60px;
+    }
+    
+    .profile-cards {
+        max-width: 1600px;
+        margin: 0 auto;
+        gap: 40px;
+    }
+    
+    .card {
+        width: 350px;
+    }
+}
+
+/* Standard desktop screens */
+@media screen and (max-width: 1366px) {
+    .header {
+        padding: 5px 15px;
+    }
+    
+    .logo {
+        height: 80px;
+    }
+    
+    .nav-link {
+        padding: 8px 15px;
+        margin: 15px 0;
+    }
+    
+    .auth-button {
+        padding: 8px 15px;
+        margin: 15px 0;
+    }
+    
+    .featured-brands {
+        height: 250px;
+    }
+    
+    .featured-brands h1 {
+        font-size: 40px;
+    }
+    
+    .brand-logo {
+        height: 180px;
+    }
+    
+    .profile-section h1, .about-section h1, .testimonials-section h1 {
+        font-size: 40px;
+    }
+    
+    .checkout-content {
+        padding: 20px;
+    }
+    
+    .checkout-form-container, .order-summary {
+        padding: 15px;
+    }
+}
+
+/* Tablets and small laptops */
+@media screen and (max-width: 1024px) {
+    .header {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 10px;
+    }
+    
+    .logo-container {
+        order: 1;
+        flex: 1;
+    }
+    
+    .auth-buttons {
+        order: 2;
+        flex: 1;
+        justify-content: flex-end;
+    }
+    
+    .nav-links {
+        order: 3;
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+    }
+    
+    .nav-link {
+        margin: 10px 5px;
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    
+    .auth-button {
+        margin: 10px 5px;
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    
+    .profile-cards {
+        justify-content: center;
+        gap: 30px;
+    }
+    
+    .card {
+        width: 280px;
+    }
+    
+    .brand-logo {
+        height: 150px;
+    }
+    
+    .featured-brands h1, .profile-section h1, .about-section h1, .testimonials-section h1 {
+        font-size: 36px;
+    }
+    
+    /* Checkout page responsive adjustments */
+    .checkout-content {
+        flex-direction: column;
+    }
+    
+    .checkout-form-container, .order-summary {
+        width: 100%;
+        margin: 0 0 20px 0;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-group {
+        width: 100%;
+    }
+}
+
+/* Large mobile phones and small tablets */
+@media screen and (max-width: 768px) {
+    .logo {
+        height: 70px;
+    }
+    
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    
+    .video-container1 {
+        height: 70vh;
+    }
+    
+    .featured-brands {
+        height: auto;
+        padding: 30px 15px;
+    }
+    
+    .brands-logos {
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .brand-logo {
+        height: 120px;
+        max-width: 45%;
+    }
+    
+    .profile-section, .about-section, .testimonials-section {
+        padding: 30px 15px;
+    }
+    
+    .featured-brands h1, .profile-section h1, .about-section h1, .testimonials-section h1 {
+        font-size: 32px;
+        margin-bottom: 20px;
+    }
+    
+    .about-section p {
+        font-size: 16px;
+    }
+    
+    .cart-modal-content {
+        width: 90%;
+        max-height: 80vh;
+    }
+    
+    .cart-items {
+        max-height: 50vh;
+    }
+    
+    /* Cart item layout changes */
+    .cart-item {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .cart-item-details {
+        width: 100%;
+        text-align: center;
+        margin: 10px 0;
+    }
+    
+    .remove-item {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* Payment section adjustments */
+    .payment-methods img {
+        height: 24px;
+        margin: 0 8px;
+    }
+    
+    .payment-actions {
+        flex-direction: column;
+    }
+    
+    .pay-now-btn {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    
+    .continue-shopping-link {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Order confirmation adjustments */
+    .order-confirmation {
+        padding: 15px;
+    }
+    
+    .confirmation-details {
+        padding: 15px;
+    }
+}
+
+/* Mobile phones (480p) */
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+    
+    .header {
+        padding: 8px;
+    }
+    
+    .logo {
+        height: 50px;
+        margin-right: 10px;
+    }
+    
+    .nav-links {
+        margin: 5px 0;
+    }
+    
+    .nav-link {
+        margin: 5px 2px;
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+    
+    .auth-button {
+        margin: 5px 2px;
+        padding: 6px 8px;
+        font-size: 10px;
+        letter-spacing: 2px;
+    }
+    
+    .header-cart-icon {
+        width: 30px;
+        height: 30px;
+        margin-right: 8px;
+    }
+    
+    .user-dropdown .user-avatar {
+        width: 30px !important;
+        height: 30px !important;
+        font-size: 14px !important;
+    }
+    
+    .dropdown-menu {
+        min-width: 180px;
+        right: -10px;
+    }
+    
+    .video-container1 {
+        height: 30vh; /* Reduce height from 60vh to 50vh */
+    }
+    
+    .video-teaser {
+        width: 50%; /* Ensure width is 100% */
+        height: auto; /* Let height adjust automatically */
+        min-height: 100%; /* Maintain minimum height */
+        object-position: center; /* Center the video content */
+    }
+    
+    .featured-brands h1, .profile-section h1, .about-section h1, .testimonials-section h1 {
+        font-size: 24px;
+    }
+    
+    .brand-logo {
+        height: 80px;
+    }
+    
+    .profile-cards {
+        gap: 20px;
+    }
+    
+    .card {
+        width: 100%;
+        max-width: 280px;
+    }
+    
+    .about-section p {
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    .cart-modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .cart-item-image {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .cart-item-details h3 {
+        font-size: 16px;
+    }
+    
+    .cart-item-price, .cart-item-brand, .cart-item-size, .cart-item-quantity {
+        font-size: 14px;
+    }
+    
+    .cart-actions {
+        flex-direction: column;
+    }
+    
+    .continue-shopping, .checkout {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    /* Checkout page mobile adjustments */
+    .checkout-header {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .back-to-cart {
+        margin-top: 10px;
+    }
+    
+    .checkout-form h2 {
+        font-size: 20px;
+    }
+    
+    .checkout-form label {
+        font-size: 14px;
+    }
+    
+    .checkout-form input, .checkout-form select {
+        padding: 8px;
+    }
+    
+    .place-order-btn {
+        padding: 12px;
+    }
+    
+    .order-summary h2 {
+        font-size: 20px;
+    }
+    
+    .summary-item {
+        flex-direction: column;
+    }
+    
+    .summary-item-image {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 10px auto;
+    }
+    
+    .summary-item-details {
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Order confirmation mobile adjustments */
+    .success-icon i {
+        font-size: 50px;
+    }
+    
+    .order-confirmation h2 {
+        font-size: 22px;
+    }
+    
+    .order-confirmation p {
+        font-size: 14px;
+    }
+    
+    .confirmation-items {
+        max-height: 30vh;
+    }
+}
+
+/* Extra small devices */
+@media screen and (max-width: 360px) {
+    .header {
+        padding: 5px;
+    }
+    
+    .logo {
+        height: 40px;
+    }
+    
+    .nav-links {
+        gap: 2px;
+    }
+    
+    .nav-link {
+        padding: 5px 6px;
+        font-size: 9px;
+        margin: 5px 1px;
+    }
+    
+    .auth-button {
+        padding: 5px 6px;
+        font-size: 9px;
+        margin: 5px 1px;
+        letter-spacing: 1px;
+    }
+    
+    .header-cart-icon, .user-dropdown .user-avatar {
+        width: 28px !important;
+        height: 28px !important;
+    }
+    
+    .user-dropdown .user-avatar {
+        font-size: 12px !important;
+    }
+    
+    .featured-brands h1, .profile-section h1, .about-section h1, .testimonials-section h1 {
+        font-size: 20px;
+    }
+    
+    .brand-logo {
+        height: 60px;
+    }
 }
