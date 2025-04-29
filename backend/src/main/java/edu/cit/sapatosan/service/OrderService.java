@@ -177,4 +177,29 @@ public class OrderService {
             }
         });
     }
+
+    public void updatePaymentStatus(String orderId, OrderEntity.PaymentStatus paymentStatus) {
+        orderRef.child(orderId).child("paymentStatus").setValueAsync(paymentStatus);
+    }
+
+    public List<OrderEntity> getAllOrders() {
+        List<OrderEntity> orders = new ArrayList<>();
+        orderRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    OrderEntity order = snapshot.getValue(OrderEntity.class);
+                    if (order != null) {
+                        orders.add(order);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Failed to fetch orders: " + databaseError.getMessage());
+            }
+        });
+        return orders;
+    }
 }

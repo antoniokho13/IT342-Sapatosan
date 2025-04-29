@@ -5,6 +5,7 @@ import edu.cit.sapatosan.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -27,6 +28,20 @@ public class OrderController {
             e.printStackTrace();
             return ResponseEntity.status(500).body(e.getMessage());
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<OrderEntity>> getAllOrders() {
+        List<OrderEntity> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
+    }
+
+    @PatchMapping("/{orderId}")
+    public ResponseEntity<Void> updatePaymentStatus(
+            @PathVariable String orderId,
+            @RequestParam OrderEntity.PaymentStatus paymentStatus) {
+        orderService.updatePaymentStatus(orderId, paymentStatus);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{orderId}")
