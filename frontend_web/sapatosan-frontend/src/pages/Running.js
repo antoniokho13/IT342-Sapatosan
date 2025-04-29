@@ -39,7 +39,7 @@ const Running = () => {
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 
                 const response = await axios.get(
-                    `http://localhost:8080/api/products`,
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                     { headers }
                 );
                 
@@ -100,7 +100,7 @@ const Running = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                `http://localhost:8080/api/carts/user/${userId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -129,7 +129,7 @@ const Running = () => {
             
             // Next, fetch ALL products (not just running) to find the ones in the cart
             const productsResponse = await axios.get(
-                `http://localhost:8080/api/products`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -231,7 +231,7 @@ const Running = () => {
             console.log("Adding to cart:", cartProduct); // Debug
 
             const response = await axios.post(
-                `http://localhost:8080/api/carts/${userId}/add-product`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
                 cartProduct,
                 {
                     headers: {
@@ -262,7 +262,7 @@ const Running = () => {
     
         try {
             const response = await axios.delete(
-                `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

@@ -82,12 +82,8 @@ const Checkout = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                `http://localhost:8080/api/carts/user/${userId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
             );
 
             if (cartResponse.status !== 200 || !cartResponse.data) {
@@ -107,7 +103,7 @@ const Checkout = () => {
             
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
-                `http://localhost:8080/api/products`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -236,14 +232,9 @@ const Checkout = () => {
         try {
             // Make the API call to create an order
             const response = await axios.post(
-                `http://localhost:8080/api/orders/from-cart/${userId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders`,
                 orderData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                }
+                { headers: { Authorization: `Bearer ${token}` } }
             );
             
             if (response.status === 200) {

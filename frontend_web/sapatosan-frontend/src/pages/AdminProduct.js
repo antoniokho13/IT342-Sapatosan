@@ -41,9 +41,10 @@ const AdminProduct = () => {
 
     const fetchProducts = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/api/products', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get(
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setProducts(response.data);
         } catch (error) {
             console.error('Error fetching products:', error);
@@ -52,9 +53,10 @@ const AdminProduct = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/api/categories', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get(
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setCategories(response.data);
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -63,9 +65,10 @@ const AdminProduct = () => {
 
     const fetchBrands = async () => {
         try {
-            const response = await axios.get('http://localhost:8080/api/brands', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get(
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/brands`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setBrands(response.data);
         } catch (error) {
             console.error('Error fetching brands:', error);
@@ -127,9 +130,10 @@ const AdminProduct = () => {
     const handleDelete = async () => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
-                await axios.delete(`http://localhost:8080/api/products/${selectedProduct.id}`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axios.delete(
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${selectedProduct.id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
                 setProducts(products.filter(product => product.id !== selectedProduct.id));
                 setShowProductModal(false);
                 setSelectedProduct(null);
@@ -192,8 +196,7 @@ const AdminProduct = () => {
                 // Update existing product
                 console.log('Updating product:', currentProduct.id, productData); // Debugging line
                 await axios.put(
-                    `http://localhost:8080/api/products/${currentProduct.id}`,
-                    // MODIFIED: Send productData object in body only
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${currentProduct.id}`,
                     productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -203,8 +206,7 @@ const AdminProduct = () => {
                 // Add new product
                 console.log('Adding new product:', productData); // Debugging line
                 await axios.post(
-                    'http://localhost:8080/api/products',
-                    // MODIFIED: Send productData object in body only
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                     productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );

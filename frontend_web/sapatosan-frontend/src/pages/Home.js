@@ -69,11 +69,10 @@ const Home = () => {
                     }
                     
                     // Now fetch users to get additional data or verify the email
-                    const response = await axios.get('http://localhost:8080/api/users', {
-                        headers: {
-                            authorization: `Bearer ${token}`
-                        }
-                    });
+                    const response = await axios.get(
+                        `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
                     
                     console.log("API response:", response.data);
                     
@@ -168,12 +167,8 @@ const fetchCartWithProducts = async () => {
     try {
         // First, get the cart data
         const cartResponse = await axios.get(
-            `http://localhost:8080/api/carts/user/${userId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
+            `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
         );
 
         if (cartResponse.status !== 200 || !cartResponse.data) {
@@ -197,7 +192,7 @@ const fetchCartWithProducts = async () => {
         
         // Next, fetch ALL products to find the ones in the cart
         const productsResponse = await axios.get(
-            `http://localhost:8080/api/products`,
+            `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
             { headers: { Authorization: `Bearer ${token}` } }
         );
         
@@ -314,9 +309,11 @@ const fetchCartWithProducts = async () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
-                await axios.post('http://localhost:8080/api/auth/logout', {}, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                await axios.post(
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout`,
+                    {},
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
                 localStorage.removeItem('token');
                 localStorage.removeItem('email');
                 localStorage.removeItem('userId');
