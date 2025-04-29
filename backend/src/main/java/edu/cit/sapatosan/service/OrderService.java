@@ -5,6 +5,7 @@ import edu.cit.sapatosan.entity.*;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -183,7 +184,9 @@ public class OrderService {
     }
 
     public List<OrderEntity> getAllOrders() {
+        CompletableFuture<List<OrderEntity>> future = new CompletableFuture<>();
         List<OrderEntity> orders = new ArrayList<>();
+
         orderRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -193,13 +196,46 @@ public class OrderService {
                         orders.add(order);
                     }
                 }
+                future.complete(orders);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 System.err.println("Failed to fetch orders: " + databaseError.getMessage());
+                future.completeExceptionally(databaseError.toException());
             }
         });
-        return orders;
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Failed to fetch orders: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public Optional<OrderEntity> getOrderById(String orderId) {
+        CompletableFuture<Optional<OrderEntity>> future = new CompletableFuture<>();
+
+        orderRef.child(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                OrderEntity order = dataSnapshot.getValue(OrderEntity.class);
+                future.complete(Optional.ofNullable(order));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Failed to fetch order: " + databaseError.getMessage());
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Failed to fetch order: " + e.getMessage());
+            return Optional.empty();
+        }
     }
 }

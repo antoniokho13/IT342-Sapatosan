@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -34,6 +35,12 @@ public class OrderController {
     public ResponseEntity<List<OrderEntity>> getAllOrders() {
         List<OrderEntity> orders = orderService.getAllOrders();
         return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderEntity> getOrderById(@PathVariable String orderId) {
+        Optional<OrderEntity> order = orderService.getOrderById(orderId);
+        return order.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{orderId}")
