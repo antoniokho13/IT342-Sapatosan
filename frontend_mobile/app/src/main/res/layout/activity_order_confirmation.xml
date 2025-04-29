@@ -1,79 +1,86 @@
 <androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".OrderConfirmationActivity">
 
-    <!-- Main Content -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Navigation Bar -->
-        <HorizontalScrollView
-            android:id="@+id/navigationBar"
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="?attr/actionBarSize"
             android:background="@color/lightGray"
-            android:padding="16dp"
-            android:fillViewport="true"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/shoeLogo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/logo"
+                android:contentDescription="logo"
+                android:layout_marginStart="16dp"
+                android:layout_gravity="start" />
 
-                <!-- Logo -->
-                <ImageView
-                    android:id="@+id/logoImage"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="8dp"
-                    android:src="@drawable/logo"
-                    android:contentDescription="Logo"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent" />
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/order_confirmation"
+                android:textColor="@android:color/black"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_gravity="center" />
 
-                <!-- App Name -->
-                <TextView
-                    android:id="@+id/appName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="sans-serif-black"
-                    android:text="ORDER CONFIRMATION"
-                    android:textColor="@android:color/black"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.391"
-                    app:layout_constraintStart_toEndOf="@id/logoImage"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </HorizontalScrollView>
+            <ImageView
+                android:id="@+id/ic_menu"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="Menu"
+                android:scaleType="fitCenter"
+                android:layout_gravity="end"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Order Details -->
+        </androidx.appcompat.widget.Toolbar>
+
         <ScrollView
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:padding="16dp"
-            app:layout_constraintTop_toBottomOf="@id/navigationBar"
+            app:layout_constraintTop_toBottomOf="@id/toolbar"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
-                    android:layout_width="match_parent"
+                    android:id="@+id/tvOrderId"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Order Items"
                     android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"
+                    tools:text="Order ID: 12345" />
+
+                <TextView
+                    android:id="@+id/tvOrderSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/order_summary"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
 
@@ -81,57 +88,40 @@
                     android:id="@+id/recyclerViewOrderItems"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:scrollbars="vertical" />
-
-                <TextView
-                    android:id="@+id/totalPrice"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Total: ₱0.00"
-                    android:textSize="16sp"
                     android:layout_marginBottom="16dp" />
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/tvTotalPrice"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp">
-
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etShippingAddress"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="Shipping Address" />
-                </com.google.android.material.textfield.TextInputLayout>
-
-                <Spinner
-                    android:id="@+id/spPaymentMethod"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:hint="Select Payment Method" />
+                    android:textColor="@android:color/black"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="24dp"
+                    tools:text="Total: ₱14799.00" />
 
                 <Button
-                    android:id="@+id/btnConfirmOrder"
+                    android:id="@+id/btnProceedToPayment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Confirm Order" />
+                    android:text="@string/proceed_to_payment"
+                    android:backgroundTint="@android:color/holo_green_dark"
+                    android:textColor="@android:color/white"
+                    android:layout_marginBottom="16dp" />
+
+                <Button
+                    android:id="@+id/btnBackToHome"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/back_to_home"
+                    android:backgroundTint="@android:color/black"
+                    android:textColor="@android:color/white" />
+
             </LinearLayout>
         </ScrollView>
-        <!-- Hamburger Icon -->
-        <ImageView
-            android:id="@+id/toolbar"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_margin="12dp"
-            android:src="@drawable/ic_menu"
-            android:contentDescription="Menu"
-            android:scaleType="fitCenter"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Side Drawer Content -->
     <LinearLayout
         android:layout_width="280dp"
         android:layout_height="match_parent"
@@ -172,4 +162,5 @@
             android:textSize="18sp"
             android:padding="8dp" />
     </LinearLayout>
+
 </androidx.drawerlayout.widget.DrawerLayout>

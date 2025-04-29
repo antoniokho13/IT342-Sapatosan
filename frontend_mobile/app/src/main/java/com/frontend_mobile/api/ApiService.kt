@@ -3,11 +3,11 @@ package com.frontend_mobile.api
 
 import com.frontend_mobile.models.AddProductToCartRequest
 import com.frontend_mobile.models.CartEntity
+import com.frontend_mobile.models.OrderEntity
 import com.frontend_mobile.models.OrderRequest
-import com.frontend_mobile.models.ProductDTO
+import com.frontend_mobile.models.PaymentEntity
 import com.frontend_mobile.models.User
 import com.frontend_mobile.models.ShoeItem
-import okhttp3.Response
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -17,7 +17,6 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.PUT
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 data class RegisterRequest(
     val firstName: String,
@@ -34,7 +33,7 @@ data class LoginRequest(
 
 data class ApiResponse(
     val success: Boolean,
-    val message: String
+    val message: String?
 )
 
 data class LoginResponse(
@@ -123,13 +122,35 @@ interface ApiService {
         @Body updatedOrder: OrderRequest
     ): Call<Void>
 
-    @DELETE("/api/orders/{orderId}")
-    fun cancelOrder(@Path("orderId") orderId: String): Call<Void>
-
     @PATCH("/api/orders/{orderId}")
     fun updateOrderStatus(
         @Path("orderId") orderId: String,
         @Body status: String
     ): Call<Void>
+
+    @POST("/api/orders/from-cart/{userId}")
+    fun createOrderFromCart(
+        @Path("userId") userId: String,
+        @Body orderDetails: OrderEntity
+    ): Call<String>
+
+    @DELETE("/api/orders/{orderId}")
+    fun cancelOrder(@Path("orderId") orderId: String): Call<Void>
+
+    @POST("api/payments/{orderId}")
+    fun createPayment(
+        @Path("orderId") orderId: String,
+        @Body payment: Map<String, Any>,
+        @Header("Authorization") authHeader: String
+    ): Call<Void>
+
+    @GET("api/payments/{orderId}")
+    suspend fun getPaymentLink(@Path("orderId") orderId: String): PaymentEntity
+
+    @GET("api/payments/order/{orderId}")
+    fun getPaymentByOrderId(
+        @Path("orderId") orderId: String,
+        @Header("Authorization") token: String
+    ): Call<PaymentEntity>
 }
 

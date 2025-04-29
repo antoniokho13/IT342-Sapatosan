@@ -25,7 +25,7 @@ class OrderConfirmationAdapter(private val items: List<ProductEntity>) :
         val item = items[position]
         holder.binding.apply {
             productName.text = item.name
-            quantity.text = "Quantity: ${item.stock}" // Assuming stock represents quantity
+            quantity.text = "Quantity: ${item.quantity}" // Corrected line
             price.text = "₱${"%.2f".format(item.price)}"
         }
     }

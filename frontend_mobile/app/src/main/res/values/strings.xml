@@ -5,6 +5,21 @@
     <string name="order_items_label">Order Items</string>
     <string name="payment_method_label">Payment Method</string>
 
+    <string name="app_logo">App Logo</string>
+    <string name="order_confirmation">ORDER CONFIRMATION</string>
+    <string name="order_id_placeholder">Order ID: %1$s</string>
+    <string name="total_price_placeholder">Total: ₱%.2f</string>
+    <string name="order_summary">Order Summary</string>
+    <string name="order_details_label">Order Details</string>
+    <string name="order_date_placeholder">Order Date: %s</string>
+    <string name="shipping_address_placeholder">Shipping Address: %s</string>
+    <string name="proceed_to_payment">Proceed to Payment</string>
+    <string name="payment_method_placeholder">Payment Method: %s</string>
+    <string name="order_status_label">Order Status</string>
+    <string name="order_status_placeholder">%s</string>
+    <string name="order_confirmation_message">Your order has been confirmed. Thank you for shopping with us!</string>
+    <string name="back_to_home">Back to Home</string>
+
     <string-array name="payment_methods">
         <item>Credit Card</item>
         <item>GCash</item>

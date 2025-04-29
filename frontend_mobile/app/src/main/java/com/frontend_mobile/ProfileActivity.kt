@@ -3,38 +3,41 @@ package com.frontend_mobile
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.frontend_mobile.api.ApiResponse
 import com.frontend_mobile.api.RetrofitClient
 import com.frontend_mobile.databinding.ActivityProfileBinding
 import com.frontend_mobile.models.User
+import com.google.android.material.snackbar.Snackbar
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.IOException
 
 class ProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityProfileBinding
     private var userId: String? = null
     private var currentUser: User? = null
+    private val TAG = "ProfileActivity"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 🔑 Retrieve userId from SharedPreferences
-        val sharedPrefs = getSharedPreferences("user_session", Context.MODE_PRIVATE)
-        userId = sharedPrefs.getString("user_id", null)
+        // Retrieve userId from SharedPreferences
+        userId = getSharedPreferences("user_session", Context.MODE_PRIVATE).getString("user_id", null)
 
         if (userId == null) {
-            Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show()
-            Log.e("ProfileActivity", "user_id is null. Check SharedPreferences.")
+            showError("User not logged in.") // Use showError
+            Log.e(TAG, "user_id is null. Check SharedPreferences.")
             finish()
             return
         } else {
-            Log.d("ProfileActivity", "Retrieved user_id: $userId")
+            Log.d(TAG, "Retrieved user_id: $userId")
         }
 
         // Fetch user details from the backend
@@ -50,7 +53,7 @@ class ProfileActivity : AppCompatActivity() {
         val userId = getSharedPreferences("user_session", MODE_PRIVATE).getString("user_id", null)
 
         if (userId.isNullOrEmpty()) {
-            Toast.makeText(this, "User ID not found. Please login again.", Toast.LENGTH_SHORT).show()
+            showError("User ID not found. Please login again.") // Use showError
             return
         }
 
@@ -59,32 +62,34 @@ class ProfileActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val user = response.body()
                     if (user != null) {
+                        currentUser = user
                         binding.editFirstName.setText(user.firstName)
                         binding.editLastName.setText(user.lastName)
                         binding.editEmail.setText(user.email)
                     } else {
-                        Toast.makeText(this@ProfileActivity, "User details not found.", Toast.LENGTH_SHORT).show()
+                        showError("User details not found.") // Use showError
                     }
                 } else {
-                    Toast.makeText(this@ProfileActivity, "Failed to fetch user details.", Toast.LENGTH_SHORT).show()
+                    showError("Failed to fetch user details.") // Use showError
                 }
             }
 
             override fun onFailure(call: Call<User>, t: Throwable) {
-                Toast.makeText(this@ProfileActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Error fetching user details: ${t.message}", t)
+                showError("Error: ${t.message}") // Use showError
             }
         })
     }
 
     private fun saveUserDetails() {
-        val firstName = binding.editFirstName.text.toString()
-        val lastName = binding.editLastName.text.toString()
-        val email = binding.editEmail.text.toString()
-        val password = binding.editPassword.text.toString()
-        val confirmPassword = binding.editConfirmPassword.text.toString()
+        val firstName = binding.editFirstName.text.toString().trim()
+        val lastName = binding.editLastName.text.toString().trim()
+        val email = binding.editEmail.text.toString().trim()
+        val password = binding.editPassword.text.toString().trim()
+        val confirmPassword = binding.editConfirmPassword.text.toString().trim()
 
         if (password.isNotEmpty() && password != confirmPassword) {
-            Toast.makeText(this, "Passwords do not match!", Toast.LENGTH_SHORT).show()
+            showError("Passwords do not match!") // Use showError
             return
         }
 
@@ -92,7 +97,7 @@ class ProfileActivity : AppCompatActivity() {
         val userId = sharedPrefs.getString("user_id", null)
 
         if (userId.isNullOrEmpty()) {
-            Toast.makeText(this, "User ID not found. Please login again.", Toast.LENGTH_SHORT).show()
+            showError("User ID not found. Please login again.") // Use showError
             return
         }
 
@@ -105,29 +110,68 @@ class ProfileActivity : AppCompatActivity() {
         )
 
         userId?.let { id ->
-            RetrofitClient.instance.updateUserDetails(id, updatedUser).enqueue(object : Callback<ApiResponse> {
-                override fun onResponse(call: Call<ApiResponse>, response: Response<ApiResponse>) {
-                    if (response.isSuccessful) {
-                        response.body()?.let { apiResponse ->
-                            if (apiResponse.success) {
-                                Toast.makeText(this@ProfileActivity, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+            RetrofitClient.instance.updateUserDetails(id, updatedUser)
+                .enqueue(object : Callback<ApiResponse> { // Changed to ApiResponse
+                    override fun onResponse(
+                        call: Call<ApiResponse>,
+                        response: Response<ApiResponse>
+                    ) {
+                        if (response.isSuccessful) {
+                            val apiResponse = response.body()
+                            if (apiResponse != null) {
+                                if (apiResponse.success) {
+                                    showMessage(apiResponse.message ?: "Profile updated successfully!") // Use showMessage
+                                    finish()
+                                } else {
+                                    showError(apiResponse.message ?: "Failed to update profile") // Use showError
+                                    Log.e(TAG, "Failed to update profile: ${apiResponse.message}")
+                                }
                             } else {
-                                val errorMessage = apiResponse.message ?: "Unexpected response format."
-                                Toast.makeText(this@ProfileActivity, "Error: $errorMessage", Toast.LENGTH_SHORT).show()
+                                showMessage("Profile updated successfully, but the response was empty.") // Use showMessage
+                                finish()
                             }
-                        } ?: run {
-                            Toast.makeText(this@ProfileActivity, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            handleErrorResponse(response) // Extract error handling
                         }
-                    } else {
-                        val errorBody = response.errorBody()?.string() ?: "Unknown error."
-                        Toast.makeText(this@ProfileActivity, "Failed to update: $errorBody", Toast.LENGTH_SHORT).show()
                     }
-                }
 
-                override fun onFailure(call: Call<ApiResponse>, t: Throwable) {
-                    Toast.makeText(this@ProfileActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
-                }
-            })
+                    override fun onFailure(call: Call<ApiResponse>, t: Throwable) { // Changed to ApiResponse
+                        Log.e(TAG, "Error updating profile: ${t.message}", t)
+                        showError("Error: ${t.message}") // Use showError
+                    }
+                })
         }
     }
+
+    private fun showError(message: String) {
+        showSnackbar(message, Snackbar.LENGTH_LONG)
+    }
+
+    private fun showMessage(message: String) {
+        showSnackbar(message, Snackbar.LENGTH_SHORT)
+    }
+    private fun showSnackbar(message: String, duration: Int) { // Added duration parameter
+        val rootView = findViewById<View>(android.R.id.content)
+        Snackbar.make(rootView, message, duration).show()
+    }
+
+    private fun handleErrorResponse(response: Response<ApiResponse>) { // Extracted error handling
+        val errorBody = response.errorBody()
+        val errorMessage = if (errorBody != null) {
+            try {
+                val errorString = errorBody.string()
+                Log.e(TAG, "Raw error from server: $errorString")
+                errorString
+            } catch (e: IOException) {
+                val errorString = "Failed to retrieve error message"
+                Log.e(TAG, "Error parsing error response: ${e.message}, raw error: $errorString")
+                errorString
+            }
+        } else {
+            "Failed to update profile"
+        }
+        Log.e(TAG, "Failed to update profile. Code: ${response.code()}, Error: $errorMessage")
+        showError(errorMessage) // Use showError
+    }
 }
+

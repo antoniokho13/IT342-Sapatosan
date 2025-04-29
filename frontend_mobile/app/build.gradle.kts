@@ -19,6 +19,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders["usesCleartextTraffic"] = true
     }
 
     buildTypes {
@@ -47,7 +48,7 @@ android {
 
 dependencies {
 
-    implementation ("org.jetbrains.kotlin:kotlin-parcelize-runtime:1.8.0")
+    implementation ("org.jetbrains.kotlin:kotlin-parcelize-runtime:1.9.0")
     implementation("androidx.drawerlayout:drawerlayout:1.1.1")
     implementation ("androidx.gridlayout:gridlayout:1.0.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -55,7 +56,7 @@ dependencies {
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
-    implementation(platform("com.google.firebase:firebase-bom:32.2.3")) // Use Firebase BOM
+    implementation(platform("com.google.firebase:firebase-bom:32.5.0")) // Use Firebase BOM
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-database-ktx")
@@ -80,8 +81,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.github.bumptech.glide:glide:4.15.1")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
-    kapt("com.github.bumptech.glide:compiler:4.15.1")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.16.0")
+    kapt("com.github.bumptech.glide:compiler:4.16.0")
 
 }

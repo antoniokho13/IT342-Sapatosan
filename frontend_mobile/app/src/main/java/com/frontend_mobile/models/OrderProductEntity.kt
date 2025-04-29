@@ -7,6 +7,8 @@ import kotlinx.parcelize.Parcelize
 data class OrderProductEntity(
     val id: String = "",
     val orderId: String = "",
+    val imageUrl: String = "",
+    val name: String = "",
     val productId: String = "",
     val quantity: Int = 0,
     val price: Double = 0.0
