@@ -40,7 +40,7 @@ const Checkout = () => {
             
             try {
                 // Fetch user data
-                const userResponse = await axios.get('http://localhost:8080/api/users', {
+                const userResponse = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
                     headers: {
                         authorization: `Bearer ${token}`
                     }
@@ -265,7 +265,7 @@ const Checkout = () => {
         
         try {
             const response = await axios.get(
-                `http://localhost:8080/api/payments/order/${orderId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/payments/order/${orderId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
