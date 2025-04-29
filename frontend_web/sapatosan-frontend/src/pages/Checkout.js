@@ -232,7 +232,7 @@ const Checkout = () => {
         try {
             // Make the API call to create an order
             const response = await axios.post(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/from-cart/${userId}`,
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
