@@ -41,6 +41,7 @@ const Checkout = () => {
             try {
                 // Fetch user data
                 const userResponse = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
+                 //   const userResponse = await axios.get('http://localhost:8080/api/users', {
                     headers: {
                         authorization: `Bearer ${token}`
                     }
@@ -83,6 +84,7 @@ const Checkout = () => {
             // First, get the cart data
             const cartResponse = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+               // `http://localhost:8080/api/carts/user/${userId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -104,6 +106,7 @@ const Checkout = () => {
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+               // `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -233,18 +236,41 @@ const Checkout = () => {
             // Make the API call to create an order
             const response = await axios.post(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/from-cart/${userId}`,
+               // `http://localhost:8080/api/orders/from-cart/${userId}`,
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
             if (response.status === 200) {
-                // Use the order ID from the response
-                const orderId = response.data || 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-                setOrderId(orderId);
-                setOrderComplete(true);
+                // Get the order ID from the response
+                const orderId = response.data;
                 
                 // Clear cart from localStorage
                 localStorage.removeItem('sapatosanCart');
+                
+                // Immediately fetch payment information and redirect
+                try {
+                    const paymentResponse = await axios.get(
+                        `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/payments/order/${orderId}`,
+                       // `http://localhost:8080/api/payments/order/${orderId}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    );
+                    
+                    if (paymentResponse.status === 200 && paymentResponse.data && paymentResponse.data.link) {
+                        // Redirect user directly to payment link
+                        window.location.href = paymentResponse.data.link;
+                    } else {
+                        // If no payment link, show error
+                        setErrors({ submit: 'Payment link not available. Please try again later.' });
+                    }
+                } catch (error) {
+                    console.error('Error fetching payment link:', error);
+                    setErrors({ submit: 'Could not retrieve payment information: ' + (error.response?.data || error.message) });
+                }
             } else {
                 setErrors({ submit: 'Failed to place order. Please try again.' });
             }
@@ -266,6 +292,7 @@ const Checkout = () => {
         try {
             const response = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/payments/order/${orderId}`,
+               // `http://localhost:8080/api/payments/order/${orderId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -508,9 +535,13 @@ const Checkout = () => {
 
                         <button 
                             type="submit" 
-                            className="place-order-btn" 
+                            className="pay-now-btn place-order-btn" 
                             disabled={isSubmitting}
                         >
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
                             {isSubmitting ? 'Processing...' : 'Place Order'}
                         </button>
                     </form>

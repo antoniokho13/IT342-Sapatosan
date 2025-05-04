@@ -447,6 +447,36 @@
     font-size: 0.85rem;
 }
 
+/* Update the place-order-btn style to match pay-now-btn */
+.place-order-btn {
+    background: #382727;     
+    box-shadow: none;
+    margin: 0;
+    padding: 12px 20px;
+    border: none;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    color: white;
+    border-radius: 4px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin-top: 1rem;
+}
+
+.place-order-btn:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+/* Add the hover effect */
+.place-order-btn:hover:not(:disabled) {
+    background: #4c3535;
+}
+
 /* Single column portrait layout for all screens */
 @media screen and (max-width: 1200px) {
     .order-confirmation {
