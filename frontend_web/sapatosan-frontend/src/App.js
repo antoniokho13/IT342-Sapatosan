@@ -1,5 +1,6 @@
 import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import AdminAnalytics from './pages/AdminAnalytics';
 import AdminCategories from './pages/AdminCategories';
 import AdminOrder from './pages/AdminOrder';
 import AdminProduct from './pages/AdminProduct';
@@ -34,9 +35,7 @@ function App() {
           <Route path="/admin/products" element={<AdminProduct />} />
           <Route path="/admin/categories" element={<AdminCategories />} />
           <Route path="/admin/orders" element={<AdminOrder />} />
-          {/* Future Admin Routes - uncomment when components are created
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
-          */}
         </Routes>
       </div>
     </Router>

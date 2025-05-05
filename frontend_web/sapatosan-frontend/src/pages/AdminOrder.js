@@ -31,6 +31,7 @@ const AdminOrder = () => {
         try {
             const response = await axios.get(
                 'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders',
+               // 'http://localhost:8080/api/orders',
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -119,7 +120,8 @@ const AdminOrder = () => {
     // Handle logout
     const handleLogout = async () => {
         try {
-            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+           await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+           // await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token'); // Clear the token from localStorage
@@ -144,6 +146,7 @@ const AdminOrder = () => {
             
             // Log the full URL for debugging
             const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}?paymentStatus=${backendStatus}`;
+           // const url = `http://localhost:8080/api/orders/${orderId}?paymentStatus=${backendStatus}`;
             console.log('Making PATCH request to:', url);
             
             await axios.patch(
@@ -205,6 +208,7 @@ const AdminOrder = () => {
                 
                 // Log the full URL for debugging
                 const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}`;
+               // const url = `http://localhost:8080/api/orders/${orderId}`;
                 console.log('Making DELETE request to:', url);
                 
                 await axios.delete(
@@ -444,7 +448,7 @@ const AdminOrder = () => {
                                                 <div className="email-subdued">{order.email}</div>
                                             </td>
                                             <td>{order.date}</td>
-                                            <td>${order.total.toFixed(2)}</td>
+                                            <td>₱{order.total.toFixed(2)}</td>
                                             <td>{order.items}</td>
                                             <td>
                                                 <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
@@ -567,7 +571,7 @@ const AdminOrder = () => {
                                             </div>
                                             <div className="order-info-item">
                                                 <span className="label">Total:</span>
-                                                <span className="value bold">${viewOrderDetails.total.toFixed(2)}</span>
+                                                <span className="value bold">₱{viewOrderDetails.total.toFixed(2)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -607,24 +611,24 @@ const AdminOrder = () => {
                                                     <tr key={item.id}>
                                                         <td>{item.name}</td>
                                                         <td>{item.size}</td>
-                                                        <td>${item.price.toFixed(2)}</td>
+                                                        <td>₱{item.price.toFixed(2)}</td>
                                                         <td>{item.quantity}</td>
-                                                        <td>${(item.price * item.quantity).toFixed(2)}</td>
+                                                        <td>₱{(item.price * item.quantity).toFixed(2)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                             <tfoot>
                                                 <tr>
                                                     <td colSpan="4" className="text-right">Subtotal:</td>
-                                                    <td>${viewOrderDetails.details.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</td>
+                                                    <td>₱{viewOrderDetails.details.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</td>
                                                 </tr>
                                                 <tr>
                                                     <td colSpan="4" className="text-right">Shipping:</td>
-                                                    <td>$10.00</td>
+                                                    <td>₱10.00</td>
                                                 </tr>
                                                 <tr className="total-row">
                                                     <td colSpan="4" className="text-right">Total:</td>
-                                                    <td>${viewOrderDetails.total.toFixed(2)}</td>
+                                                    <td>₱{viewOrderDetails.total.toFixed(2)}</td>
                                                 </tr>
                                             </tfoot>
                                         </table>

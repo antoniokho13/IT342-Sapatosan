@@ -40,6 +40,7 @@ const Running = () => {
                 
                 const response = await axios.get(
                     `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                   // `http://localhost:8080/api/products`,
                     { headers }
                 );
                 
@@ -101,6 +102,7 @@ const Running = () => {
             // First, get the cart data
             const cartResponse = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+               // `http://localhost:8080/api/carts/user/${userId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -130,6 +132,7 @@ const Running = () => {
             // Next, fetch ALL products (not just running) to find the ones in the cart
             const productsResponse = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                //`http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -232,6 +235,7 @@ const Running = () => {
 
             const response = await axios.post(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
+               // `http://localhost:8080/api/carts/${userId}/add-product`,
                 cartProduct,
                 {
                     headers: {
@@ -263,6 +267,7 @@ const Running = () => {
         try {
             const response = await axios.delete(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
+               // `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -527,7 +532,7 @@ const Running = () => {
                                     <div className="product-details">
                                         <div className="product-brand">{shoe.brand}</div>
                                         <h3 className="product-name">{shoe.name}</h3>
-                                        <div className="product-price">${shoe.price.toFixed(2)}</div>
+                                        <div className="product-price">₱{shoe.price.toFixed(2)}</div>
                                         <div className="product-sizes">
                                             {shoe.sizes.map(size => (
                                                 <span className="size-option" key={size}>US {size}</span>
@@ -564,7 +569,7 @@ const Running = () => {
                             <div className="modal-product-info">
                                 <div className="modal-product-brand">{quickViewShoe.brand}</div>
                                 <h2 className="modal-product-name">{quickViewShoe.name}</h2>
-                                <div className="modal-product-price">${quickViewShoe.price.toFixed(2)}</div>
+                                <div className="modal-product-price">₱{quickViewShoe.price.toFixed(2)}</div>
                                 <p className="modal-product-description">{quickViewShoe.description}</p>
                                 
                                 <div className="modal-size-selection">
@@ -652,7 +657,7 @@ const Running = () => {
                                                     <p className="cart-item-size">Size: US {item.selectedSize || '?'}</p>
                                                     <p className="cart-item-quantity">Quantity: {item.quantity || 0}</p>
                                                     <p className="cart-item-price">
-                                                        ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                                        ₱{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                                                     </p>
                                                 </div>
                                                 <button 
@@ -671,7 +676,7 @@ const Running = () => {
                                 <div className="cart-summary">
                                     <div className="cart-total">
                                         <span>Total:</span>
-                                        <span>${calculateTotal()}</span>
+                                        <span>₱{calculateTotal()}</span>
                                     </div>
                                     <div className="cart-actions">
                                         <button 

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = 'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api';
+//const API_BASE_URL = 'http://localhost:8080/api';
 
 export const authService = {
     register: async (userData) => {
