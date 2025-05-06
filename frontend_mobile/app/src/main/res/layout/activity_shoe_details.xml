@@ -11,7 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Navbar with Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -48,7 +47,6 @@
                 android:layout_gravity="end" />
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Enlarged Shoe Image -->
         <ImageView
             android:id="@+id/shoeImage"
             android:layout_width="200dp"
@@ -59,7 +57,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Shoe Details -->
         <TextView
             android:id="@+id/shoeName"
             android:layout_width="wrap_content"
@@ -102,19 +99,27 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="8dp" />
 
-        <!-- Size Buttons -->
-        <androidx.gridlayout.widget.GridLayout
-            android:id="@+id/sizeButtonsContainer"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/selectSizeTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="16dp"
-            app:columnCount="4"
+            android:text="Select Size:"
+            android:textSize="18sp"
             app:layout_constraintTop_toBottomOf="@id/shoeStock"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="16dp" />
 
-        <!-- Quantity Container (Label + Spinner) -->
+        <androidx.gridlayout.widget.GridLayout
+            android:id="@+id/sizeButtonsContainer"
+            android:layout_width="wrap_content"  android:layout_height="wrap_content"
+            android:padding="16dp"
+            app:columnCount="4"
+            app:layout_constraintTop_toBottomOf="@id/selectSizeTextView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
         <LinearLayout
             android:id="@+id/quantityContainer"
             android:layout_width="wrap_content"
@@ -142,7 +147,6 @@
                 android:padding="8dp" />
         </LinearLayout>
 
-        <!-- Add to Cart Button -->
         <Button
             android:id="@+id/btnAddToCart"
             android:layout_width="0dp"
@@ -159,7 +163,6 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Side Drawer -->
     <LinearLayout
         android:layout_width="280dp"
         android:layout_height="match_parent"

@@ -7,6 +7,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.frontend_mobile.api.ApiResponse
 import com.frontend_mobile.api.RetrofitClient
+import com.frontend_mobile.api.UserResponse
 import com.frontend_mobile.databinding.ActivityProfileBinding
 import com.frontend_mobile.models.User
 import com.google.android.material.snackbar.Snackbar

@@ -9,7 +9,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Navbar with Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
@@ -27,17 +26,24 @@
                 android:layout_gravity="start" />
 
             <TextView
+                android:id="@+id/orderFormTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ORDER FORM"
+                android:text="SHIPPING INFORMATION"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_gravity="center" />
-
-
+            <ImageView
+                android:id="@+id/ic_menu"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_margin="12dp"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="Menu"
+                android:scaleType="fitCenter"
+                android:layout_gravity="end" />
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Main Content -->
         <ScrollView
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -53,6 +59,7 @@
                 android:orientation="vertical">
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilFirstName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp">
@@ -66,6 +73,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilLastName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp">
@@ -79,6 +87,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp">
@@ -92,6 +101,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilAddress"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp">
@@ -105,6 +115,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilPostalCode"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp">
@@ -118,11 +129,11 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilCountry"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp">
-
-                    <com.google.android.material.textfield.TextInputEditText
+                    <AutoCompleteTextView
                         android:id="@+id/etCountry"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -131,6 +142,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilContactNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp">
@@ -149,24 +161,11 @@
                     android:layout_height="wrap_content"
                     android:text="Proceed to Payment"
                     android:layout_marginTop="16dp" />
-
             </LinearLayout>
         </ScrollView>
-
-        <!-- Hamburger Icon -->
-        <ImageView
-            android:id="@+id/ic_menu"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_margin="12dp"
-            android:src="@drawable/ic_menu"
-            android:contentDescription="Menu"
-            android:scaleType="fitCenter"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-    <!-- Side Drawer Content -->
     <LinearLayout
+        android:id="@+id/left_drawer"
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"

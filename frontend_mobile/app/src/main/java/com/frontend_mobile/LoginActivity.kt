@@ -23,6 +23,11 @@ import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.ui.graphics.Color
 import com.frontend_mobile.api.LoginResponse
+import android.util.Log // Import Log
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.NetworkCapabilities.*
+import androidx.core.content.getSystemService
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,29 +48,64 @@ fun LoginScreenWithActions() {
 
     LoginScreen(
         onLoginClick = { email, password ->
+            if (!isNetworkAvailable(context)) { // Check for internet
+                Toast.makeText(context, "No internet connection. Please check your network.", Toast.LENGTH_SHORT).show()
+                return@LoginScreen // Stop the login attempt
+            }
+
             val loginRequest = LoginRequest(email, password)
 
             RetrofitClient.instance.loginUser(loginRequest).enqueue(object : Callback<LoginResponse> {
                 override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
                     if (response.isSuccessful && response.body() != null) {
                         val loginResponse = response.body()!!
+                        Log.d("LoginActivity", "Login successful: $loginResponse")
                         Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
 
                         // Save the JWT token and user_id to SharedPreferences
-                        RetrofitClient.saveToken(loginResponse.token) // Save the token
+                        RetrofitClient.saveToken(loginResponse.token)
                         val prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
-                        prefs.edit().putString("user_id", loginResponse.userId).apply() // Save user_id
-                        RetrofitClient.saveUserId(response.body()?.userId ?: "")
+                        prefs.edit().putString("user_id", loginResponse.userId).apply()
+                        RetrofitClient.saveUserId(loginResponse.userId)
 
                         // Navigate to HomeActivity
-                        context.startActivity(Intent(context, HomeActivity::class.java))
+                        val intent = Intent(context, HomeActivity::class.java)
+                        context.startActivity(intent)
                         (context as? ComponentActivity)?.finish()
                     } else {
-                        Toast.makeText(context, "Invalid credentials.", Toast.LENGTH_SHORT).show()
+                        val errorMessage = response.errorBody()?.string() ?: "Unknown error"
+                        Log.e("LoginActivity", "Login failed. Code: ${response.code()}, Message: $errorMessage")
+                        when (response.code()) {
+                            403 -> {
+                                Toast.makeText(
+                                    context,
+                                    "Login failed. Please check your credentials and try again. If the problem persists, clear app data or contact support.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            400 ->  {
+                                Toast.makeText(
+                                    context,
+                                    "Invalid request.  Please check the format of your email and password.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            500 -> {
+                                Toast.makeText(
+                                    context,
+                                    "Server error. Please try again later.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            else -> {
+                                Toast.makeText(context, "Login failed: ${response.message()}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 }
 
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                    Log.e("LoginActivity", "Error: ${t.message}", t)
                     Toast.makeText(context, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
             })
@@ -95,10 +135,10 @@ fun LoginScreen(
     ) {
         // Logo
         Image(
-            painter = painterResource(id = R.drawable.logo), // Replace with your logo resource
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(150.dp) // Increased size
+                .size(150.dp)
                 .padding(bottom = 24.dp)
         )
 
@@ -128,9 +168,9 @@ fun LoginScreen(
         Button(
             onClick = { onLoginClick(email, password) },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Red button
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
         ) {
-            Text("LOGIN", color = Color.White) // Capitalized text
+            Text("LOGIN", color = Color.White)
         }
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -139,4 +179,31 @@ fun LoginScreen(
             Text("Don't have an account? Register")
         }
     }
+}
+
+fun isNetworkAvailable(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    if (connectivityManager != null) {
+        val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        if (networkCapabilities != null) {
+            return when {
+                networkCapabilities.hasTransport(TRANSPORT_WIFI) -> {
+                    Log.i("Internet", "TRANSPORT_WIFI")
+                    true
+                }
+                networkCapabilities.hasTransport(TRANSPORT_CELLULAR) -> {
+                    Log.i("Internet", "TRANSPORT_CELLULAR")
+                    true
+                }
+                networkCapabilities.hasTransport(TRANSPORT_ETHERNET) -> {
+                    Log.i("Internet", "TRANSPORT_ETHERNET")
+                    true
+                }
+                // Add other transport types if needed
+                else -> false
+            }
+        }
+    }
+    Log.e("Internet", "No active network detected")
+    return false
 }

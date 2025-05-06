@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.frontend_mobile.adapters.CartAdapter
 import com.frontend_mobile.api.RetrofitClient
-import com.frontend_mobile.databinding.ActivityShoppingCartBinding
+import com.frontend_mobile.databinding.ActivityShoppingCartBinding // Import the correct binding
 import com.frontend_mobile.models.OrderEntity
 import com.frontend_mobile.models.PaymentEntity
 import com.frontend_mobile.models.ProductEntity
@@ -22,7 +22,7 @@ import retrofit2.Response
 
 class ShoppingCartActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityShoppingCartBinding
+    private lateinit var binding: ActivityShoppingCartBinding // Use the correct binding class
     private lateinit var cartAdapter: CartAdapter
     private var cartItems: MutableList<ProductEntity> = mutableListOf()
     private var totalPrice: Double = 0.0
@@ -33,11 +33,12 @@ class ShoppingCartActivity : AppCompatActivity() {
     // ========================================================================
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityShoppingCartBinding.inflate(layoutInflater)
+        binding = ActivityShoppingCartBinding.inflate(layoutInflater) // Initialize binding
         setContentView(binding.root)
 
         setupRecyclerView()
         handleProductFromIntent() // Check for product passed directly
+        fetchCartItems() // Load cart items.  <--- ADD THIS LINE
         setCheckoutButtonListener()
     }
 
@@ -58,8 +59,6 @@ class ShoppingCartActivity : AppCompatActivity() {
             cartAdapter.notifyDataSetChanged()
             calculateTotalPrice()
             showCartContent()
-        } else {
-            fetchCartItems()
         }
     }
 
@@ -82,13 +81,12 @@ class ShoppingCartActivity : AppCompatActivity() {
 
         if (userId.isNullOrEmpty()) {
             Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show()
+            showEmptyCart() // Ensure empty cart is shown
             return
         }
 
-        binding.progressBar.visibility = View.VISIBLE
         RetrofitClient.instance.getCartByUserId(userId).enqueue(object : Callback<CartEntity> {
             override fun onResponse(call: Call<CartEntity>, response: Response<CartEntity>) {
-                binding.progressBar.visibility = View.GONE
                 if (response.isSuccessful) {
                     val cart = response.body()
                     if (cart != null && cart.cartProductIds.isNotEmpty()) {
@@ -104,7 +102,6 @@ class ShoppingCartActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<CartEntity>, t: Throwable) {
-                binding.progressBar.visibility = View.GONE
                 showEmptyCart() // Error
                 Log.e(TAG, "Error fetching cart: ${t.message}", t)
                 Toast.makeText(this@ShoppingCartActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
@@ -138,11 +135,7 @@ class ShoppingCartActivity : AppCompatActivity() {
                     }
                     cartAdapter.notifyDataSetChanged()
                     calculateTotalPrice()
-                    if (cartItems.isEmpty()) {
-                        showEmptyCart()
-                    } else {
-                        showCartContent()
-                    }
+                    showCartContent()
                 } else {
                     showEmptyCart() // error
                     Log.e(TAG, "Failed to fetch products: ${response.errorBody()?.string()}")
@@ -163,24 +156,25 @@ class ShoppingCartActivity : AppCompatActivity() {
     // ========================================================================
     private fun calculateTotalPrice() {
         totalPrice = cartItems.sumOf { it.price * it.quantity }
-        binding.totalPrice.text = "Total: ₱${"%.2f".format(totalPrice)}"
+        binding.totalPrice.text = "Total: ₱${"%.2f".format(totalPrice)}" // Use binding
     }
 
     private fun showEmptyCart() {
-        binding.cartRecyclerView.visibility = View.GONE
-        binding.cartSummaryLayout.visibility = View.GONE
-        binding.emptyCartText.visibility = View.VISIBLE
+        binding.cartRecyclerView.visibility = View.GONE // Use binding
+        binding.cartSummaryLayout.visibility = View.GONE // Use binding
+        binding.emptyCartText.visibility = View.VISIBLE // Use binding
     }
 
     private fun showCartContent() {
-        binding.cartRecyclerView.visibility = View.VISIBLE
-        binding.cartSummaryLayout.visibility = View.VISIBLE
-        binding.emptyCartText.visibility = View.GONE
-    }
-
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        binding.btnCheckout.isEnabled = !isLoading
+        if (cartItems.isEmpty()) {
+            binding.cartRecyclerView.visibility = View.GONE // Use binding
+            binding.cartSummaryLayout.visibility = View.GONE // Use binding
+            binding.emptyCartText.visibility = View.VISIBLE // Use binding
+        } else {
+            binding.cartRecyclerView.visibility = View.VISIBLE // Use binding
+            binding.cartSummaryLayout.visibility = View.VISIBLE // Use binding
+            binding.emptyCartText.visibility = View.GONE // Use binding
+        }
     }
 
     // ========================================================================
@@ -190,6 +184,11 @@ class ShoppingCartActivity : AppCompatActivity() {
         val userId = getSharedPreferences("user_session", MODE_PRIVATE).getString("user_id", null)
         if (userId == null) {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (cartItems.isEmpty()) { // Check if the cart is empty before proceeding
+            Toast.makeText(this, "Your cart is empty.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -233,10 +232,8 @@ class ShoppingCartActivity : AppCompatActivity() {
             contactNumber = contactNumber
         )
 
-        showLoading(true)
         RetrofitClient.instance.createOrderFromCart(userId, orderDetails).enqueue(object : Callback<String> {
             override fun onResponse(call: Call<String>, response: Response<String>) {
-                showLoading(false)
                 if (response.isSuccessful) {
                     val orderIdString = response.body() ?: ""
                     val orderId = extractOrderId(orderIdString)  // Extract order ID
@@ -244,9 +241,9 @@ class ShoppingCartActivity : AppCompatActivity() {
                     if (orderId != null) {
                         fetchPaymentDetails(orderId)
                     } else {
-                        //navigate
+                        // navigate
                         val intent = Intent(this@ShoppingCartActivity, OrderConfirmationActivity::class.java).apply {
-                            putExtra("orderId", orderId as String?)
+                            putExtra("orderId", orderId as String?) // Pass orderId, even if it's null
                             putExtra("totalPrice", totalPrice)
                             putParcelableArrayListExtra("cartItems", ArrayList(cartItems))
                         }
@@ -259,7 +256,6 @@ class ShoppingCartActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<String>, t: Throwable) {
-                showLoading(false)
                 Log.e(TAG, "Error creating order: ${t.message}", t)
                 Toast.makeText(this@ShoppingCartActivity, "Error creating order: ${t.message}", Toast.LENGTH_SHORT).show()
             }
@@ -274,21 +270,18 @@ class ShoppingCartActivity : AppCompatActivity() {
             val endIndex = response.indexOf(",", idStartIndex) //  <--  Find the end of the ID
             if (endIndex != -1) {
                 return response.substring(idStartIndex, endIndex).trim()
-            }
-            else{
+            } else {
                 return response.substring(idStartIndex).trim()
             }
         }
-        return null
+        return null;
     }
 
     private fun fetchPaymentDetails(orderId: String) {
         val token = getSharedPreferences("user_session", MODE_PRIVATE).getString("token", "") ?: ""
 
-        showLoading(true)
         RetrofitClient.instance.getPaymentByOrderId(orderId, "Bearer $token").enqueue(object : Callback<PaymentEntity> {
             override fun onResponse(call: Call<PaymentEntity>, response: Response<PaymentEntity>) {
-                showLoading(false)
                 if (response.isSuccessful) {
                     val payment = response.body()
                     if (payment != null) {
@@ -310,7 +303,6 @@ class ShoppingCartActivity : AppCompatActivity() {
             }
 
             override fun onFailure(call: Call<PaymentEntity>, t: Throwable) {
-                showLoading(false)
                 Log.e(TAG, "Error fetching payment details: ${t.message}", t)
                 Toast.makeText(this@ShoppingCartActivity, "Error fetching payment details: ${t.message}", Toast.LENGTH_SHORT).show()
             }

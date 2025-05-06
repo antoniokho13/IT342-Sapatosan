@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import java.security.cert.X509Certificate
+import javax.net.ssl.SSLSocketFactory
 
 @SuppressLint("StaticFieldLeak")
 object RetrofitClient {
@@ -66,22 +67,21 @@ object RetrofitClient {
     }
 
     private val authInterceptor = Interceptor { chain ->
-        val token = getTokenFromPrefs()
+        val originalRequest = chain.request()
+        //check if the request is for login. Do not add header.
+        if (originalRequest.url.encodedPath.contains("/api/auth/login")) {
+            return@Interceptor chain.proceed(originalRequest)
+        }
+
+        val token = getTokenFromPrefs()  // Call the function defined below
         val newRequest: Request = if (token.isNotEmpty()) {
-            chain.request().newBuilder()
+            originalRequest.newBuilder()
                 .addHeader("Authorization", "Bearer $token")
                 .build()
         } else {
-            chain.request()
+            originalRequest
         }
         chain.proceed(newRequest)
-    }
-
-    // Make this public so we can access it from debug tools
-    fun getTokenFromPrefs(): String {
-        val ctx = context ?: throw IllegalStateException("RetrofitClient.init(context) must be called before usage")
-        val prefs: SharedPreferences = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(TOKEN_KEY, "") ?: ""
     }
 
     // Custom Gson for date handling
@@ -119,11 +119,13 @@ object RetrofitClient {
                 override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
             })
 
-            val sslContext = SSLContext.getInstance("SSL")
-            sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+            val sslContext: SSLContext = SSLContext.getInstance("SSL")
+            sslContext.init(null, trustAllCerts as Array<X509TrustManager>, java.security.SecureRandom()) // Cast is crucial
+
+            val sslSocketFactory: SSLSocketFactory = sslContext.socketFactory
 
             return OkHttpClient.Builder()
-                .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0])
+                .sslSocketFactory(sslSocketFactory, trustAllCerts[0])
                 .hostnameVerifier { _, _ -> true }
                 .addInterceptor(authInterceptor)
                 .addInterceptor(loggingInterceptor)
@@ -174,5 +176,11 @@ object RetrofitClient {
             remove(USER_ID_KEY)
         }
         Log.d(TAG, "Cleared authentication token and user ID")
+    }
+
+    private fun getTokenFromPrefs(): String {  // Define the function here, inside the object
+        val ctx = context ?: throw IllegalStateException("RetrofitClient.init(context) must be called before usage")
+        val prefs: SharedPreferences = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getString(TOKEN_KEY, "") ?: ""
     }
 }

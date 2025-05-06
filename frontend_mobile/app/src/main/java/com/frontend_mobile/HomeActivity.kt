@@ -38,7 +38,6 @@ class HomeActivity : AppCompatActivity() {
         setupRecyclerView()
         setupDrawerNavigation()
         setupTopNavigation()
-        setupSearchAndFilter()
         fetchShoes()
 
         binding.icMenu.setOnClickListener {
@@ -94,43 +93,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
 
-    private fun setupSearchAndFilter() {
-        // Populate filter options
-        val filterOptions = listOf("All", "Basketball", "Casual", "Running")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, filterOptions)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.filterSpinner.adapter = adapter
-
-        // Set up filter spinner listener
-        binding.filterSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // Handle filter selection
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // Handle no selection
-            }
-        }
-
-        // Set up search view listener
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                // Handle search submission
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                // Handle text change
-                return true
-            }
-        })
-    }
-
-    private fun searchShoes(query: String) {
-        val filteredShoes = allShoes.filter { it.name.contains(query, ignoreCase = true) }
-        shoeAdapter.updateList(filteredShoes)
-    }
-
     private fun setupRecyclerView() {
         shoeAdapter = ShoeAdapter(mutableListOf()) { shoe ->
             val intent = Intent(this, ShoeDetailsActivity::class.java)
@@ -143,8 +105,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupNavigation() {
-        binding.logoImage.setOnClickListener { updateCategory("ALL") }
-
         binding.tvSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
