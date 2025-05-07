@@ -1,6 +1,10 @@
+// CartController.java
 package edu.cit.sapatosan.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -17,15 +21,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.sapatosan.dto.AddProductToCartRequest; // Import the DTO
 import edu.cit.sapatosan.entity.CartEntity;
+import edu.cit.sapatosan.entity.ProductEntity;
 import edu.cit.sapatosan.service.CartService;
+import edu.cit.sapatosan.service.ProductService;
 
 @RestController
 @RequestMapping("/api/carts")
 public class CartController {
     private final CartService cartService;
+    private final ProductService productService;
 
-    public CartController(CartService cartService) {
+    public CartController(CartService cartService, ProductService productService) {
         this.cartService = cartService;
+        this.productService = productService;
     }
 
     @GetMapping
@@ -44,6 +52,18 @@ public class CartController {
     public ResponseEntity<CartEntity> getCartByUserId(@PathVariable String userId) throws ExecutionException, InterruptedException {
         Optional<CartEntity> cart = cartService.getCartByUserId(userId).get();
         return cart.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    // New endpoint to get products in cart
+    @GetMapping("/user/{userId}/products")
+    public ResponseEntity<List<ProductEntity>> getProductsInCart(@PathVariable String userId) {
+        try {
+            List<ProductEntity> products = cartService.getProductsInCart(userId);
+            return ResponseEntity.ok(products);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     // Modified to accept request body

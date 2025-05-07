@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,8 @@ public class OrderService {
         this.paymentService = paymentService;
     }
 
-    public String createOrderFromCart(String userId, OrderEntity orderDetails) throws ExecutionException, InterruptedException {
+    public String createOrderFromCart(String userId, OrderEntity orderDetails)
+            throws ExecutionException, InterruptedException {
         // Retrieve the user's cart
         Optional<CartEntity> cartOptional = cartService.getCartByUserId(userId).get();
         if (cartOptional.isEmpty()) {
@@ -225,6 +227,62 @@ public class OrderService {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("Failed to fetch orders: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public Optional<OrderEntity> getOrderById(String orderId) {
+        CompletableFuture<Optional<OrderEntity>> future = new CompletableFuture<>();
+
+        orderRef.child(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                OrderEntity order = dataSnapshot.getValue(OrderEntity.class);
+                future.complete(Optional.ofNullable(order));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Failed to fetch order: " + databaseError.getMessage());
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Failed to fetch order: " + e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public List<OrderEntity> getOrdersByUserId(String userId) {
+        CompletableFuture<List<OrderEntity>> future = new CompletableFuture<>();
+        List<OrderEntity> orders = new ArrayList<>();
+
+        orderRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    OrderEntity order = snapshot.getValue(OrderEntity.class);
+                    if (order != null) {
+                        orders.add(order);
+                    }
+                }
+                future.complete(orders);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Failed to fetch orders for user: " + databaseError.getMessage());
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Failed to fetch orders for user: " + e.getMessage());
             return Collections.emptyList();
         }
     }
