@@ -17,14 +17,17 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import edu.cit.sapatosan.entity.CartEntity;
+import edu.cit.sapatosan.entity.ProductEntity;
 
 @Service
 public class CartService {
     private final DatabaseReference cartRef;
+    private final ProductService productService;
 
-    public CartService() {
+    public CartService(ProductService productService) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         this.cartRef = database.getReference("carts");
+        this.productService = productService;
     }
 
     public CompletableFuture<Optional<CartEntity>> getCartById(String id) {
@@ -160,14 +163,14 @@ public class CartService {
 
     public void removeEntireProductFromCart(String userId, String productId) throws ExecutionException, InterruptedException {
         Optional<CartEntity> cartOptional = getCartByUserId(userId).get();
-    
+
         if (cartOptional.isPresent()) {
             CartEntity cart = cartOptional.get();
             String cartId = cart.getId();
-    
+
             if (cart.getCartProductIds() != null) {
                 Map<String, Integer> cartProducts = cart.getCartProductIds();
-    
+
                 if (cartProducts.containsKey(productId)) {
                     // Remove the product entirely, regardless of quantity
                     cartProducts.remove(productId);
@@ -217,5 +220,25 @@ public class CartService {
         } else {
             System.out.println("Cart not found for userId: " + userId);
         }
+    }
+
+    public List<ProductEntity> getProductsInCart(String userId) throws ExecutionException, InterruptedException {
+        Optional<CartEntity> cartOptional = getCartByUserId(userId).get();
+        if (cartOptional.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        CartEntity cart = cartOptional.get();
+        if (cart.getCartProductIds() == null || cart.getCartProductIds().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<ProductEntity> products = new ArrayList<>();
+        for (String productId : cart.getCartProductIds().keySet()) {
+            Optional<ProductEntity> productOptional = productService.getProductById(productId).get();
+            productOptional.ifPresent(products::add);
+        }
+
+        return products;
     }
 }

@@ -56,4 +56,10 @@ public class OrderController {
         orderService.cancelOrder(orderId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderEntity>> getOrdersByUserId(@PathVariable String userId) {
+        List<OrderEntity> orders = orderService.getOrdersByUserId(userId);
+        return ResponseEntity.ok(orders);
+    }
 }

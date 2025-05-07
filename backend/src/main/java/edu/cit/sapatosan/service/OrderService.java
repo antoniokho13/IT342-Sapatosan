@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -236,6 +237,37 @@ public class OrderService {
         } catch (InterruptedException | ExecutionException e) {
             System.err.println("Failed to fetch order: " + e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    public List<OrderEntity> getOrdersByUserId(String userId) {
+        CompletableFuture<List<OrderEntity>> future = new CompletableFuture<>();
+        List<OrderEntity> orders = new ArrayList<>();
+
+        orderRef.orderByChild("userId").equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    OrderEntity order = snapshot.getValue(OrderEntity.class);
+                    if (order != null) {
+                        orders.add(order);
+                    }
+                }
+                future.complete(orders);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                System.err.println("Failed to fetch orders for user: " + databaseError.getMessage());
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            System.err.println("Failed to fetch orders for user: " + e.getMessage());
+            return Collections.emptyList();
         }
     }
 }
