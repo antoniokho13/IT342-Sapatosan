@@ -2,9 +2,7 @@ package edu.cit.sapatosan.service;
 
 import com.google.firebase.database.*;
 import edu.cit.sapatosan.entity.OrderEntity;
-import edu.cit.sapatosan.entity.OrderProductEntity;
 import edu.cit.sapatosan.entity.PaymentEntity;
-import edu.cit.sapatosan.entity.ProductEntity;
 import okhttp3.*;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,16 +16,17 @@ import java.util.concurrent.CompletableFuture;
 public class PaymentService {
     private final DatabaseReference paymentRef;
     private final DatabaseReference orderRef;
-    private final DatabaseReference productRef;
 
     @Value("${paymongo.secret.key}")
     private String secretKey;
+
+    @Value("${paymongo.webhook.url}")
+    private String webhookUrl;
 
     public PaymentService() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         this.paymentRef = database.getReference("payments");
         this.orderRef = database.getReference("orders");
-        this.productRef = database.getReference("products");
     }
 
     public void createPayment(String orderId, PaymentEntity payment) {
@@ -44,6 +43,9 @@ public class PaymentService {
                 JSONObject attributes = new JSONObject();
                 attributes.put("amount", payment.getAmount().intValue() * 100); // Convert to cents
                 attributes.put("description", payment.getDescription());
+                JSONObject metadata = new JSONObject();
+                metadata.put("order_id", orderId);
+                attributes.put("metadata", metadata);
                 payload.put("data", new JSONObject().put("attributes", attributes));
 
                 RequestBody body = RequestBody.create(mediaType, payload.toString());
@@ -73,6 +75,11 @@ public class PaymentService {
         }
     }
 
+    private String getAuthorizationHeader() {
+        String credentials = secretKey + ":";
+        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+    }
+
     public CompletableFuture<Optional<PaymentEntity>> getPaymentByOrderId(String orderId) {
         CompletableFuture<Optional<PaymentEntity>> future = new CompletableFuture<>();
         paymentRef.orderByChild("orderId").equalTo(orderId).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -95,11 +102,6 @@ public class PaymentService {
             }
         });
         return future;
-    }
-
-    private String getAuthorizationHeader() {
-        String credentials = secretKey + ":";
-        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
     }
 
     public void deletePayment(String paymentId) {
