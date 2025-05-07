@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
-import axios from 'axios';
 
 const AdminCategories = () => {
     const [categories, setCategories] = useState([]);
@@ -28,6 +28,7 @@ const AdminCategories = () => {
     const fetchCategories = async () => {
         try {
             const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories', {
+            //const response = await axios.get('http://localhost:8080/api/categories', {    
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCategories(response.data);
@@ -60,6 +61,7 @@ const AdminCategories = () => {
         if (window.confirm('Are you sure you want to delete this category?')) {
             try {
                 await axios.delete(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${selectedCategory.id}`, {
+                //await axios.delete(`http://localhost:8080/api/categories/${selectedCategory.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 await fetchCategories(); // Refresh categories dynamically
@@ -105,13 +107,15 @@ const AdminCategories = () => {
         try {
             if (currentCategory.id) {
                 await axios.put(
-                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${currentCategory.id}`,
+                  `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${currentCategory.id}`,
+                   // `http://localhost:8080/api/categories/${currentCategory.id}`,
                     { name: currentCategory.name, description: currentCategory.description, isFeatured: currentCategory.featured },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
             } else {
                 await axios.post(
                     'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories',
+                    //'http://localhost:8080/api/categories',
                     { name: currentCategory.name, description: currentCategory.description, isFeatured: currentCategory.featured },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -128,6 +132,7 @@ const AdminCategories = () => {
             const updatedCategory = { ...category, featured: !category.featured };
             await axios.put(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${category.id}`,
+                //`http://localhost:8080/api/categories/${category.id}`,
                 {
                     name: updatedCategory.name,
                     description: updatedCategory.description,
@@ -145,7 +150,8 @@ const AdminCategories = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+            //await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token'); // Clear the token from localStorage
@@ -239,7 +245,6 @@ const AdminCategories = () => {
                                     <th>Name</th>
                                     <th>Description</th>
                                     <th>Products</th>
-                                    <th>Featured</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -255,27 +260,11 @@ const AdminCategories = () => {
                                             <td>{category.name}</td>
                                             <td>{category.description}</td>
                                             <td>{category.products || 0}</td>
-                                            <td>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={category.featured}
-                                                    onChange={() => toggleFeatured(category)}
-                                                />
-                                                {category.featured ? (
-                                                    <span className="badge-featured">
-                                                        <i className="fas fa-check-circle"></i> Featured
-                                                    </span>
-                                                ) : (
-                                                    <span className="badge-not-featured">
-                                                        <i className="fas fa-times-circle"></i> Not Featured
-                                                    </span>
-                                                )}
-                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="5" className="no-results">No categories found</td>
+                                        <td colSpan="4" className="no-results">No categories found</td>
                                     </tr>
                                 )}
                             </tbody>

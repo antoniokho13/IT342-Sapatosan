@@ -1,82 +1,12 @@
-import React, { useState } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
 
 const AdminOrder = () => {
     // State for managing orders data
-    const [orders, setOrders] = useState([
-        { 
-            id: 1001, 
-            customer: "John Doe", 
-            email: "john.doe@example.com",
-            date: "2025-04-05",
-            total: 240.00,
-            items: 2,
-            status: "Delivered",
-            payment: "Credit Card"
-        },
-        { 
-            id: 1002, 
-            customer: "Jane Smith", 
-            email: "jane.smith@example.com",
-            date: "2025-04-06",
-            total: 120.00,
-            items: 1,
-            status: "Processing",
-            payment: "PayPal"
-        },
-        { 
-            id: 1003, 
-            customer: "Michael Johnson", 
-            email: "michael.johnson@example.com",
-            date: "2025-04-06",
-            total: 360.00,
-            items: 3,
-            status: "Shipped",
-            payment: "Credit Card"
-        },
-        { 
-            id: 1004, 
-            customer: "Sarah Williams", 
-            email: "sarah.williams@example.com",
-            date: "2025-04-07",
-            total: 170.00,
-            items: 1,
-            status: "Pending",
-            payment: "Bank Transfer"
-        },
-        { 
-            id: 1005, 
-            customer: "Robert Brown", 
-            email: "robert.brown@example.com",
-            date: "2025-04-07",
-            total: 210.00,
-            items: 2,
-            status: "Delivered",
-            payment: "Credit Card"
-        },
-        { 
-            id: 1006, 
-            customer: "Emily Jones", 
-            email: "emily.jones@example.com",
-            date: "2025-04-08",
-            total: 90.00,
-            items: 1,
-            status: "Processing",
-            payment: "PayPal"
-        },
-        { 
-            id: 1007, 
-            customer: "David Miller", 
-            email: "david.miller@example.com",
-            date: "2025-04-08",
-            total: 320.00,
-            items: 2,
-            status: "Cancelled",
-            payment: "Credit Card"
-        }
-    ]);
+    const [orders, setOrders] = useState([]);
 
     // State for searching, filtering and pagination
     const [searchTerm, setSearchTerm] = useState('');
@@ -84,7 +14,232 @@ const AdminOrder = () => {
     const [dateSort, setDateSort] = useState('newest'); // 'newest' or 'oldest'
     const [currentPage, setCurrentPage] = useState(1);
     const [viewOrderDetails, setViewOrderDetails] = useState(null);
+    // State for editing status in modal
+    const [editingStatus, setEditingStatus] = useState('');
     const itemsPerPage = 5;
+
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+
+    // Fetch orders when component mounts
+    useEffect(() => {
+        fetchOrders();
+    }, []);
+
+    // Fetch orders from the backend
+    const fetchOrders = async () => {
+        try {
+            const response = await axios.get(
+                'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders',
+               // 'http://localhost:8080/api/orders',
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            console.log('API Response:', response.data);
+            
+            // Transform the data to match our frontend structure
+            const formattedOrders = response.data.map(order => {
+                // Get the correct order ID directly
+                const orderId = order.id || order.orderId;
+                
+                if (!orderId) {
+                    console.error('Missing order ID in order:', order);
+                }
+                
+                return {
+                    id: orderId,
+                    customer: `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`,
+                    email: order.email || 'No email provided',
+                    date: new Date(order.orderDate || Date.now()).toISOString().split('T')[0],
+                    total: order.totalAmount || 0,
+                    items: order.items?.length || 0,
+                    status: mapOrderStatus(order.paymentStatus),
+                    payment: order.paymentMethod || 'Unknown',
+                    details: {
+                        items: order.items?.map(item => ({
+                            id: item.productId,
+                            name: item.productName,
+                            size: item.size || 'N/A',
+                            price: item.price || 0,
+                            quantity: item.quantity || 1
+                        })) || [],
+                        shippingAddress: formatShippingAddress(order.shippingAddress),
+                        shippingMethod: order.shippingMethod || 'Standard Shipping',
+                        trackingNumber: order.trackingNumber || 'Not assigned yet'
+                    }
+                };
+            });
+            
+            console.log('Fetched orders with IDs:', formattedOrders.map(o => o.id));
+            setOrders(formattedOrders);
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            setOrders([]); // Set empty array instead of demo data
+            alert('Failed to fetch orders. Please try again later.');
+        }
+    };
+
+    // Helper function to format shipping address
+    const formatShippingAddress = (address) => {
+        if (!address) return 'No address provided';
+        return `${address.street || ''}, ${address.city || ''}, ${address.state || ''} ${address.zipCode || ''}, ${address.country || ''}`;
+    };
+
+    // Helper function to map backend order status to frontend display status
+    const mapOrderStatus = (paymentStatus) => {
+        switch (paymentStatus) {
+            case 'PAID':
+                return 'Delivered';
+            case 'PENDING':
+                return 'Processing';
+            case 'CANCELLED':
+                return 'Cancelled';
+            case 'REFUNDED':
+                return 'Refunded';
+            case 'SHIPPED':
+                return 'Shipped';
+            default:
+                return 'Pending';
+        }
+    };
+
+    // Helper function to map frontend display status to backend payment status
+    const mapToBackendStatus = (displayStatus) => {
+        switch (displayStatus.toLowerCase()) {
+            case 'delivered':
+                return 'PAID';
+            case 'processing':
+                return 'PENDING';
+            case 'pending':
+                return 'PENDING';
+            default:
+                return 'PENDING';
+        }
+    };
+
+    // Handle logout
+    const handleLogout = async () => {
+        try {
+           await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+           // await axios.post('http://localhost:8080/api/auth/logout', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            localStorage.removeItem('token'); // Clear the token from localStorage
+            window.location.href = '/'; // Redirect to the landing page
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
+    // Update order status
+    const updateOrderStatus = async (orderId, newStatus) => {
+        // Validate that orderId exists
+        if (!orderId) {
+            console.error('Error: Order ID is undefined');
+            alert('Cannot update order: Invalid order ID');
+            return;
+        }
+        
+        try {
+            const backendStatus = mapToBackendStatus(newStatus);
+            console.log(`Updating order ${orderId} to status: ${backendStatus}`);
+            
+            // Log the full URL for debugging
+            const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}?paymentStatus=${backendStatus}`;
+           // const url = `http://localhost:8080/api/orders/${orderId}?paymentStatus=${backendStatus}`;
+            console.log('Making PATCH request to:', url);
+            
+            await axios.patch(
+                url,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            // Update local state
+            setOrders(orders.map(order => 
+                order.id === orderId ? { ...order, status: newStatus } : order
+            ));
+            
+            // If we're viewing the order details, update that too
+            if (viewOrderDetails && viewOrderDetails.id === orderId) {
+                setViewOrderDetails({ ...viewOrderDetails, status: newStatus });
+            }
+            
+            // Provide user feedback
+            alert(`Order #${orderId} status updated successfully to ${newStatus}`);
+        } catch (error) {
+            console.error('Error updating order status:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+            }
+            alert('Failed to update order status. Please try again.');
+        }
+    };
+
+    // Handle update status in modal
+    const handleUpdateStatus = () => {
+        if (!viewOrderDetails || !editingStatus) return;
+        
+        if (editingStatus !== viewOrderDetails.status) {
+            updateOrderStatus(viewOrderDetails.id, editingStatus);
+        }
+    };
+
+    // Set initial editing status when modal opens
+    useEffect(() => {
+        if (viewOrderDetails) {
+            setEditingStatus(viewOrderDetails.status);
+        }
+    }, [viewOrderDetails]);
+
+    // Cancel order
+    const handleCancelOrder = async (orderId) => {
+        // Validate that orderId exists
+        if (!orderId) {
+            console.error('Error: Order ID is undefined');
+            alert('Cannot cancel order: Invalid order ID');
+            return;
+        }
+
+        if (window.confirm('Are you sure you want to cancel this order?')) {
+            try {
+                console.log(`Cancelling order ${orderId}`);
+                
+                // Log the full URL for debugging
+                const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}`;
+               // const url = `http://localhost:8080/api/orders/${orderId}`;
+                console.log('Making DELETE request to:', url);
+                
+                await axios.delete(
+                    url,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                
+                // Update local state
+                setOrders(orders.map(order => 
+                    order.id === orderId ? { ...order, status: 'Cancelled' } : order
+                ));
+                
+                // If we're viewing the order details, update that too
+                if (viewOrderDetails && viewOrderDetails.id === orderId) {
+                    setViewOrderDetails({ ...viewOrderDetails, status: 'Cancelled' });
+                    // Close the modal after cancellation
+                    closeOrderDetails();
+                }
+                
+                // Provide user feedback
+                alert(`Order #${orderId} has been cancelled successfully`);
+            } catch (error) {
+                console.error('Error cancelling order:', error);
+                if (error.response) {
+                    console.error('Response data:', error.response.data);
+                    console.error('Response status:', error.response.status);
+                }
+                alert('Failed to cancel order. Please try again.');
+            }
+        }
+    };
 
     // Filter orders based on search term and status filter
     const filteredOrders = orders.filter(order => 
@@ -145,91 +300,37 @@ const AdminOrder = () => {
         }
     };
 
-    // Mock order details for the selected order
-    const getOrderDetails = (orderId) => {
-        // In a real app, you would fetch this data from the backend
-        const orderDetailsMap = {
-            1001: {
-                items: [
-                    { id: 1, name: "Nike Anthony Edwards 1", size: "US 10", price: 120.00, quantity: 1 },
-                    { id: 2, name: "Nike InfinityRN 4 Mens Road", size: "US 9", price: 120.00, quantity: 1 }
-                ],
-                shippingAddress: "123 Main St, Anytown, CA 12345",
-                shippingMethod: "Standard Shipping",
-                trackingNumber: "SPS1001284753"
-            },
-            1002: {
-                items: [
-                    { id: 3, name: "Harden Volume 8 Unisex", size: "US 11", price: 120.00, quantity: 1 }
-                ],
-                shippingAddress: "456 Oak Ave, Somewhere, NY 67890",
-                shippingMethod: "Express Shipping",
-                trackingNumber: "SPS1002394856"
-            },
-            1003: {
-                items: [
-                    { id: 4, name: "Nike KD16 Ember Glow", size: "US 10.5", price: 150.00, quantity: 1 },
-                    { id: 5, name: "Nike LeBron 21 World Is Your Oyster", size: "US 11", price: 200.00, quantity: 1 },
-                    { id: 6, name: "Adidas Superstar", size: "US 9", price: 10.00, quantity: 1 }
-                ],
-                shippingAddress: "789 Pine Rd, Elsewhere, TX 13579",
-                shippingMethod: "Next Day Delivery",
-                trackingNumber: "SPS1003485967"
-            },
-            1004: {
-                items: [
-                    { id: 7, name: "Nike Interact Run SE Mens Road", size: "US 10", price: 170.00, quantity: 1 }
-                ],
-                shippingAddress: "321 Cedar St, Nowhere, FL 24680",
-                shippingMethod: "Standard Shipping",
-                trackingNumber: "Pending"
-            },
-            1005: {
-                items: [
-                    { id: 8, name: "Kobe A.D. 'Igloo'", size: "US 9", price: 160.00, quantity: 1 },
-                    { id: 9, name: "Nike Women's Sabrina 2 EP", size: "US 7", price: 50.00, quantity: 1 }
-                ],
-                shippingAddress: "654 Maple Dr, Anywhere, WA 97531",
-                shippingMethod: "Express Shipping",
-                trackingNumber: "SPS1005384965"
-            },
-            1006: {
-                items: [
-                    { id: 10, name: "Nike Men's G.T. Cut Academy", size: "US 12", price: 90.00, quantity: 1 }
-                ],
-                shippingAddress: "987 Birch Ln, Someplace, IL 86420",
-                shippingMethod: "Standard Shipping",
-                trackingNumber: "SPS1006293847"
-            },
-            1007: {
-                items: [
-                    { id: 11, name: "Nike KD17 Flight To Paris", size: "US 10", price: 180.00, quantity: 1 },
-                    { id: 12, name: "Nike Zoom Freak 1 All Star", size: "US 11", price: 140.00, quantity: 1 }
-                ],
-                shippingAddress: "246 Elm Blvd, Otherplace, GA 75309",
-                shippingMethod: "Express Shipping",
-                trackingNumber: "Cancelled"
-            }
-        };
-        
-        return orderDetailsMap[orderId] || { 
-            items: [], 
-            shippingAddress: "Not available", 
-            shippingMethod: "Not available",
-            trackingNumber: "Not available"
-        };
-    };
-
     // View order details
     const handleViewOrderDetails = (orderId) => {
-        const orderDetails = getOrderDetails(orderId);
         const order = orders.find(o => o.id === orderId);
-        setViewOrderDetails({ ...order, details: orderDetails });
+        setViewOrderDetails(order);
+        if (order) {
+            setEditingStatus(order.status);
+        }
     };
 
     // Close order details modal
     const closeOrderDetails = () => {
         setViewOrderDetails(null);
+        setEditingStatus('');
+    };
+
+    // CSS styles for the status dropdown
+    const statusDropdownStyles = {
+        select: {
+            padding: '6px 10px',
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+            backgroundColor: '#fff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            minWidth: '120px'
+        },
+        container: {
+            position: 'relative',
+            display: 'inline-block',
+            marginRight: '10px'
+        }
     };
 
     return (
@@ -243,13 +344,13 @@ const AdminOrder = () => {
                 </div>
                 <h1 className="admin-title">ADMIN DASHBOARD</h1>
                 <div className="auth-buttons">
-                    <Link to="/" className="auth-button">
+                    <button onClick={handleLogout} className="auth-button">
                         <span></span>
                         <span></span>
                         <span></span>
                         <span></span>
                         Logout
-                    </Link>
+                    </button>
                 </div>
             </header>
 
@@ -261,13 +362,13 @@ const AdminOrder = () => {
                             <i className="fas fa-users"></i>
                             <span>Users</span>
                         </Link>
-                        <Link to="/admin/products" className="sidebar-link">
-                            <i className="fas fa-shoe-prints"></i>
-                            <span>Products</span>
-                        </Link>
                         <Link to="/admin/categories" className="sidebar-link">
                             <i className="fas fa-tags"></i>
                             <span>Categories</span>
+                        </Link>
+                        <Link to="/admin/products" className="sidebar-link">
+                            <i className="fas fa-shoe-prints"></i>
+                            <span>Products</span>
                         </Link>
                         <Link to="/admin/orders" className="sidebar-link active">
                             <i className="fas fa-shopping-cart"></i>
@@ -305,9 +406,7 @@ const AdminOrder = () => {
                                     <option value="">All Statuses</option>
                                     <option value="Pending">Pending</option>
                                     <option value="Processing">Processing</option>
-                                    <option value="Shipped">Shipped</option>
                                     <option value="Delivered">Delivered</option>
-                                    <option value="Cancelled">Cancelled</option>
                                 </select>
                             </div>
                             <div className="filter-group">
@@ -342,14 +441,14 @@ const AdminOrder = () => {
                             <tbody>
                                 {currentOrders.length > 0 ? (
                                     currentOrders.map(order => (
-                                        <tr key={order.id}>
-                                            <td>#{order.id}</td>
+                                        <tr key={order.id} onClick={() => handleViewOrderDetails(order.id)} style={{cursor: 'pointer'}}>
+                                            <td>#{order.id || 'No ID'}</td>
                                             <td>
                                                 <div>{order.customer}</div>
                                                 <div className="email-subdued">{order.email}</div>
                                             </td>
                                             <td>{order.date}</td>
-                                            <td>${order.total.toFixed(2)}</td>
+                                            <td>₱{order.total.toFixed(2)}</td>
                                             <td>{order.items}</td>
                                             <td>
                                                 <span className={`status-badge ${getStatusBadgeClass(order.status)}`}>
@@ -357,20 +456,36 @@ const AdminOrder = () => {
                                                 </span>
                                             </td>
                                             <td>{order.payment}</td>
-                                            <td className="action-cell">
+                                            <td className="action-cell" onClick={(e) => e.stopPropagation()}>
                                                 <button 
                                                     className="action-button view"
-                                                    onClick={() => handleViewOrderDetails(order.id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleViewOrderDetails(order.id);
+                                                    }}
                                                     title="View Order Details"
                                                 >
                                                     <i className="fas fa-eye"></i>
                                                 </button>
-                                                <button 
-                                                    className="action-button edit"
-                                                    title="Edit Order"
-                                                >
-                                                    <i className="fas fa-edit"></i>
-                                                </button>
+                                                
+                                                <div className="status-dropdown-container">
+                                                    <select
+                                                        className="status-dropdown"
+                                                        value={order.status}
+                                                        onChange={(e) => {
+                                                            e.stopPropagation();
+                                                            const newStatus = e.target.value;
+                                                            if (window.confirm(`Update order #${order.id} status to ${newStatus}?`)) {
+                                                                updateOrderStatus(order.id, newStatus);
+                                                            }
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Processing">Processing</option>
+                                                        <option value="Delivered">Delivered</option>
+                                                    </select>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -432,9 +547,23 @@ const AdminOrder = () => {
                                             </div>
                                             <div className="order-info-item">
                                                 <span className="label">Status:</span>
-                                                <span className={`status-badge ${getStatusBadgeClass(viewOrderDetails.status)}`}>
-                                                    {viewOrderDetails.status}
-                                                </span>
+                                                <div className="status-update-container">
+                                                    <select
+                                                        className="status-dropdown"
+                                                        value={editingStatus}
+                                                        onChange={(e) => setEditingStatus(e.target.value)}
+                                                    >
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Processing">Processing</option>
+                                                        <option value="Delivered">Delivered</option>
+                                                    </select>
+                                                    <button 
+                                                        className="primary-button"
+                                                        onClick={handleUpdateStatus}
+                                                    >
+                                                        Update
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="order-info-item">
                                                 <span className="label">Payment Method:</span>
@@ -442,7 +571,7 @@ const AdminOrder = () => {
                                             </div>
                                             <div className="order-info-item">
                                                 <span className="label">Total:</span>
-                                                <span className="value bold">${viewOrderDetails.total.toFixed(2)}</span>
+                                                <span className="value bold">₱{viewOrderDetails.total.toFixed(2)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -482,24 +611,24 @@ const AdminOrder = () => {
                                                     <tr key={item.id}>
                                                         <td>{item.name}</td>
                                                         <td>{item.size}</td>
-                                                        <td>${item.price.toFixed(2)}</td>
+                                                        <td>₱{item.price.toFixed(2)}</td>
                                                         <td>{item.quantity}</td>
-                                                        <td>${(item.price * item.quantity).toFixed(2)}</td>
+                                                        <td>₱{(item.price * item.quantity).toFixed(2)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                             <tfoot>
                                                 <tr>
                                                     <td colSpan="4" className="text-right">Subtotal:</td>
-                                                    <td>${viewOrderDetails.details.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</td>
+                                                    <td>₱{viewOrderDetails.details.items.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</td>
                                                 </tr>
                                                 <tr>
                                                     <td colSpan="4" className="text-right">Shipping:</td>
-                                                    <td>$10.00</td>
+                                                    <td>₱10.00</td>
                                                 </tr>
                                                 <tr className="total-row">
                                                     <td colSpan="4" className="text-right">Total:</td>
-                                                    <td>${viewOrderDetails.total.toFixed(2)}</td>
+                                                    <td>₱{viewOrderDetails.total.toFixed(2)}</td>
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -509,9 +638,14 @@ const AdminOrder = () => {
                                         <button className="secondary-button" onClick={closeOrderDetails}>
                                             Close
                                         </button>
-                                        <button className="primary-button">
-                                            Update Status
-                                        </button>
+                                        {viewOrderDetails.status.toLowerCase() !== 'cancelled' && (
+                                            <button 
+                                                className="danger-button"
+                                                onClick={() => handleCancelOrder(viewOrderDetails.id)}
+                                            >
+                                                Cancel Order
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

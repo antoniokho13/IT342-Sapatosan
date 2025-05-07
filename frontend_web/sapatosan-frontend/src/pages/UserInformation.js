@@ -14,7 +14,33 @@ const UserInformation = () => {
     const dropdownRef = useRef(null);
     const [showDropdown, setShowDropdown] = useState(false);
     
-    // Initialize user data with empty values
+    // Add modal state
+    const [showModal, setShowModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
+    const [modalAction, setModalAction] = useState(null);
+    
+    // Add toast state
+    const [toast, setToast] = useState({
+        visible: false,
+        message: '',
+        type: 'success' // 'success', 'error', 'info', etc.
+    });
+
+    // Function to show a toast notification
+    const showToast = (message, type = 'success') => {
+        setToast({
+            visible: true,
+            message,
+            type
+        });
+        
+        // Automatically hide the toast after 3 seconds
+        setTimeout(() => {
+            setToast(prev => ({...prev, visible: false}));
+        }, 3000);
+    };
+    
+    // Initialize user data with empty valsues
     const [userData, setUserData] = useState({
         id: '',
         firstName: '',
@@ -37,6 +63,7 @@ const UserInformation = () => {
             }
             
             const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
+           // const response = await axios.get('http://localhost:8080/api/users', {
                 headers: { authorization: `Bearer ${token}` }
             });
             
@@ -120,7 +147,8 @@ const UserInformation = () => {
             // Handle password separately
             if (userData.password !== '********') {
                 if (userData.password !== userData.confirmPassword) {
-                    alert("Passwords don't match!");
+                    setModalMessage("Passwords don't match!");
+                    setShowModal(true);
                     return;
                 }
                 userDataToUpdate.password = userData.password;
@@ -133,6 +161,7 @@ const UserInformation = () => {
             // Call API to update user
             const response = await axios.put(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${userData.id}`,
+               // `http://localhost:8080/api/users/${userData.id}`,
                 userDataToUpdate,
                 { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
             );
@@ -140,25 +169,31 @@ const UserInformation = () => {
             // Exit edit mode
             setIsEditing(false);
             
-            // Show success message
-            alert('Profile updated successfully!');
-            
             // Handle email or password changes
             if (emailChanged || userData.password !== '********') {
-                // Clear localStorage
-                localStorage.removeItem('token');
-                localStorage.removeItem('userId');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('email');
+                // Show success message with toast
+                showToast('Profile updated successfully!', 'success');
                 
-                // Inform user they need to log in again
-                alert('Your credentials have been updated. Please log in again with your new information.');
-                
-                // Redirect to login page
-                navigate('/login');
+                // Set modal action for login redirect
+                setModalMessage('Your credentials have been updated. Please log in again with your new information.');
+                setModalAction(() => {
+                    // Clear localStorage
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('email');
+                    
+                    // Add a small delay before navigation to allow toast to be seen
+                    setTimeout(() => {
+                        navigate('/login');
+                    }, 1500); // 1.5 second delay
+                });
+                setShowModal(true);
             } else {
                 // Just update email in localStorage if nothing critical changed
                 localStorage.setItem('email', userData.email);
+                setModalMessage('Profile updated successfully!');
+                setShowModal(true);
             }
             
         } catch (error) {
@@ -175,14 +210,15 @@ const UserInformation = () => {
                 errorMessage += error.message;
             }
             
-            alert(errorMessage);
+            showToast(errorMessage, 'error');
         }
     };
 
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+          //  await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token');
@@ -382,6 +418,41 @@ const UserInformation = () => {
                     <p>&copy; 2025 Sapatosan. All rights reserved.</p>
                 </div>
             </footer>
+
+            {/* Modal Component */}
+            {showModal && (
+                <div className="modal-overlay">
+                    <div className="modal-container">
+                        <div className="modal-content">
+                            <p>{modalMessage}</p>
+                            <button 
+                                className="modal-button"
+                                onClick={() => {
+                                    setShowModal(false);
+                                    if (modalAction) {
+                                        modalAction();
+                                    }
+                                }}
+                            >
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Floating Toast Notification */}
+            {toast.visible && (
+                <div className={`toast-notification ${toast.type}`}>
+                    <div className="toast-content">
+                        <p>{toast.message}</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

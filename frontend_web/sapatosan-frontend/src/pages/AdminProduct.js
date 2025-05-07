@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
-import axios from 'axios';
 
 const AdminProduct = () => {
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [categoryFilter, setCategoryFilter] = useState('');
-    const [brandFilter, setBrandFilter] = useState('');
     const itemsPerPage = 5;
 
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -27,22 +26,21 @@ const AdminProduct = () => {
     });
 
     const [categories, setCategories] = useState([]);
-    const [brands, setBrands] = useState([]);
     const [imageFile, setImageFile] = useState(null);
 
     const token = localStorage.getItem('token');
 
-    // Fetch products, categories, and brands from the backend
+    // Fetch products and categories from the backend
     useEffect(() => {
         fetchProducts();
         fetchCategories();
-        fetchBrands(); // Fetch brands on component load
     }, []);
 
     const fetchProducts = async () => {
         try {
             const response = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+               // `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setProducts(response.data);
@@ -55,6 +53,7 @@ const AdminProduct = () => {
         try {
             const response = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories`,
+               // `http://localhost:8080/api/categories`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setCategories(response.data);
@@ -63,20 +62,9 @@ const AdminProduct = () => {
         }
     };
 
-    const fetchBrands = async () => {
-        try {
-            const response = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/brands`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setBrands(response.data);
-        } catch (error) {
-            console.error('Error fetching brands:', error);
-        }
-    };
-
     const handleLogout = async () => {
         try {
+           // await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
             await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -97,16 +85,10 @@ const AdminProduct = () => {
         setCurrentPage(1);
     };
 
-    const handleBrandChange = (e) => {
-        setBrandFilter(e.target.value);
-        setCurrentPage(1);
-    };
-
     const filteredProducts = products.filter(product =>
         (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.brand.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (categoryFilter === '' || product.categoryId === categoryFilter) &&
-        (brandFilter === '' || product.brand === brandFilter)
+        (categoryFilter === '' || product.categoryId === categoryFilter)
     );
 
     const indexOfLastProduct = currentPage * itemsPerPage;
@@ -123,7 +105,12 @@ const AdminProduct = () => {
 
     const handleEdit = () => {
         setShowProductModal(false);
-        setCurrentProduct({ ...selectedProduct });
+        // Convert price from cents to whole units for editing
+        const productForEdit = { 
+            ...selectedProduct,
+            price: selectedProduct.price / 100 
+        };
+        setCurrentProduct(productForEdit);
         setShowEditModal(true);
     };
 
@@ -132,6 +119,7 @@ const AdminProduct = () => {
             try {
                 await axios.delete(
                     `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${selectedProduct.id}`,
+                   // `http://localhost:8080/api/products/${selectedProduct.id}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 setProducts(products.filter(product => product.id !== selectedProduct.id));
@@ -178,7 +166,8 @@ const AdminProduct = () => {
     
                 console.log('Uploading image...'); // Debugging line
                 const uploadResponse = await axios.post(
-                    'http://localhost:8080/api/images/upload',
+                    'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/images/upload',
+                   // 'http://localhost:8080/api/images/upload',
                     formData,
                     { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
                 );
@@ -189,14 +178,20 @@ const AdminProduct = () => {
                  console.log('No new image file selected. Using existing URL:', imageUrl); // Debugging line
             }
     
-            // Prepare the product data with the correct image URL
-            const productData = { ...currentProduct, imageUrl };
+            // Prepare the product data with the correct image URL and price in cents
+            const productData = { 
+                ...currentProduct, 
+                imageUrl,
+                // Convert price from display format (whole units) to storage format (cents)
+                price: parseFloat(currentProduct.price) * 100
+            };
     
             if (currentProduct.id) {
                 // Update existing product
                 console.log('Updating product:', currentProduct.id, productData); // Debugging line
                 await axios.put(
                     `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${currentProduct.id}`,
+                    //`http://localhost:8080/api/products/${currentProduct.id}`,
                     productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -207,6 +202,7 @@ const AdminProduct = () => {
                 console.log('Adding new product:', productData); // Debugging line
                 await axios.post(
                     `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                    //`http://localhost:8080/api/products`,
                     productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -316,21 +312,6 @@ const AdminProduct = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="filter-group" style={{ marginRight: '15px' }}>
-                                <select 
-                                    value={brandFilter}
-                                    onChange={handleBrandChange}
-                                    className="search-input"
-                                    style={{ paddingLeft: '15px', minWidth: '150px' }}
-                                >
-                                    <option value="">All Brands</option>
-                                    {brands.map(brand => (
-                                        <option key={brand.id} value={brand.name}>
-                                            {brand.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
                             <button className="add-button" onClick={handleAddProduct}>
                                 <i className="fas fa-plus"></i> Add Product
                             </button>
@@ -389,7 +370,7 @@ const AdminProduct = () => {
                                             <td>
                                                 {categories.find(category => category.id === product.categoryId)?.name || 'Unknown'}
                                             </td>
-                                            <td>${product.price.toFixed(2)}</td>
+                                            <td>₱{(product.price / 100).toFixed(2)}</td>
                                             <td>{product.stock}</td>
                                         </tr>
                                     ))
@@ -454,7 +435,7 @@ const AdminProduct = () => {
                                 <span className="product-brand">
                                     {selectedProduct.brand} | {categories.find(category => category.id === selectedProduct.categoryId)?.name || 'Unknown'}
                                 </span>
-                                <span className="product-price">${selectedProduct.price.toFixed(2)}</span>
+                                <span className="product-price">₱{(selectedProduct.price / 100).toFixed(2)}</span>
                             </div>
                         </div>
                         <div className="product-actions">
@@ -533,7 +514,7 @@ const AdminProduct = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label htmlFor="price">Price ($)</label>
+                                    <label htmlFor="price">Price (₱)</label>
                                     <input
                                         id="price"
                                         name="price"

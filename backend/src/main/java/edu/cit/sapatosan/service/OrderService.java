@@ -1,13 +1,28 @@
 package edu.cit.sapatosan.service;
 
-import com.google.firebase.database.*;
-import edu.cit.sapatosan.entity.*;
-import org.springframework.stereotype.Service;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import edu.cit.sapatosan.entity.CartEntity;
+import edu.cit.sapatosan.entity.OrderEntity;
+import edu.cit.sapatosan.entity.OrderProductEntity;
+import edu.cit.sapatosan.entity.PaymentEntity;
+import edu.cit.sapatosan.entity.ProductEntity;
 
 @Service
 public class OrderService {
@@ -28,7 +43,8 @@ public class OrderService {
         this.paymentService = paymentService;
     }
 
-    public String createOrderFromCart(String userId, OrderEntity orderDetails) throws ExecutionException, InterruptedException {
+    public String createOrderFromCart(String userId, OrderEntity orderDetails)
+            throws ExecutionException, InterruptedException {
         // Retrieve the user's cart
         Optional<CartEntity> cartOptional = cartService.getCartByUserId(userId).get();
         if (cartOptional.isEmpty()) {

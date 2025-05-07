@@ -12,7 +12,7 @@ import mel from '../assets/images/mel.png'; // Import the image for Rommel John 
 import nike from '../assets/images/nike.png'; // Import the Nike logo
 import pullsnBear from '../assets/images/pullsnbear.png'; // Import the Pull&Bear logo
 import puma from '../assets/images/puma.png'; // Import the Puma logo
-import raymund from '../assets/images/raymund.jpg'; // Import the image for Raymund Laude
+import raymund from '../assets/images/raymund.png'; // Import the image for Raymund Laude
 import teaser from '../assets/images/teaser.mp4';
 
 const Home = () => {
@@ -71,6 +71,7 @@ const Home = () => {
                     // Now fetch users to get additional data or verify the email
                     const response = await axios.get(
                         `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users`,
+                       // `http://localhost:8080/api/users`,
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     
@@ -168,6 +169,7 @@ const fetchCartWithProducts = async () => {
         // First, get the cart data
         const cartResponse = await axios.get(
             `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+           // `http://localhost:8080/api/carts/user/${userId}`,
             { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -193,6 +195,7 @@ const fetchCartWithProducts = async () => {
         // Next, fetch ALL products to find the ones in the cart
         const productsResponse = await axios.get(
             `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+           // `http://localhost:8080/api/products`,
             { headers: { Authorization: `Bearer ${token}` } }
         );
         
@@ -275,7 +278,8 @@ const fetchCartWithProducts = async () => {
     
         try {
             const response = await axios.delete(
-                `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
+               // `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -311,6 +315,7 @@ const fetchCartWithProducts = async () => {
             if (token) {
                 await axios.post(
                     `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout`,
+                   // `http://localhost:8080/api/auth/logout`,
                     {},
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -400,7 +405,8 @@ const fetchCartWithProducts = async () => {
 
                 if (token && cartItems.length > 0) {
                     // Fetch all products from the backend
-                    const response = await axios.get('http://localhost:8080/api/products', {
+                    const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products', {
+                    // const response = await axios.get('http://localhost:8080/api/products', {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },

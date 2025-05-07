@@ -40,6 +40,7 @@ const Basketball = () => {
                 
                 const response = await axios.get(
                     `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                    //`http://localhost:8080/api/products`,
                     { headers }
                 );
                 
@@ -101,6 +102,7 @@ const Basketball = () => {
             // First, get the cart data
             const cartResponse = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+                //`http://localhost:8080/api/carts/user/${userId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -130,6 +132,7 @@ const Basketball = () => {
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+               // `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -189,7 +192,7 @@ const Basketball = () => {
         console.log("Calculating total for cart:", cart);
         return cart.reduce((total, item) => {
             const itemTotal = (item.price || 0) * (item.quantity || 1);
-            console.log(`Item ${item.name}: $${item.price} x ${item.quantity} = $${itemTotal}`);
+            console.log(`Item ${item.name}: ₱${item.price} x ${item.quantity} = ₱${itemTotal}`);
             return total + itemTotal;
         }, 0).toFixed(2);
     };
@@ -368,6 +371,7 @@ const Basketball = () => {
 
             const response = await axios.post(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
+               // `http://localhost:8080/api/carts/${userId}/add-product`,
                 cartProduct,
                 {
                     headers: {
@@ -400,6 +404,7 @@ const Basketball = () => {
         try {
             const response = await axios.delete(
                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
+               // `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -544,7 +549,7 @@ const Basketball = () => {
                                     <div className="product-details">
                                         <div className="product-brand">{shoe.brand}</div>
                                         <h3 className="product-name">{shoe.name}</h3>
-                                        <div className="product-price">${(shoe.price || 0).toFixed(2)}</div>
+                                        <div className="product-price">₱{(shoe.price || 0).toFixed(2)}</div>
                                         <div className="product-sizes">
                                             {staticSizes.map(size => (
                                                 <span className="size-option" key={size}>US {size}</span>
@@ -581,7 +586,7 @@ const Basketball = () => {
                             <div className="modal-product-info">
                                 <div className="modal-product-brand">{quickViewShoe.brand}</div>
                                 <h2 className="modal-product-name">{quickViewShoe.name}</h2>
-                                <div className="modal-product-price">${quickViewShoe.price.toFixed(2)}</div>
+                                <div className="modal-product-price">₱{quickViewShoe.price.toFixed(2)}</div>
                                 <p className="modal-product-description">{quickViewShoe.description}</p>
                                 
                                 <div className="modal-size-selection">
@@ -669,7 +674,7 @@ const Basketball = () => {
                                                     <p className="cart-item-size">Size: US {item.selectedSize || '?'}</p>
                                                     <p className="cart-item-quantity">Quantity: {item.quantity || 0}</p>
                                                     <p className="cart-item-price">
-                                                        ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                                        ₱{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                                                     </p>
                                                 </div>
                                                 <button 
@@ -688,7 +693,7 @@ const Basketball = () => {
                                 <div className="cart-summary">
                                     <div className="cart-total">
                                         <span>Total:</span>
-                                        <span>${calculateTotal()}</span>
+                                        <span>₱{calculateTotal()}</span>
                                     </div>
                                     <div className="cart-actions">
                                         <button 
