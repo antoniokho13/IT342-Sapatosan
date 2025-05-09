@@ -1,55 +1,34 @@
 package edu.cit.sapatosan.entity;
 
 public class PaymentEntity {
-    private String id; // Unique ID for the payment
-    private String orderId; // Reference to the Order
-    private Double amount; // Total amount from the order
-    private String description; // Payment description
-    private String link; // Payment link (checkout_url from PayMongo)
-    private String status; // Payment status (e.g., pending, completed, failed)
+    private String id;
+    private String orderId;
+    private Double amount;
+    private String description;
+    private String link;
+    private String status;
+    private String linkId; // Add this to store PayMongo link ID
 
-    public PaymentEntity() {
-        // Default constructor for Firebase
-    }
+    public PaymentEntity() {}
 
-    // Getters and Setters
-    public String getId() {
-        return id;
-    }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getOrderId() { return orderId; }
+    public void setOrderId(String orderId) { this.orderId = orderId; }
 
-    public String getOrderId() {
-        return orderId;
-    }
+    public Double getAmount() { return amount; }
+    public void setAmount(Double amount) { this.amount = amount; }
 
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public Double getAmount() {
-        return amount;
-    }
+    public String getLink() { return link; }
+    public void setLink(String link) { this.link = link; }
 
-    public void setAmount(Double amount) {
-        this.amount = amount;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getLink() {
-        return link;
-    }
-
-    public void setLink(String link) {
-        this.link = link;
-    }
+    public String getLinkId() { return linkId; }
+    public void setLinkId(String linkId) { this.linkId = linkId; }
 }

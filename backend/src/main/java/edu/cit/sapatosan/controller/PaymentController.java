@@ -1,8 +1,10 @@
 package edu.cit.sapatosan.controller;
 
 import edu.cit.sapatosan.entity.PaymentEntity;
+import edu.cit.sapatosan.entity.UserEntity;
 import edu.cit.sapatosan.service.PaymentService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -15,10 +17,17 @@ public class PaymentController {
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
     }
-    //Push na ni oy
+
     @PostMapping("/{orderId}")
-    public ResponseEntity<Void> createPayment(@PathVariable String orderId, @RequestBody PaymentEntity payment) {
-        paymentService.createPayment(orderId, payment);
+    public ResponseEntity<Void> createPayment(
+            @PathVariable String orderId,
+            @RequestBody PaymentEntity payment,
+            Authentication authentication) {
+        // Fetch the logged-in user
+        String userId = authentication.getName(); // Assuming userId is the principal
+        // You'll need to fetch the UserEntity here using UserService
+        // For simplicity, assuming user details are passed or fetched elsewhere
+        paymentService.createPayment(orderId, payment, new UserEntity()); // Replace with actual user
         return ResponseEntity.ok().build();
     }
 

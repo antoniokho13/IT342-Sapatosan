@@ -3,6 +3,7 @@ package edu.cit.sapatosan.service;
 import com.google.firebase.database.*;
 import edu.cit.sapatosan.entity.OrderEntity;
 import edu.cit.sapatosan.entity.PaymentEntity;
+import edu.cit.sapatosan.entity.UserEntity;
 import okhttp3.*;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,20 +30,25 @@ public class PaymentService {
         this.orderRef = database.getReference("orders");
     }
 
-    public void createPayment(String orderId, PaymentEntity payment) {
+    public void createPayment(String orderId, PaymentEntity payment, UserEntity user) {
         String paymentId = paymentRef.push().getKey();
         if (paymentId != null) {
             payment.setId(paymentId);
             payment.setOrderId(orderId);
+            payment.setStatus("pending");
 
-            // Call PayMongo API to generate the payment link
             try {
                 OkHttpClient client = new OkHttpClient();
                 MediaType mediaType = MediaType.parse("application/json");
                 JSONObject payload = new JSONObject();
                 JSONObject attributes = new JSONObject();
-                attributes.put("amount", payment.getAmount().intValue()); // Convert to cents
-                attributes.put("description", payment.getDescription());
+                attributes.put("amount", payment.getAmount().intValue() * 100); // Convert to cents
+                // Include user details in the description
+                String description = String.format(
+                        "Payment for order %s by %s %s (%s)",
+                        orderId, user.getFirstName(), user.getLastName(), user.getEmail()
+                );
+                attributes.put("description", description);
                 JSONObject metadata = new JSONObject();
                 metadata.put("order_id", orderId);
                 attributes.put("metadata", metadata);
@@ -61,7 +67,9 @@ public class PaymentService {
                 if (response.isSuccessful() && response.body() != null) {
                     JSONObject responseBody = new JSONObject(response.body().string());
                     String checkoutUrl = responseBody.getJSONObject("data").getJSONObject("attributes").getString("checkout_url");
+                    String linkId = responseBody.getJSONObject("data").getString("id");
                     payment.setLink(checkoutUrl);
+                    payment.setLinkId(linkId);
                 } else {
                     String errorBody = response.body() != null ? response.body().string() : "No response body";
                     throw new RuntimeException("Failed to create payment link: " + response.message() + " - " + errorBody);
@@ -70,14 +78,33 @@ public class PaymentService {
                 throw new RuntimeException("Error while calling PayMongo API", e);
             }
 
-            // Save the payment to Firebase
             paymentRef.child(paymentId).setValueAsync(payment);
+            createWebhookForPayment(paymentId, orderId);
         }
     }
 
-    private String getAuthorizationHeader() {
-        String credentials = secretKey + ":";
-        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+    public void createWebhookForPayment(String paymentId, String orderId) {
+        try {
+            OkHttpClient client = new OkHttpClient();
+            MediaType mediaType = MediaType.parse("application/json");
+            String bodyJson = String.format("{\"data\":{\"attributes\":{\"url\":\"%s\",\"events\":[\"link.payment.paid\"]}}}", webhookUrl);
+            RequestBody body = RequestBody.create(mediaType, bodyJson);
+            Request request = new Request.Builder()
+                    .url("https://api.paymongo.com/v1/webhooks")
+                    .post(body)
+                    .addHeader("accept", "application/json")
+                    .addHeader("content-type", "application/json")
+                    .addHeader("authorization", getAuthorizationHeader())
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful() || response.body() == null) {
+                String errorBody = response.body() != null ? response.body().string() : "No response body";
+                throw new RuntimeException("Failed to create webhook: " + response.message() + " - " + errorBody);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error while creating webhook", e);
+        }
     }
 
     public CompletableFuture<Optional<PaymentEntity>> getPaymentByOrderId(String orderId) {
@@ -102,6 +129,42 @@ public class PaymentService {
             }
         });
         return future;
+    }
+
+    public CompletableFuture<Optional<PaymentEntity>> getPaymentByLinkId(String linkId) {
+        CompletableFuture<Optional<PaymentEntity>> future = new CompletableFuture<>();
+        paymentRef.orderByChild("linkId").equalTo(linkId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                for (DataSnapshot child : snapshot.getChildren()) {
+                    PaymentEntity payment = child.getValue(PaymentEntity.class);
+                    if (payment != null) {
+                        payment.setId(child.getKey());
+                        future.complete(Optional.of(payment));
+                        return;
+                    }
+                }
+                future.complete(Optional.empty());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
+            }
+        });
+        return future;
+    }
+
+    private String getAuthorizationHeader() {
+        String credentials = secretKey + ":";
+        return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes());
+    }
+    public void updatePayment(PaymentEntity payment) {
+        if (payment.getId() != null) {
+            paymentRef.child(payment.getId()).setValueAsync(payment);
+        } else {
+            throw new IllegalArgumentException("Payment ID is required to update payment");
+        }
     }
 
     public void deletePayment(String paymentId) {
