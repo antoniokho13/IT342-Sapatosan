@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -15,6 +16,16 @@ public class OrderController {
 
     public OrderController(OrderService orderService) {
         this.orderService = orderService;
+    }
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderEntity> getOrderById(@PathVariable String orderId) {
+        try {
+            Optional<OrderEntity> order = orderService.getOrderById(orderId);
+            return order.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 
     @PostMapping("/from-cart/{userId}")
