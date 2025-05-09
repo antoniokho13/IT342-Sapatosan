@@ -29,6 +29,7 @@ const Basketball = () => {
     const [showOrders, setShowOrders] = useState(false);
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [orderError, setOrderError] = useState(null);
+    const [checkingPayment, setCheckingPayment] = useState(false);
     
     // Fetch products from backend
     useEffect(() => {
@@ -45,7 +46,6 @@ const Basketball = () => {
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 
                 const response = await axios.get(
-                    //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                     `http://localhost:8080/api/products`,
                     { headers }
                 );
@@ -107,7 +107,6 @@ const Basketball = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
                 `http://localhost:8080/api/carts/user/${userId}`,
                 {
                     headers: {
@@ -137,7 +136,6 @@ const Basketball = () => {
             
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
-               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                 `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -208,7 +206,6 @@ const Basketball = () => {
         
         try {
             const response = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/user/${userId}`,
                 `http://localhost:8080/api/orders/user/${userId}`,
                 {
                     headers: {
@@ -241,7 +238,6 @@ const Basketball = () => {
         
         try {
             const response = await axios.get(
-               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}`,
                 `http://localhost:8080/api/orders/${orderId}`,
                 {
                     headers: {
@@ -259,6 +255,39 @@ const Basketball = () => {
         return null;
     };
 
+    // Add the new forceCheckPaymentStatus function
+    const forceCheckPaymentStatus = async (orderId) => {
+        const token = localStorage.getItem('token');
+        if (!token || !orderId) return;
+        
+        setCheckingPayment(true);
+        try {
+            // First make a manual check call to update the status
+            await axios.post(
+                `http://localhost:8080/api/payments/check/${orderId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            // Then fetch the current order status
+            const response = await checkOrderStatus(orderId);
+            if (response) {
+                // Refresh orders to show the updated status
+                fetchUserOrders();
+                return response;
+            }
+        } catch (error) {
+            console.error(`Error checking payment status for order ${orderId}:`, error);
+        } finally {
+            setCheckingPayment(false);
+        }
+        return null;
+    };
+
     // Add the formatOrderDate function
     const formatOrderDate = (dateString) => {
         const options = { 
@@ -271,7 +300,7 @@ const Basketball = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
-    // Add the polling useEffect
+   // Add the polling useEffect
     useEffect(() => {
         let intervalId;
         
@@ -285,22 +314,26 @@ const Basketball = () => {
             if (unpaidOrders.length > 0) {
                 // Poll every 5 seconds to check for status changes
                 intervalId = setInterval(async () => {
-                    let updatesFound = false;
+                    let updatedAny = false;
                     
+                    // For each unpaid order, check its current status
                     for (const order of unpaidOrders) {
                         const updatedOrder = await checkOrderStatus(order.id);
                         
-                        if (updatedOrder && updatedOrder.paymentStatus !== order.paymentStatus) {
-                            updatesFound = true;
-                            break;
+                        // If the order status has changed, mark that we need to refresh
+                        if (updatedOrder && 
+                            (updatedOrder.paymentStatus !== order.paymentStatus || 
+                             updatedOrder.status !== order.status)) {
+                            updatedAny = true;
                         }
                     }
                     
-                    if (updatesFound) {
-                        // If any order status changed, refresh all orders
+                    // If any order was updated, refresh the entire order list
+                    if (updatedAny) {
+                        console.log("Order status changed, refreshing orders list");
                         fetchUserOrders();
                     }
-                }, 5000); // Poll every 5 seconds for faster updates
+                }, 5000);
             }
         }
         
@@ -520,7 +553,6 @@ const Basketball = () => {
             console.log("Adding to cart:", cartProduct); // Debug
 
             const response = await axios.post(
-               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
                 `http://localhost:8080/api/carts/${userId}/add-product`,
                 cartProduct,
                 {
@@ -553,7 +585,6 @@ const Basketball = () => {
     
         try {
             const response = await axios.delete(
-               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
                 `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
@@ -961,6 +992,15 @@ const Basketball = () => {
                                                             }}
                                                         >
                                                             <i className="fas fa-credit-card"></i> Complete Payment
+                                                        </button>
+                                                        
+                                                        <button 
+                                                            className="check-payment-btn"
+                                                            onClick={() => forceCheckPaymentStatus(order.id)}
+                                                            disabled={checkingPayment}
+                                                        >
+                                                            <i className={`fas fa-sync ${checkingPayment ? 'fa-spin' : ''}`}></i>
+                                                            {checkingPayment ? 'Checking...' : 'Check Payment Status'}
                                                         </button>
                                                     </div>
                                                 )}

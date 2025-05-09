@@ -241,32 +241,45 @@ const Checkout = () => {
             );
             
             if (response.status === 200) {
-                // Get the order ID from the response
-                const orderId = response.data;
+                // Extract the order ID from the response (which is an OrderResponse object)
+                const responseData = response.data;
+                const orderId = responseData.order?.id;
+                
+                if (!orderId) {
+                    console.error("Order ID not found in response:", responseData);
+                    setErrors({ submit: 'Failed to retrieve order ID from response' });
+                    return;
+                }
+                
                 setOrderId(orderId);
                 console.log("Order created successfully with ID:", orderId);
                 
                 // Clear cart from localStorage
                 localStorage.removeItem('sapatosanCart');
                 
-                // Fetch payment info for later use but don't redirect yet
-                try {
-                    console.log("Fetching payment information for order:", orderId);
-                    const paymentResponse = await axios.get(
-                        `http://localhost:8080/api/payments/order/${orderId}`,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`
+                // Set payment info from the response if available
+                if (responseData.payment) {
+                    setPaymentInfo(responseData.payment);
+                } else {
+                    // If not in response, fetch it separately
+                    try {
+                        console.log("Fetching payment information for order:", orderId);
+                        const paymentResponse = await axios.get(
+                            `http://localhost:8080/api/payments/order/${orderId}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                }
                             }
+                        );
+                        
+                        if (paymentResponse.status === 200 && paymentResponse.data) {
+                            console.log("Payment information received:", paymentResponse.data);
+                            setPaymentInfo(paymentResponse.data);
                         }
-                    );
-                    
-                    if (paymentResponse.status === 200 && paymentResponse.data) {
-                        console.log("Payment information received:", paymentResponse.data);
-                        setPaymentInfo(paymentResponse.data);
+                    } catch (error) {
+                        console.error('Error fetching payment link:', error);
                     }
-                } catch (error) {
-                    console.error('Error fetching payment link:', error);
                 }
                 
                 // Show order confirmation screen
