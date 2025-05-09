@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,7 @@ import edu.cit.sapatosan.entity.OrderEntity;
 import edu.cit.sapatosan.entity.OrderProductEntity;
 import edu.cit.sapatosan.entity.PaymentEntity;
 import edu.cit.sapatosan.entity.ProductEntity;
+import edu.cit.sapatosan.entity.UserEntity;
 
 @Service
 public class OrderService {
@@ -43,9 +43,8 @@ public class OrderService {
         this.paymentService = paymentService;
     }
 
-    public String createOrderFromCart(String userId, OrderEntity orderDetails)
+    public String createOrderFromCart(String userId, OrderEntity orderDetails, UserEntity user)
             throws ExecutionException, InterruptedException {
-        // Retrieve the user's cart
         Optional<CartEntity> cartOptional = cartService.getCartByUserId(userId).get();
         if (cartOptional.isEmpty()) {
             throw new IllegalArgumentException("Cart not found for user");
@@ -56,7 +55,6 @@ public class OrderService {
             throw new IllegalArgumentException("Cart is empty");
         }
 
-        // Calculate total amount and prepare order products
         double totalAmount = 0.0;
         List<String> orderProductIds = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : cart.getCartProductIds().entrySet()) {
@@ -85,15 +83,14 @@ public class OrderService {
             }
         }
 
-        // Create the order
         OrderEntity order = new OrderEntity();
         order.setUserId(userId);
         order.setOrderDate(new Date());
         order.setTotalAmount(totalAmount);
         order.setStatus("ACTIVE");
         order.setOrderProductIds(orderProductIds);
+        order.setPaymentStatus(OrderEntity.PaymentStatus.PENDING);
 
-        // Fill in additional details from the request body
         order.setFirstName(orderDetails.getFirstName());
         order.setLastName(orderDetails.getLastName());
         order.setEmail(orderDetails.getEmail());
@@ -102,20 +99,17 @@ public class OrderService {
         order.setCountry(orderDetails.getCountry());
         order.setContactNumber(orderDetails.getContactNumber());
 
-        // Save the order to Firebase
         String orderId = orderRef.push().getKey();
         if (orderId != null) {
             order.setId(orderId);
             orderRef.child(orderId).setValueAsync(order);
         }
 
-        // Create the payment
         PaymentEntity payment = new PaymentEntity();
         payment.setAmount(totalAmount);
         payment.setDescription("Payment for order " + orderId);
-        paymentService.createPayment(orderId, payment);
+        paymentService.createPayment(orderId, payment, user);
 
-        // Clear the cart
         cartService.deleteCart(cart.getId());
 
         return orderId;
@@ -130,7 +124,6 @@ public class OrderService {
                     for (String orderProductId : order.getOrderProductIds()) {
                         incrementProductStock(orderProductId);
                     }
-                    // Delete the order after restoring stock
                     orderRef.child(orderId).removeValueAsync();
                 }
             }
@@ -165,7 +158,7 @@ public class OrderService {
         orderProductRef.child(orderProductId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                OrderProductEntity orderProduct = snapshot.getValue(OrderProductEntity.class);
+                OrderProductEntity orderProduct = snapshot.getValue(OrderProductEntity.class); // Corrected class
                 if (orderProduct != null) {
                     String productId = orderProduct.getProductId();
                     int quantity = orderProduct.getQuantity();
