@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/Checkout.css';
 import logo from '../assets/images/logo.png';
@@ -24,6 +24,8 @@ const Checkout = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [paymentInfo, setPaymentInfo] = useState(null);
     const [fetchingPayment, setFetchingPayment] = useState(false);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [paymentStatus, setPaymentStatus] = useState('PENDING');
 
     // Load cart data from backend and fetch user data
     useEffect(() => {
@@ -40,8 +42,7 @@ const Checkout = () => {
             
             try {
                 // Fetch user data
-                const userResponse = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
-                 //   const userResponse = await axios.get('http://localhost:8080/api/users', {
+                const userResponse = await axios.get('http://localhost:8080/api/users', {
                     headers: {
                         authorization: `Bearer ${token}`
                     }
@@ -83,8 +84,7 @@ const Checkout = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
-               // `http://localhost:8080/api/carts/user/${userId}`,
+                `http://localhost:8080/api/carts/user/${userId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -105,8 +105,7 @@ const Checkout = () => {
             
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-               // `http://localhost:8080/api/products`,
+                `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -233,10 +232,10 @@ const Checkout = () => {
         };
         
         try {
+            console.log("Creating order with data:", orderData);
             // Make the API call to create an order
             const response = await axios.post(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/from-cart/${userId}`,
-               // `http://localhost:8080/api/orders/from-cart/${userId}`,
+                `http://localhost:8080/api/orders/from-cart/${userId}`,
                 orderData,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -244,15 +243,17 @@ const Checkout = () => {
             if (response.status === 200) {
                 // Get the order ID from the response
                 const orderId = response.data;
+                setOrderId(orderId);
+                console.log("Order created successfully with ID:", orderId);
                 
                 // Clear cart from localStorage
                 localStorage.removeItem('sapatosanCart');
                 
-                // Immediately fetch payment information and redirect
+                // Fetch payment info for later use but don't redirect yet
                 try {
+                    console.log("Fetching payment information for order:", orderId);
                     const paymentResponse = await axios.get(
-                        `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/payments/order/${orderId}`,
-                       // `http://localhost:8080/api/payments/order/${orderId}`,
+                        `http://localhost:8080/api/payments/order/${orderId}`,
                         {
                             headers: {
                                 Authorization: `Bearer ${token}`
@@ -260,29 +261,38 @@ const Checkout = () => {
                         }
                     );
                     
-                    if (paymentResponse.status === 200 && paymentResponse.data && paymentResponse.data.link) {
-                        // Redirect user directly to payment link
-                        window.location.href = paymentResponse.data.link;
-                    } else {
-                        // If no payment link, show error
-                        setErrors({ submit: 'Payment link not available. Please try again later.' });
+                    if (paymentResponse.status === 200 && paymentResponse.data) {
+                        console.log("Payment information received:", paymentResponse.data);
+                        setPaymentInfo(paymentResponse.data);
                     }
                 } catch (error) {
                     console.error('Error fetching payment link:', error);
-                    setErrors({ submit: 'Could not retrieve payment information: ' + (error.response?.data || error.message) });
                 }
+                
+                // Show order confirmation screen
+                setOrderComplete(true);
+                
             } else {
+                console.error("Unexpected response status:", response.status);
                 setErrors({ submit: 'Failed to place order. Please try again.' });
             }
         } catch (error) {
             console.error('Error creating order:', error);
-            setErrors({ submit: 'Failed to place order: ' + (error.response?.data || error.message) });
+            let errorMessage = 'Failed to place order';
+            
+            // Provide more specific error messages when available
+            if (error.response?.data) {
+                errorMessage += ': ' + error.response.data;
+            } else if (error.message) {
+                errorMessage += ': ' + error.message;
+            }
+            
+            setErrors({ submit: errorMessage });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // Add a function to fetch payment information
     const fetchPaymentInfo = async (orderId) => {
         if (!orderId) return;
         
@@ -291,8 +301,7 @@ const Checkout = () => {
         
         try {
             const response = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/payments/order/${orderId}`,
-               // `http://localhost:8080/api/payments/order/${orderId}`,
+                `http://localhost:8080/api/payments/order/${orderId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -302,100 +311,208 @@ const Checkout = () => {
             
             if (response.status === 200 && response.data) {
                 setPaymentInfo(response.data);
+                return response.data;
             } else {
                 console.error('No payment information found');
+                return null;
             }
         } catch (error) {
             console.error('Error fetching payment information:', error);
+            return null;
         } finally {
             setFetchingPayment(false);
         }
     };
 
-    // Handle payment button click
     const handlePayNowClick = async () => {
-        if (!paymentInfo) {
-            await fetchPaymentInfo(orderId);
-        }
+        // Set processing state
+        setIsProcessingPayment(true);
         
-        // If we have payment link, navigate to it
-        if (paymentInfo && paymentInfo.link) {
-            window.open(paymentInfo.link, '_blank');
-        } else {
-            alert('Payment link not available. Please try again later.');
+        try {
+            // If we don't have payment info yet, fetch it
+            let paymentData = paymentInfo;
+            if (!paymentData) {
+                paymentData = await fetchPaymentInfo(orderId);
+            }
+            
+            // If we have a payment link, update the order status and redirect
+            if (paymentData && paymentData.link) {
+                // Update the order status to indicate the user is proceeding to payment
+                const token = localStorage.getItem('token');
+                try {
+                    console.log(`Updating order ${orderId} status to PENDING before redirecting to payment`);
+                    await axios.patch(
+                        `http://localhost:8080/api/orders/${orderId}`,
+                        null,
+                        { 
+                            params: { paymentStatus: 'PENDING' },
+                            headers: { Authorization: `Bearer ${token}` }
+                        }
+                    );
+                    console.log("Order status updated to PENDING");
+                    
+                    // Set local status immediately for better UX
+                    setPaymentStatus('PENDING');
+                    
+                    // Redirect to payment gateway
+                    console.log("Redirecting to payment URL:", paymentData.link);
+                    window.location.href = paymentData.link;
+                } catch (updateError) {
+                    console.error("Error updating order status:", updateError);
+                    // Continue anyway to not block payment
+                    window.location.href = paymentData.link;
+                }
+            } else {
+                // If for some reason we don't have a link, show an error
+                alert('Payment link not available. Please refresh and try again.');
+                // Try fetching the payment data again
+                fetchPaymentInfo(orderId);
+                setIsProcessingPayment(false);
+            }
+        } catch (error) {
+            console.error("Error processing payment:", error);
+            alert('There was an error processing your payment. Please try again.');
+            setIsProcessingPayment(false);
         }
     };
+
+    useEffect(() => {
+        let intervalId;
+        
+        // If we have an order, check payment status periodically
+        if (orderComplete && orderId) {
+            const checkPaymentStatus = async () => {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await axios.get(
+                        `http://localhost:8080/api/orders/${orderId}`,
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    
+                    if (response.data && response.data.paymentStatus) {
+                        setPaymentStatus(response.data.paymentStatus);
+                        
+                        // If paid, stop checking
+                        if (response.data.paymentStatus === 'PAID') {
+                            clearInterval(intervalId);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error checking payment status:", error);
+                }
+            };
+            
+            // Check immediately and then every 10 seconds
+            checkPaymentStatus();
+            intervalId = setInterval(checkPaymentStatus, 10000);
+        }
+        
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [orderComplete, orderId]);
 
     if (isLoading) {
         return <div className="loading">Loading checkout information...</div>;
     }
 
-    // Modify your orderComplete render section
+    // Update the order confirmation render section
     if (orderComplete) {
         return (
             <div className="checkout-page">
+                <header className="checkout-header">
+                    <div className="logo-container">
+                        <Link to="/">
+                            <img src={logo} alt="Sapatosan Logo" className="logo" />
+                        </Link>
+                    </div>
+                    <div className="checkout-title">
+                        <h1>Order Confirmation</h1>
+                    </div>
+                </header>
+                
                 <div className="order-confirmation">
                     <div className="success-icon">
                         <i className="fas fa-check-circle"></i>
                     </div>
-                    <h2>Order Complete!</h2>
-                    <p>Order ID: <span className="order-id">{orderId}</span> • {formData.email}</p>
+                    <h2>Your Order Has Been Placed!</h2>
+                    <p>Order ID: <span className="order-id">{orderId}</span></p>
+                    <p>A confirmation email has been sent to {formData.email}</p>
+                    
+                    <div className={`order-status-badge ${paymentStatus.toLowerCase()}`}>
+                        Payment Status: <span>{paymentStatus}</span>
+                    </div>
                     
                     <div className="confirmation-details">
-                        <h3>Order Summary</h3>
-                        <div className="confirmation-items">
-                            {cart.map((item, index) => (
-                                <div key={index} className="confirmation-item">
-                                    <div className="item-name">
-                                        {item.name} <span>({item.selectedSize})</span>
-                                    </div>
-                                    <div className="item-price">${(item.price * item.quantity).toFixed(2)}</div>
-                                </div>
-                            ))}
+                        <div className="confirmation-section">
+                            <h3>Shipping Information</h3>
+                            <div className="confirmation-info">
+                                <p><strong>{formData.firstName} {formData.lastName}</strong></p>
+                                <p>{formData.address}</p>
+                                <p>{formData.postalCode}, {formData.country}</p>
+                                <p>Phone: {formData.contactNumber}</p>
+                            </div>
                         </div>
-                        <div className="confirmation-totals">
-                            <div className="total-line">
-                                <span>Subtotal:</span>
-                                <span>${calculateSubtotal().toFixed(2)}</span>
+                        
+                        <div className="confirmation-section">
+                            <h3>Order Summary</h3>
+                            <div className="confirmation-items">
+                                {cart.map((item, index) => (
+                                    <div key={index} className="confirmation-item">
+                                        <div className="item-image">
+                                            <img src={item.imageUrl} alt={item.name} />
+                                        </div>
+                                        <div className="item-details">
+                                            <h4>{item.name}</h4>
+                                            <p className="item-meta">Size: US {item.selectedSize} · Qty: {item.quantity}</p>
+                                            <p className="item-price">₱{(item.price * item.quantity).toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="total-line">
-                                <span>Tax:</span>
-                                <span>${calculateTax().toFixed(2)}</span>
-                            </div>
-                            <div className="total-line">
-                                <span>Shipping:</span>
-                                <span>$10.00</span>
-                            </div>
-                            <div className="total-line grand-total">
-                                <span>Total:</span>
-                                <span>${calculateTotal().toFixed(2)}</span>
+                            <div className="confirmation-totals">
+                                <div className="total-line">
+                                    <span>Subtotal:</span>
+                                    <span>₱{calculateSubtotal().toFixed(2)}</span>
+                                </div>
+                                <div className="total-line">
+                                    <span>Tax:</span>
+                                    <span>₱{calculateTax().toFixed(2)}</span>
+                                </div>
+                                <div className="total-line">
+                                    <span>Shipping:</span>
+                                    <span>₱10.00</span>
+                                </div>
+                                <div className="total-line grand-total">
+                                    <span>Total:</span>
+                                    <span>₱{calculateTotal().toFixed(2)}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <div className="payment-section">
-                        <h3>Complete Your Purchase</h3>
-                        <div className="payment-info">
-                            <p>Click the button below for our secure payment gateway</p>
-                            
-                            <div className="payment-methods">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="payment-logo" />
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="payment-logo" />
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png" alt="Google Pay" className="payment-logo" />
-                            </div>
+                        <h3>Complete Your Payment</h3>
+                        <p>Please proceed to pay for your order.</p>
+                        
+                        <div className="payment-methods">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="payment-logo" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="payment-logo" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Google_Pay_Logo_%282020%29.svg/1024px-Google_Pay_Logo_%282020%29.svg.png" alt="Google Pay" className="payment-logo" />
                         </div>
                         
                         <div className="payment-actions">
                             <button 
                                 onClick={handlePayNowClick} 
                                 className="pay-now-btn"
-                                disabled={fetchingPayment}
+                                disabled={fetchingPayment || isProcessingPayment}
                             >
                                 <span></span>
                                 <span></span>
                                 <span></span>
                                 <span></span>
-                                {fetchingPayment ? 'Loading...' : 'Pay Now'}
+                                {isProcessingPayment ? 'Processing...' : 
+                                 fetchingPayment ? 'Loading...' : 'Pay Now'}
                             </button>
                             
                             <Link to="/" className="continue-shopping-link">
@@ -404,6 +521,12 @@ const Checkout = () => {
                         </div>
                     </div>
                 </div>
+                
+                <footer className="footer">
+                    <div className="footer-bottom">
+                        <p>&copy; 2025 Sapatosan. All rights reserved.</p>
+                    </div>
+                </footer>
             </div>
         );
     }
@@ -472,18 +595,18 @@ const Checkout = () => {
                             {errors.email && <span className="error-message">{errors.email}</span>}
                         </div>
                         
-                        <div className="form-group">
-                            <label htmlFor="contactNumber">Contact Number</label>
-                            <input 
-                                type="text" 
-                                id="contactNumber" 
-                                name="contactNumber" 
-                                value={formData.contactNumber}
-                                onChange={handleInputChange}
-                                className={errors.contactNumber ? 'error' : ''}
-                            />
-                            {errors.contactNumber && <span className="error-message">{errors.contactNumber}</span>}
-                        </div>
+                       <div className="form-group">
+    <label htmlFor="contactNumber">Contact Number</label>
+    <input 
+        type="text" 
+        id="contactNumber" 
+        name="contactNumber" 
+        value={formData.contactNumber}
+        onChange={handleInputChange}
+        className={errors.contactNumber ? 'error' : ''}
+    />
+    {errors.contactNumber && <span className="error-message">{errors.contactNumber}</span>}
+</div>
                         
                         <div className="form-group">
                             <label htmlFor="address">Address</label>
@@ -569,19 +692,19 @@ const Checkout = () => {
                     <div className="summary-totals">
                         <div className="summary-line">
                             <span>Subtotal</span>
-                            <span>${calculateSubtotal().toFixed(2)}</span>
+                            <span>₱{calculateSubtotal().toFixed(2)}</span>
                         </div>
                         <div className="summary-line">
                             <span>Tax (12%)</span>
-                            <span>${calculateTax().toFixed(2)}</span>
+                            <span>₱{calculateTax().toFixed(2)}</span>
                         </div>
                         <div className="summary-line">
                             <span>Shipping</span>
-                            <span>$10.00</span>
+                            <span>₱10.00</span>
                         </div>
                         <div className="summary-line total">
                             <span>Total</span>
-                            <span>${calculateTotal().toFixed(2)}</span>
+                            <span>₱{calculateTotal().toFixed(2)}</span>
                         </div>
                     </div>
                 </div>

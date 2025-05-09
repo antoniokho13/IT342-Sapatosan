@@ -25,8 +25,8 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
-            //const response = await axios.get('http://localhost:8080/api/users', {
+            //const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
+            const response = await axios.get('http://localhost:8080/api/users', {
                 headers: { authorization: `Bearer ${token}` }
             });
             setUsers(response.data);
@@ -54,8 +54,8 @@ const AdminUsers = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${currentUser.id}`, currentUser, {
-            //await axios.put(`http://localhost:8080/api/users/${currentUser.id}`, currentUser, {
+           // await axios.put(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${currentUser.id}`, currentUser, {
+            await axios.put(`http://localhost:8080/api/users/${currentUser.id}`, currentUser, {
                 headers: { authorization: `Bearer ${token}` }
             });
             setShowEditModal(false);
@@ -68,8 +68,8 @@ const AdminUsers = () => {
     const handleDeleteConfirm = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${selectedUser.id}`, {
-           // await axios.delete(`http://localhost:8080/api/users/${selectedUser.id}`, {
+            //await axios.delete(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${selectedUser.id}`, {
+            await axios.delete(`http://localhost:8080/api/users/${selectedUser.id}`, {
                 headers: { authorization: `Bearer ${token}` }
             });
             setShowDeleteModal(false);
@@ -83,8 +83,8 @@ const AdminUsers = () => {
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('token');
-            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
-           // await axios.post('http://localhost:8080/api/auth/logout', {}, {
+            //await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+            await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token'); // Clear the token from localStorage
