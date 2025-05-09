@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Running.css';
 import logo from '../assets/images/logo.png';
@@ -23,6 +23,12 @@ const Running = () => {
     const [runningShoes, setRunningShoes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Orders state variables
+    const [orders, setOrders] = useState([]);
+    const [showOrders, setShowOrders] = useState(false);
+    const [loadingOrders, setLoadingOrders] = useState(false);
+    const [orderError, setOrderError] = useState(null);
     
     // Fetch products from backend
     useEffect(() => {
@@ -39,8 +45,8 @@ const Running = () => {
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 
                 const response = await axios.get(
-                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-                   // `http://localhost:8080/api/products`,
+                    //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                    `http://localhost:8080/api/products`,
                     { headers }
                 );
                 
@@ -101,8 +107,8 @@ const Running = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
-               // `http://localhost:8080/api/carts/user/${userId}`,
+                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
+                `http://localhost:8080/api/carts/user/${userId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -131,8 +137,8 @@ const Running = () => {
             
             // Next, fetch ALL products (not just running) to find the ones in the cart
             const productsResponse = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-                //`http://localhost:8080/api/products`,
+                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -188,6 +194,134 @@ const Running = () => {
         }
     };
 
+    // Update the fetchUserOrders function
+    const fetchUserOrders = async () => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+        
+        if (!token || !userId) {
+            return;
+        }
+        
+        setLoadingOrders(true);
+        setOrderError(null);
+        
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/orders/user/${userId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            if (response.status === 200) {
+                // Sort orders by date, newest first
+                const sortedOrders = response.data.sort((a, b) => {
+                    return new Date(b.orderDate) - new Date(a.orderDate);
+                });
+                setOrders(sortedOrders);
+            } else {
+                setOrderError("Failed to fetch orders");
+            }
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            setOrderError("An error occurred while fetching your orders");
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    // Add the checkOrderStatus function
+    const checkOrderStatus = async (orderId) => {
+        const token = localStorage.getItem('token');
+        if (!token || !orderId) return null;
+        
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/orders/${orderId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            if (response.status === 200 && response.data) {
+                return response.data;
+            }
+        } catch (error) {
+            console.error(`Error checking status for order ${orderId}:`, error);
+        }
+        return null;
+    };
+
+    // Add the formatOrderDate function
+    const formatOrderDate = (dateString) => {
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    };
+
+    // Add the polling useEffect
+    useEffect(() => {
+        let intervalId;
+        
+        // If we have orders and the orders modal is open, set up polling
+        if (showOrders && orders.length > 0) {
+            // Find orders that are in PENDING payment status
+            const pendingOrders = orders.filter(
+                order => order.paymentStatus === 'PENDING'
+            );
+            
+            if (pendingOrders.length > 0) {
+                // Poll every 10 seconds to check for status changes
+                intervalId = setInterval(async () => {
+                    let updatesFound = false;
+                    
+                    for (const order of pendingOrders) {
+                        const updatedOrder = await checkOrderStatus(order.id);
+                        
+                        if (updatedOrder && updatedOrder.paymentStatus !== order.paymentStatus) {
+                            updatesFound = true;
+                            break;
+                        }
+                    }
+                    
+                    if (updatesFound) {
+                        // If any order status changed, refresh all orders
+                        fetchUserOrders();
+                    }
+                }, 10000); // Poll every 10 seconds
+            }
+        }
+        
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [showOrders, orders]);
+
+    // Add function to toggle orders modal
+    const toggleOrders = () => {
+        // If we're opening the orders, refresh the data first
+        if (!showOrders) {
+            fetchUserOrders();
+        }
+        
+        setShowOrders(!showOrders);
+        // Close other modals
+        if (!showOrders) {
+            setQuickViewShoe(null);
+            setShowCart(false);
+        }
+    };
+
     // Cart functions
     const addToCart = async (shoe, size, quantity) => {
         const token = localStorage.getItem('token');
@@ -234,8 +368,8 @@ const Running = () => {
             console.log("Adding to cart:", cartProduct); // Debug
 
             const response = await axios.post(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
-               // `http://localhost:8080/api/carts/${userId}/add-product`,
+                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
+                `http://localhost:8080/api/carts/${userId}/add-product`,
                 cartProduct,
                 {
                     headers: {
@@ -266,8 +400,8 @@ const Running = () => {
     
         try {
             const response = await axios.delete(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
-               // `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
+               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
+                `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -355,14 +489,17 @@ const Running = () => {
         window.location.href = '/checkout';
     };
 
-    // Close modals when clicking outside
+    // Update the click outside handler to include orders modal
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (quickViewShoe && !event.target.closest('.quick-view-modal-content') && !event.target.closest('.quick-view')) {
                 closeQuickView();
             }
-            if (showCart && !event.target.closest('.cart-modal-content')) {
+            if (showCart && !event.target.closest('.cart-modal-content') && !event.target.closest('.cart-icon')) {
                 setShowCart(false);
+            }
+            if (showOrders && !event.target.closest('.orders-modal-content') && !event.target.closest('.header-order-icon')) {
+                setShowOrders(false);
             }
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowDropdown(false);
@@ -373,7 +510,7 @@ const Running = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [quickViewShoe, showCart, showDropdown]);
+    }, [quickViewShoe, showCart, showOrders, showDropdown]);
 
     // Animation for sections
     useEffect(() => {
@@ -397,9 +534,9 @@ const Running = () => {
         };
     }, []);
 
-    // Prevent body scrolling when modal is open
+    // Update the body scrolling effect to include orders modal
     useEffect(() => {
-        if (quickViewShoe || showCart) {
+        if (quickViewShoe || showCart || showOrders) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -407,7 +544,7 @@ const Running = () => {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [quickViewShoe, showCart]);
+    }, [quickViewShoe, showCart, showOrders]);
 
     // Handle storage changes for cart sync
     useEffect(() => {
@@ -423,6 +560,16 @@ const Running = () => {
         return () => {
             window.removeEventListener('storage', handleStorageChange);
         };
+    }, []);
+
+    // Add initial fetch for orders
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
+        
+        if (token && userId) {
+            fetchUserOrders();
+        }
     }, []);
 
     return (
@@ -443,6 +590,10 @@ const Running = () => {
                 <div className="auth-buttons">
                     {localStorage.getItem('token') ? (
                         <>
+                            <div className="header-order-icon" onClick={toggleOrders}>
+                                <i className="fas fa-box"></i>
+                                <span className="header-order-count">{orders.length}</span>
+                            </div>
                             <div className="header-cart-icon" onClick={toggleCart}>
                                 <i className="fas fa-shopping-cart"></i>
                                 <span className="header-cart-count">{cart.length}</span>
@@ -692,6 +843,118 @@ const Running = () => {
                                 </div>
                             </>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Orders Modal */}
+            {showOrders && (
+                <div className="orders-modal">
+                    <div className="orders-modal-content">
+                        <button className="close-modal" onClick={() => setShowOrders(false)}>×</button>
+                        <h2>Your Orders</h2>
+                        
+                        {loadingOrders && <div className="loading-spinner">Loading orders...</div>}
+                        {orderError && <div className="error-message">{orderError}</div>}
+                        
+                        {!loadingOrders && !orderError && orders.length === 0 && (
+                            <div className="empty-orders">
+                                <i className="fas fa-box-open"></i>
+                                <p>You don't have any orders yet</p>
+                                <button 
+                                    className="continue-shopping" 
+                                    onClick={() => setShowOrders(false)}
+                                >
+                                    Continue Shopping
+                                </button>
+                            </div>
+                        )}
+                        
+                        {!loadingOrders && !orderError && orders.length > 0 && (
+                            <div className="orders-list">
+                                {orders.map((order) => (
+                                    <div key={order.id} className="order-item">
+                                        <div className="order-header">
+                                            <div className="order-id">
+                                                <span className="order-label">Order ID:</span> 
+                                                <span className="order-value">{order.id}</span>
+                                            </div>
+                                            <div className="order-date">
+                                                <span className="order-label">Date:</span> 
+                                                <span className="order-value">
+                                                    {formatOrderDate(order.orderDate)}
+                                                </span>
+                                            </div>
+                                            <div className="order-status">
+                                                <span className={`status-badge ${order.status?.toLowerCase() || 'unknown'}`}>
+                                                    {order.status || 'UNKNOWN'}
+                                                </span>
+                                                <span className={`payment-badge ${order.paymentStatus?.toLowerCase() || 'pending'}`}>
+                                                    {order.paymentStatus === 'PAID' ? 'PAYMENT COMPLETED' :
+                                                     order.paymentStatus === 'PENDING' ? 'AWAITING PAYMENT' :
+                                                     'PAYMENT REQUIRED'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="order-details">
+                                            <div className="delivery-address">
+                                                <h4>Shipping To:</h4>
+                                                <p>{order.firstName} {order.lastName}</p>
+                                                <p>{order.address}</p>
+                                                <p>{order.postalCode}, {order.country}</p>
+                                            </div>
+                                            <div className="order-price">
+                                                <h4>Total:</h4>
+                                                <p className="order-total">₱{order.totalAmount?.toFixed(2) || '0.00'}</p>
+                                                
+                                                {order.paymentStatus === 'PENDING' && (
+                                                    <div className="payment-actions">
+                                                        <button 
+                                                            className="complete-payment-btn"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const token = localStorage.getItem('token');
+                                                                    const paymentResponse = await axios.get(
+                                                                        `http://localhost:8080/api/payments/order/${order.id}`,
+                                                                        {
+                                                                            headers: {
+                                                                                Authorization: `Bearer ${token}`
+                                                                            }
+                                                                        }
+                                                                    );
+                                                                    
+                                                                    if (paymentResponse.data && paymentResponse.data.link) {
+                                                                        window.location.href = paymentResponse.data.link;
+                                                                    } else {
+                                                                        alert('Payment link not available. Please contact support.');
+                                                                    }
+                                                                } catch (error) {
+                                                                    console.error('Error retrieving payment link:', error);
+                                                                    alert('Could not retrieve payment information. Please try again.');
+                                                                }
+                                                            }}
+                                                        >
+                                                            <i className="fas fa-credit-card"></i> Complete Payment
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        <div className="orders-refresh">
+                            <button 
+                                className="refresh-orders-btn"
+                                onClick={fetchUserOrders}
+                                disabled={loadingOrders}
+                            >
+                                <i className={`fas fa-sync-alt ${loadingOrders ? 'fa-spin' : ''}`}></i>
+                                {loadingOrders ? 'Refreshing...' : 'Refresh Orders'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

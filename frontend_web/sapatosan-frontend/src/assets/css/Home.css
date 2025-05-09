@@ -1127,6 +1127,240 @@ img {
     }
 }
 
+
+/* Order Icon Styles - Add this near the header-cart-icon styles */
+.header-order-icon {
+    position: relative;
+    padding: 6px;
+    margin-right: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    background-color: #f8f8f8;
+}
+
+.header-order-icon:hover {
+    background-color: #e8e8e8;
+    transform: translateY(-2px);
+}
+
+.header-order-icon i {
+    font-size: 16px;
+    color: #333;
+}
+
+.header-order-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #000000;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid white;
+}
+
+/* Orders Modal Styles */
+.orders-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.orders-modal-content {
+    background: white;
+    width: 90%;
+    max-width: 900px;
+    border-radius: 8px;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 30px;
+    animation: slideUp 0.3s ease;
+}
+
+.orders-modal-content h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Empty orders styles */
+.empty-orders {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+.empty-orders i {
+    font-size: 50px;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.empty-orders p {
+    font-size: 18px;
+    color: #888;
+    margin-bottom: 30px;
+}
+
+/* Orders list styles */
+.orders-list {
+    margin-bottom: 20px;
+}
+
+.order-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 8px 8px 0 0;
+}
+
+.order-id, .order-date {
+    font-size: 14px;
+}
+
+.order-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.order-value {
+    margin-left: 5px;
+}
+
+.order-status {
+    display: flex;
+    gap: 10px;
+}
+
+.status-badge, .payment-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-badge.completed {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-badge.cancelled {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+.payment-badge.paid {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.payment-badge.pending {
+    background-color: #fff8e1;
+    color: #ffa000;
+}
+
+.payment-badge.failed {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+.order-details {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.delivery-address h4, .order-price h4 {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #666;
+}
+
+.delivery-address p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #444;
+}
+
+.order-total {
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
+}
+
+/* Order responsive styles */
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .order-status {
+        align-self: flex-end;
+    }
+    
+    .order-details {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .orders-modal-content {
+        padding: 15px;
+    }
+    
+    .order-header {
+        padding: 10px;
+    }
+    
+    .order-details {
+        padding: 10px;
+    }
+}
+
 /* Mobile phones (480p) */
 @media screen and (max-width: 480px) {
     html {

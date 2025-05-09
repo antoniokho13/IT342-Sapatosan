@@ -39,8 +39,8 @@ const AdminProduct = () => {
     const fetchProducts = async () => {
         try {
             const response = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-               // `http://localhost:8080/api/products`,
+               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setProducts(response.data);
@@ -52,8 +52,8 @@ const AdminProduct = () => {
     const fetchCategories = async () => {
         try {
             const response = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories`,
-               // `http://localhost:8080/api/categories`,
+               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories`,
+                `http://localhost:8080/api/categories`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setCategories(response.data);
@@ -118,8 +118,8 @@ const AdminProduct = () => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
                 await axios.delete(
-                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${selectedProduct.id}`,
-                   // `http://localhost:8080/api/products/${selectedProduct.id}`,
+                   // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${selectedProduct.id}`,
+                    `http://localhost:8080/api/products/${selectedProduct.id}`,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
                 setProducts(products.filter(product => product.id !== selectedProduct.id));
@@ -166,8 +166,8 @@ const AdminProduct = () => {
     
                 console.log('Uploading image...'); // Debugging line
                 const uploadResponse = await axios.post(
-                    'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/images/upload',
-                   // 'http://localhost:8080/api/images/upload',
+                   // 'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/images/upload',
+                    'http://localhost:8080/api/images/upload',
                     formData,
                     { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
                 );
@@ -190,8 +190,8 @@ const AdminProduct = () => {
                 // Update existing product
                 console.log('Updating product:', currentProduct.id, productData); // Debugging line
                 await axios.put(
-                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${currentProduct.id}`,
-                    //`http://localhost:8080/api/products/${currentProduct.id}`,
+                    //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products/${currentProduct.id}`,
+                    `http://localhost:8080/api/products/${currentProduct.id}`,
                     productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -201,8 +201,8 @@ const AdminProduct = () => {
                 // Add new product
                 console.log('Adding new product:', productData); // Debugging line
                 await axios.post(
-                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-                    //`http://localhost:8080/api/products`,
+                    //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                    `http://localhost:8080/api/products`,
                     productData,
                     { headers: { Authorization: `Bearer ${token}` } }
                 );

@@ -27,8 +27,8 @@ const AdminCategories = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories', {
-            //const response = await axios.get('http://localhost:8080/api/categories', {    
+           // const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories', {
+            const response = await axios.get('http://localhost:8080/api/categories', {    
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCategories(response.data);
@@ -60,8 +60,8 @@ const AdminCategories = () => {
 
         if (window.confirm('Are you sure you want to delete this category?')) {
             try {
-                await axios.delete(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${selectedCategory.id}`, {
-                //await axios.delete(`http://localhost:8080/api/categories/${selectedCategory.id}`, {
+               // await axios.delete(`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${selectedCategory.id}`, {
+                await axios.delete(`http://localhost:8080/api/categories/${selectedCategory.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 await fetchCategories(); // Refresh categories dynamically
@@ -107,15 +107,15 @@ const AdminCategories = () => {
         try {
             if (currentCategory.id) {
                 await axios.put(
-                  `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${currentCategory.id}`,
-                   // `http://localhost:8080/api/categories/${currentCategory.id}`,
+                 // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${currentCategory.id}`,
+                   `http://localhost:8080/api/categories/${currentCategory.id}`,
                     { name: currentCategory.name, description: currentCategory.description, isFeatured: currentCategory.featured },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
             } else {
                 await axios.post(
-                    'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories',
-                    //'http://localhost:8080/api/categories',
+                    //'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories',
+                    'http://localhost:8080/api/categories',
                     { name: currentCategory.name, description: currentCategory.description, isFeatured: currentCategory.featured },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -131,8 +131,8 @@ const AdminCategories = () => {
         try {
             const updatedCategory = { ...category, featured: !category.featured };
             await axios.put(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${category.id}`,
-                //`http://localhost:8080/api/categories/${category.id}`,
+                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories/${category.id}`,
+                `http://localhost:8080/api/categories/${category.id}`,
                 {
                     name: updatedCategory.name,
                     description: updatedCategory.description,
@@ -150,8 +150,8 @@ const AdminCategories = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
-            //await axios.post('http://localhost:8080/api/auth/logout', {}, {
+           //await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+            await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token'); // Clear the token from localStorage
