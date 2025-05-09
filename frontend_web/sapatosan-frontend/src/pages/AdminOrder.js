@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
 import logo from '../assets/images/logo.png';
@@ -30,8 +30,8 @@ const AdminOrder = () => {
     const fetchOrders = async () => {
         try {
             const response = await axios.get(
-               // 'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders',
-                'http://localhost:8080/api/orders',
+                'https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders',
+                //'http://localhost:8080/api/orders',
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -120,8 +120,8 @@ const AdminOrder = () => {
     // Handle logout
     const handleLogout = async () => {
         try {
-          // await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
-           await axios.post('http://localhost:8080/api/auth/logout', {}, {
+           await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+          // await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token'); // Clear the token from localStorage
@@ -145,8 +145,8 @@ const AdminOrder = () => {
             console.log(`Updating order ${orderId} to status: ${backendStatus}`);
             
             // Log the full URL for debugging
-           // const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}?paymentStatus=${backendStatus}`;
-            const url = `http://localhost:8080/api/orders/${orderId}?paymentStatus=${backendStatus}`;
+           const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}?paymentStatus=${backendStatus}`;
+            //const url = `http://localhost:8080/api/orders/${orderId}?paymentStatus=${backendStatus}`;
             console.log('Making PATCH request to:', url);
             
             await axios.patch(
@@ -207,8 +207,8 @@ const AdminOrder = () => {
                 console.log(`Cancelling order ${orderId}`);
                 
                 // Log the full URL for debugging
-               // const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}`;
-                const url = `http://localhost:8080/api/orders/${orderId}`;
+                const url = `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}`;
+               // const url = `http://localhost:8080/api/orders/${orderId}`;
                 console.log('Making DELETE request to:', url);
                 
                 await axios.delete(

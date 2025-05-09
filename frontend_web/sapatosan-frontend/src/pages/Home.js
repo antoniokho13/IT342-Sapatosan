@@ -1,4 +1,4 @@
-import axios from 'axios'; // Add this import for axios
+import axios from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../assets/css/Home.css'; // Import the CSS file for styling
@@ -77,8 +77,8 @@ const Home = () => {
                     
                     // Now fetch users to get additional data or verify the email
                     const response = await axios.get(
-                       // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users`,
-                        `http://localhost:8080/api/users`,
+                        `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users`,
+                       // `http://localhost:8080/api/users`,
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
                     
@@ -175,7 +175,7 @@ const Home = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                `http://localhost:8080/api/carts/user/${userId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -200,7 +200,7 @@ const Home = () => {
             
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
-                `http://localhost:8080/api/products`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
@@ -270,7 +270,7 @@ const Home = () => {
         
         try {
             const response = await axios.get(
-                `http://localhost:8080/api/orders/user/${userId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/user/${userId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -302,7 +302,7 @@ const Home = () => {
         
         try {
             const response = await axios.get(
-                `http://localhost:8080/api/orders/${orderId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${orderId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -319,39 +319,6 @@ const Home = () => {
         return null;
     };
     
-    // Add the new forceCheckPaymentStatus function
-    const forceCheckPaymentStatus = async (orderId) => {
-        const token = localStorage.getItem('token');
-        if (!token || !orderId) return;
-        
-        setCheckingPayment(true);
-        try {
-            // First make a manual check call to update the status
-            await axios.post(
-                `http://localhost:8080/api/payments/check/${orderId}`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-            
-            // Then fetch the current order status
-            const response = await checkOrderStatus(orderId);
-            if (response) {
-                // Refresh orders to show the updated status
-                fetchUserOrders();
-                return response;
-            }
-        } catch (error) {
-            console.error(`Error checking payment status for order ${orderId}:`, error);
-        } finally {
-            setCheckingPayment(false);
-        }
-        return null;
-    };
-
     // Add the formatOrderDate function for consistency with other pages
     const formatOrderDate = (dateString) => {
         const options = { 
@@ -447,7 +414,7 @@ const Home = () => {
     
         try {
             const response = await axios.delete(
-                `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -482,7 +449,7 @@ const Home = () => {
             const token = localStorage.getItem('token');
             if (token) {
                 await axios.post(
-                    `http://localhost:8080/api/auth/logout`,
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout`,
                     {},
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
@@ -516,6 +483,50 @@ const Home = () => {
         
         // Navigate to checkout page
         window.location.href = '/checkout';
+    };
+
+    // Add the handleOrderPayment function to match other pages
+    const handleOrderPayment = async (order) => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // If order status is PENDING, go to order confirmation page
+            if (order.paymentStatus === 'PENDING') {
+                // Store order ID in local storage for the confirmation page
+                localStorage.setItem('currentOrderId', order.id);
+                // Navigate to order confirmation page with order ID in URL
+                window.location.href = `/order-confirmation/${order.id}`;  // Added hyphen to match route in App.js
+                return;
+            }
+            
+            // Rest of the function remains unchanged
+            const paymentResponse = await axios.get(
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/payments/order/${order.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            if (paymentResponse.data && paymentResponse.data.link) {
+                // Update the order status to PENDING before redirecting
+                await axios.patch(
+                    `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders/${order.id}`,
+                    null,
+                    { 
+                        params: { paymentStatus: 'PENDING' },
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+                window.location.href = paymentResponse.data.link;
+            } else {
+                alert('Payment link not available. Please contact support.');
+            }
+        } catch (error) {
+            console.error('Error processing payment:', error);
+            alert('Could not process payment. Please try again.');
+        }
     };
 
     // Add this useEffect to handle storage events (when cart changes in other tabs)
@@ -587,7 +598,7 @@ const Home = () => {
 
                 if (token && cartItems.length > 0) {
                     // Fetch all products from the backend
-                    const response = await axios.get('http://localhost:8080/api/products', {
+                    const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products', {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
@@ -777,7 +788,7 @@ const Home = () => {
                 </div>
             )}
 
-            {/* Orders Modal */}
+            {/* Orders Modal - Updated with new payment handling */}
             {showOrders && (
                 <div className="orders-modal">
                     <div className="orders-modal-content">
@@ -841,48 +852,10 @@ const Home = () => {
                                                     <div className="payment-actions">
                                                         <button 
                                                             className="complete-payment-btn"
-                                                            onClick={async () => {
-                                                                try {
-                                                                    const token = localStorage.getItem('token');
-                                                                    const paymentResponse = await axios.get(
-                                                                        `http://localhost:8080/api/payments/order/${order.id}`,
-                                                                        {
-                                                                            headers: {
-                                                                                Authorization: `Bearer ${token}`
-                                                                            }
-                                                                        }
-                                                                    );
-                                                                    
-                                                                    if (paymentResponse.data && paymentResponse.data.link) {
-                                                                        // Update the order status to PENDING before redirecting
-                                                                        await axios.patch(
-                                                                            `http://localhost:8080/api/orders/${order.id}`,
-                                                                            null,
-                                                                            { 
-                                                                                params: { paymentStatus: 'PENDING' },
-                                                                                headers: { Authorization: `Bearer ${token}` }
-                                                                            }
-                                                                        );
-                                                                        window.location.href = paymentResponse.data.link;
-                                                                    } else {
-                                                                        alert('Payment link not available. Please contact support.');
-                                                                    }
-                                                                } catch (error) {
-                                                                    console.error('Error retrieving payment link:', error);
-                                                                    alert('Could not retrieve payment information. Please try again.');
-                                                                }
-                                                            }}
+                                                            onClick={() => handleOrderPayment(order)}
                                                         >
-                                                            <i className="fas fa-credit-card"></i> Complete Payment
-                                                        </button>
-                                                        
-                                                        <button 
-                                                            className="check-payment-btn"
-                                                            onClick={() => forceCheckPaymentStatus(order.id)}
-                                                            disabled={checkingPayment}
-                                                        >
-                                                            <i className={`fas fa-sync ${checkingPayment ? 'fa-spin' : ''}`}></i>
-                                                            {checkingPayment ? 'Checking...' : 'Check Payment Status'}
+                                                            <i className="fas fa-credit-card"></i> 
+                                                            {order.paymentStatus === 'PENDING' ? 'Continue Payment' : 'Complete Payment'}
                                                         </button>
                                                     </div>
                                                 )}

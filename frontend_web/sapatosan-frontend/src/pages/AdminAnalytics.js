@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, LineElement, PointElement, Title, Tooltip } from 'chart.js';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Link } from 'react-router-dom';
 import '../assets/css/AdminDashboard.css';
@@ -78,29 +78,29 @@ const AdminAnalytics = () => {
             
             // Fetch orders with date filtering
             const ordersResponse = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders?startDate=${startDate}&endDate=${endDate}`,
-                `http://localhost:8080/api/orders?startDate=${startDate}&endDate=${endDate}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/orders?startDate=${startDate}&endDate=${endDate}`,
+                //`http://localhost:8080/api/orders?startDate=${startDate}&endDate=${endDate}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
             // Fetch products data
             const productsResponse = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-                `http://localhost:8080/api/products`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                //`http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
             // Fetch users data
             const usersResponse = await axios.get(
-                // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users`,
-                `http://localhost:8080/api/users`,
+                 `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users`,
+                //`http://localhost:8080/api/users`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
             // Fetch categories data
             const categoriesResponse = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories`,
-                `http://localhost:8080/api/categories`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/categories`,
+                //`http://localhost:8080/api/categories`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -475,8 +475,8 @@ const AdminAnalytics = () => {
 
     const handleLogout = async () => {
         try {
-            //await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
-                await axios.post('http://localhost:8080/api/auth/logout', {}, {
+            await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+               // await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token');

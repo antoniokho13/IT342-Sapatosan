@@ -1,0 +1,609 @@
+/* Order Confirmation Page Styles */
+.confirmation-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8f8f8;
+  font-family: 'Poppins', sans-serif;
+  overflow-y: auto; /* Allow scrolling within the component */
+  height: 100vh; /* Limit to viewport height */
+  position: fixed; /* Fix the position */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Body style to be applied when component mounts */
+.body-no-scroll {
+  overflow: hidden;
+  margin: 0;
+  height: 100%;
+  position: fixed;
+  width: 100%;
+}
+
+/* Header styles */
+.confirmation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f8f8f8;
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+}
+
+.confirmation-header .header-logo img {
+    height: 100px;
+    object-fit: contain;
+}
+
+.confirmation-header h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 0;
+    color: #333;
+    flex: 1;
+    text-align: center;
+    padding-left: 15rem; /* Adjust this value to shift it slightly to the right */
+}
+
+.confirmation-header .order-id-header {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    color: #555;
+}
+
+.order-confirmation {
+  max-width: 650px; /* Increased from 550px to give more space */
+  width: 90%;
+  margin: 0.3rem auto;
+  padding: 0.4rem;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 1 auto;
+}
+
+/* Logo styling */
+.confirmation-logo {
+  margin-bottom: 0.12rem; /* Reduced from 0.15rem */
+}
+
+.confirmation-logo img {
+  height: 22px; /* Reduced from 25px */
+  object-fit: contain;
+}
+
+/* Success icon styling */
+.success-icon {
+  font-size: 1.1rem; /* Reduced from 1.3rem */
+  color: #4CAF50;
+  margin-bottom: 0.08rem; /* Reduced from 0.1rem */
+}
+
+.success-icon i.fa-clipboard-check {
+  color: #FFA000;
+}
+
+/* Headings and text */
+.order-confirmation h2 {
+  font-size: 0.95rem; /* Reduced from 1rem */
+  margin-bottom: 0.12rem; /* Reduced from 0.15rem */
+}
+
+.order-confirmation p {
+  margin: 0.1rem 0; /* Reduced from 0.12rem */
+  font-size: 0.75rem; /* Reduced from 0.8rem */
+}
+
+/* Order status badge */
+.order-status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem; /* Reduced from 0.2rem 0.6rem */
+  border-radius: 14px; /* Reduced from 16px */
+  font-weight: bold;
+  margin: 0.25rem 0; /* Reduced from 0.3rem */
+  font-size: 0.65rem; /* Reduced from 0.7rem */
+}
+
+.order-status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.order-status-badge.paid {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.order-status-badge.unpaid {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Order details layout - Make more compact */
+.confirmation-details {
+  width: 98%;
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: row;
+  gap: 0.8rem; /* Increased from 0.5rem to add more space between columns */
+  align-items: stretch; /* Ensure columns stretch to match heights */
+}
+
+/* Two-column layout for shipping and order info - make them aligned */
+.left-column, .right-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 200px; /* Fixed height for both columns */
+}
+
+/* Scrollable shipping info - align with order summary */
+.shipping-info {
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  width: 100%;
+  text-align: left;
+  height: 100%; /* Use full height of container */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make shipping info title match order summary toggle */
+.shipping-info-title {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-bottom: 1px solid #eee;
+  color: #382727;
+  background-color: #f0f0f0; /* Match toggle button */
+  border-radius: 4px 4px 0 0; /* Round only top corners */
+  height: 35px; /* Match height of order summary toggle */
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.shipping-info-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0.4rem;
+  padding-right: 0.6rem; /* Add padding for scrollbar */
+  height: calc(100% - 35px); /* Account for title height */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+.shipping-detail {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 4px;
+  background-color: #f3f3f3;
+}
+
+.detail-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #666;
+  margin-bottom: 0.15rem; /* Increased from 0.05rem */
+  text-transform: uppercase;
+  letter-spacing: 0.03rem;
+}
+
+.detail-value {
+  font-size: 0.9rem; /* Slightly increased */
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+}
+
+/* Especially for phone number */
+.shipping-detail:last-child .detail-value {
+  font-size: 1rem;
+  letter-spacing: 0.05rem;
+  font-weight: 700;
+  color: #222;
+}
+
+/* Order items styles */
+.order-items-container {
+  width: 100%;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  height: 100%; /* Use full height of container */
+}
+
+/* Only keep the toggle for order items */
+.order-summary-toggle {
+  width: 100%;
+  background-color: #f0f0f0; /* Slightly darker to distinguish from content */
+  border: none;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.8rem;
+  border-radius: 4px 4px 0 0; /* Round only top corners */
+  margin-bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 35px; /* Fixed height to match shipping-info-title */
+}
+
+.order-summary-toggle:hover {
+  background-color: #f0f0f0;
+}
+
+.order-summary-toggle .toggle-icon {
+  transition: transform 0.3s;
+}
+
+.order-summary-toggle.expanded .toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* Scrollable order summary - improved to ensure content is visible and scrollable */
+.order-summary-content {
+  display: none;
+  height: calc(100% - 35px); /* Account for toggle button height */
+  max-height: calc(100% - 35px); /* Fixed height minus toggle height */
+  overflow-y: auto;
+  padding: 0.4rem;
+  padding-right: 0.6rem; /* Add padding for scrollbar */
+  background-color: #f9f9f9; /* Match shipping info background */
+  border-radius: 0 0 4px 4px; /* Round only bottom corners */
+  position: relative; /* Added for better positioning of content */
+}
+
+.order-summary-content.visible {
+  display: block;
+}
+
+/* Custom scrollbar styling - ensure consistency */
+.shipping-info-content::-webkit-scrollbar,
+.order-summary-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.shipping-info-content::-webkit-scrollbar-track,
+.order-summary-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.shipping-info-content::-webkit-scrollbar-thumb,
+.order-summary-content::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.shipping-info-content::-webkit-scrollbar-thumb:hover,
+.order-summary-content::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Better item container for scrolling */
+.confirmation-items-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Allow items to expand properly */
+}
+
+/* Adjust order items section for better consistency */
+.confirmation-section {
+  flex: 1;
+  text-align: left;
+  margin-bottom: 0.3rem;
+}
+
+.confirmation-section h3 {
+  font-size: 0.9rem; /* Reduced from 0.95rem */
+  margin-bottom: 0.3rem; /* Reduced from 0.4rem */
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.15rem; /* Reduced from 0.2rem */
+}
+
+/* Make confirmation items more compact */
+.confirmation-item {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0; /* Reduced from 0.3rem */
+  border-bottom: 1px solid #eee;
+  margin-bottom: 0.25rem;
+}
+
+/* Reduce size of item images further */
+.item-image {
+  width: 40px; /* Reduced from 45px */
+  height: 40px; /* Reduced from 45px */
+  margin-right: 0.6rem; /* Reduced from 0.7rem */
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-details h4 {
+  margin: 0;
+  font-size: 0.85rem; /* Reduced from 0.9rem */
+}
+
+.item-meta {
+  font-size: 0.75rem; /* Reduced from 0.8rem */
+  color: #666;
+  margin: 0.15rem 0; /* Reduced from 0.2rem */
+}
+
+.item-price {
+  font-size: 0.8rem; /* Reduced from 0.85rem */
+  font-weight: bold;
+}
+
+/* Total calculations */
+.confirmation-totals {
+  max-width: none;
+  width: 100%;
+  padding-top: 0.5rem; /* Reduced from 0.6rem */
+  margin-top: 0.5rem; /* Reduced from 0.6rem */
+  border-top: 1px solid #eee;
+}
+
+/* Ensure total lines are properly aligned */
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.total-line.grand-total {
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+/* Payment section */
+.payment-section {
+  margin-top: 0.4rem; /* Reduced from 0.6rem */
+  width: 100%;
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Payment actions */
+.payment-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem; /* Reduced from 0.3rem */
+  margin-top: 0.3rem; /* Reduced from 0.4rem */
+}
+
+.pay-now-btn {
+  background-color: #382727;
+  padding: 0.35rem 0.8rem; /* Reduced from 0.4rem 1rem */
+  font-size: 0.8rem; /* Reduced from 0.85rem */
+  width: 130px; /* Reduced from 140px */
+  text-transform: none;
+  letter-spacing: 0.5px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.pay-now-btn:hover {
+  background-color: #4c3535;
+}
+
+.pay-now-btn span {
+  position: absolute;
+  display: block;
+}
+
+.pay-now-btn span:nth-child(1) {
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, white);
+  animation: animate1 1s linear infinite;
+}
+
+.pay-now-btn span:nth-child(2) {
+  top: -100%;
+  right: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, white);
+  animation: animate2 1s linear infinite;
+  animation-delay: 0.25s;
+}
+
+.pay-now-btn span:nth-child(3) {
+  bottom: 0;
+  right: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(270deg, transparent, white);
+  animation: animate3 1s linear infinite;
+  animation-delay: 0.5s;
+}
+
+.pay-now-btn span:nth-child(4) {
+  bottom: -100%;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(360deg, transparent, white);
+  animation: animate4 1s linear infinite;
+  animation-delay: 0.75s;
+}
+
+.continue-shopping-link {
+  display: inline-block;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.8rem;
+  padding: 0.3rem 0;
+}
+
+.continue-shopping-link:hover {
+  color: #382727;
+  text-decoration: underline;
+}
+
+.continue-shopping-btn {
+  background-color: transparent;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+  width: 130px;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 0.5rem;
+}
+
+.continue-shopping-btn:hover {
+  background-color: #f5f5f5;
+  color: #382727;
+  border-color: #ccc;
+}
+
+/* Footer styling */
+.footer {
+  padding: 0.8rem;
+  text-align: center;
+  background-color: #f8f8f8;
+  margin-top: auto;
+  font-size: 0.8rem;
+}
+
+/* Loading and error states */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1rem;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #382727;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  max-width: 500px;
+  margin: 3rem auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Animations */
+@keyframes animate1 {
+  0% { left: -100%; }
+  50%, 100% { left: 100%; }
+}
+
+@keyframes animate2 {
+  0% { top: -100%; }
+  50%, 100% { top: 100%; }
+}
+
+@keyframes animate3 {
+  0% { right: -100%; }
+  50%, 100% { right: 100%; }
+}
+
+@keyframes animate4 {
+  0% { bottom: -100%; }
+  50%, 100% { bottom: 100%; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .order-confirmation {
+    padding: 1.2rem;
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+  
+  .confirmation-flex {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  
+  .shipping-info, .order-items {
+    flex: 1 1 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-value {
+    font-size: 0.85rem;
+  }
+  
+  .shipping-detail:last-child .detail-value {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  
+  .order-confirmation {
+    width: 95%;
+    max-width: 630px; /* Updated to match the increased size */
+    padding: 0.4rem;
+  }
+  
+  .confirmation-details {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  
+  .left-column, .right-column {
+    width: 100%;
+  } 
+}

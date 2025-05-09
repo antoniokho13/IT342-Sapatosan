@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../assets/css/UserInformation.css';
 import logo from '../assets/images/logo.png';
@@ -62,8 +62,8 @@ const UserInformation = () => {
                 return;
             }
             
-           // const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
-            const response = await axios.get('http://localhost:8080/api/users', {
+            const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users', {
+           // const response = await axios.get('http://localhost:8080/api/users', {
                 headers: { authorization: `Bearer ${token}` }
             });
             
@@ -160,8 +160,8 @@ const UserInformation = () => {
             
             // Call API to update user
             const response = await axios.put(
-               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${userData.id}`,
-                `http://localhost:8080/api/users/${userData.id}`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/users/${userData.id}`,
+               // `http://localhost:8080/api/users/${userData.id}`,
                 userDataToUpdate,
                 { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
             );
@@ -217,8 +217,8 @@ const UserInformation = () => {
     const handleLogout = async () => {
         try {
             const token = localStorage.getItem('token');
-          //  await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
-            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+           await axios.post('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout', {}, {
+           // await axios.post('http://localhost:8080/api/auth/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             localStorage.removeItem('token');

@@ -614,6 +614,222 @@
     border: 1px solid #f5c6cb;
 }
 
+/* Optimized Order Confirmation Styles */
+.confirmation-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f8f8;
+    font-family: 'Poppins', sans-serif;
+}
+
+.order-confirmation {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+/* Logo styling - more compact */
+.confirmation-logo {
+    margin-bottom: 0.5rem;
+}
+
+.confirmation-logo img {
+    height: 40px;
+    object-fit: contain;
+}
+
+/* Success icon styling - slightly smaller */
+.success-icon {
+    font-size: 2.5rem;
+    color: #4CAF50;
+    margin-bottom: 0.5rem;
+}
+
+.success-icon i.fa-clipboard-check {
+    color: #FFA000;
+}
+
+/* More compact headings */
+.order-confirmation h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.order-confirmation p {
+    margin: 0.2rem 0;
+    font-size: 0.9rem;
+}
+
+/* Order status badge - more compact */
+.order-status-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 16px;
+    font-weight: bold;
+    margin: 0.8rem 0;
+    font-size: 0.9rem;
+}
+
+/* Order details layout - more compact */
+.confirmation-details {
+    width: 100%;
+    margin-top: 0.8rem;
+}
+
+.confirmation-flex {
+    display: flex;
+    width: 100%;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.confirmation-section {
+    flex: 1;
+    text-align: left;
+    margin-bottom: 0.5rem;
+}
+
+.confirmation-section h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.3rem;
+}
+
+/* Shipping info styles - more compact */
+.shipping-info {
+    flex: 0 0 35%;
+}
+
+.confirmation-info p {
+    margin: 0.2rem 0;
+    font-size: 0.85rem;
+}
+
+/* Order items styles - more compact */
+.order-items {
+    flex: 0 0 60%;
+}
+
+/* Items display - reduced height */
+.confirmation-items {
+    max-height: 180px;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+}
+
+.confirmation-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.item-image {
+    width: 50px;
+    height: 50px;
+    margin-right: 0.8rem;
+}
+
+.item-details h4 {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.item-meta {
+    font-size: 0.8rem;
+}
+
+.item-price {
+    font-size: 0.85rem;
+}
+
+/* Total calculations - more compact */
+.confirmation-totals {
+    max-width: 300px;
+    padding-top: 0.5rem;
+}
+
+.total-line {
+    margin-bottom: 0.3rem;
+    font-size: 0.85rem;
+}
+
+.total-line.grand-total {
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+}
+
+/* Payment section - more compact */
+.payment-section {
+    margin-top: 0.8rem;
+    width: 100%;
+    background-color: transparent;
+    padding: 0;
+}
+
+/* Fix the pay-now-btn to match the design */
+.payment-actions {
+    margin-top: 0.5rem;
+}
+
+.pay-now-btn {
+    background-color: #382727;
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+    width: 180px;
+    text-transform: none;
+    letter-spacing: 0.5px;
+}
+
+.pay-now-btn:hover {
+    background-color: #4c3535;
+}
+
+.continue-shopping-link {
+    font-size: 0.85rem;
+}
+
+/* Footer styling - more compact */
+.footer {
+    padding: 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .order-confirmation {
+        padding: 1.2rem;
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .confirmation-flex {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pay-now-btn {
+        width: 100%;
+        max-width: 200px;
+    }
+    
+    .confirmation-items {
+        max-height: 150px;
+    }
+}
 /* Single column portrait layout for all screens */
 @media screen and (max-width: 1200px) {
     .order-confirmation {
