@@ -33,6 +33,7 @@ const Home = () => {
     const [showOrders, setShowOrders] = useState(false);
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [orderError, setOrderError] = useState(null);
+    const [checkingPayment, setCheckingPayment] = useState(false);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
@@ -162,100 +163,98 @@ const Home = () => {
     }, [dropdownRef]);
 
     // Add this fetchCartWithProducts function to the Home component
-const fetchCartWithProducts = async () => {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
+    const fetchCartWithProducts = async () => {
+        const token = localStorage.getItem('token');
+        const userId = localStorage.getItem('userId');
 
-    if (!token || !userId) {
-        console.log("No token or userId available");
-        return;
-    }
-
-    try {
-        // First, get the cart data
-        const cartResponse = await axios.get(
-           // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
-            `http://localhost:8080/api/carts/user/${userId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (cartResponse.status !== 200 || !cartResponse.data) {
-            console.log('No cart found or empty cart');
-            setCart([]);
-            localStorage.setItem('sapatosanCart', JSON.stringify([]));
+        if (!token || !userId) {
+            console.log("No token or userId available");
             return;
         }
 
-        const cartData = cartResponse.data;
-        const cartProductIds = Object.keys(cartData.cartProductIds || {});
-        
-        if (cartProductIds.length === 0) {
-            console.log('Cart is empty');
-            setCart([]);
-            localStorage.setItem('sapatosanCart', JSON.stringify([]));
-            return;
-        }
-        
-        console.log("Cart product IDs:", cartProductIds);
-        
-        // Next, fetch ALL products to find the ones in the cart
-        const productsResponse = await axios.get(
-           // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
-            `http://localhost:8080/api/products`,
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        if (!productsResponse.data || !Array.isArray(productsResponse.data)) {
-            console.error("Failed to fetch products for cart");
-            return;
-        }
-        
-        // Create a map of all products by ID for easy lookup
-        const productsMap = {};
-        productsResponse.data.forEach(product => {
-            productsMap[product.id] = {
-                ...product,
-                price: product.price / 100,
-                sizes: [7, 8, 9, 10, 11, 12],
-                description: product.description || `Premium ${product.brand} shoes.`,
-                imageUrl: product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
-            };
-        });
-        
-        console.log("Products map created:", Object.keys(productsMap).length, "products");
-        
-        // Get the saved sizes from localStorage
-        const savedCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
-        const sizeMap = {};
-        savedCart.forEach(item => {
-            const key = item.id;
-            sizeMap[key] = item.selectedSize;
-        });
-        
-        // Build the cart items with complete product details
-        const cartItems = cartProductIds.map(productId => {
-            const product = productsMap[productId] || {};
-            const quantity = cartData.cartProductIds[productId] || 1;
-            const savedSize = sizeMap[productId] || 7;
+        try {
+            // First, get the cart data
+            const cartResponse = await axios.get(
+                `http://localhost:8080/api/carts/user/${userId}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (cartResponse.status !== 200 || !cartResponse.data) {
+                console.log('No cart found or empty cart');
+                setCart([]);
+                localStorage.setItem('sapatosanCart', JSON.stringify([]));
+                return;
+            }
+
+            const cartData = cartResponse.data;
+            const cartProductIds = Object.keys(cartData.cartProductIds || {});
             
-            return {
-                ...product,
-                id: productId,
-                quantity: quantity,
-                price: product.price || 0,
-                selectedSize: savedSize
-            };
-        });
-        
-        console.log("Final cart items:", cartItems);
-        setCart(cartItems);
-        localStorage.setItem('sapatosanCart', JSON.stringify(cartItems));
-    } catch (error) {
-        console.error('Error fetching cart with products:', error);
-        setCart([]);
-        localStorage.setItem('sapatosanCart', JSON.stringify([]));
-    }
-};
+            if (cartProductIds.length === 0) {
+                console.log('Cart is empty');
+                setCart([]);
+                localStorage.setItem('sapatosanCart', JSON.stringify([]));
+                return;
+            }
+            
+            console.log("Cart product IDs:", cartProductIds);
+            
+            // Next, fetch ALL products to find the ones in the cart
+            const productsResponse = await axios.get(
+                `http://localhost:8080/api/products`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (!productsResponse.data || !Array.isArray(productsResponse.data)) {
+                console.error("Failed to fetch products for cart");
+                return;
+            }
+            
+            // Create a map of all products by ID for easy lookup
+            const productsMap = {};
+            productsResponse.data.forEach(product => {
+                productsMap[product.id] = {
+                    ...product,
+                    price: product.price / 100,
+                    sizes: [7, 8, 9, 10, 11, 12],
+                    description: product.description || `Premium ${product.brand} shoes.`,
+                    imageUrl: product.imageUrl || 'https://via.placeholder.com/300x300?text=No+Image'
+                };
+            });
+            
+            console.log("Products map created:", Object.keys(productsMap).length, "products");
+            
+            // Get the saved sizes from localStorage
+            const savedCart = JSON.parse(localStorage.getItem('sapatosanCart') || '[]');
+            const sizeMap = {};
+            savedCart.forEach(item => {
+                const key = item.id;
+                sizeMap[key] = item.selectedSize;
+            });
+            
+            // Build the cart items with complete product details
+            const cartItems = cartProductIds.map(productId => {
+                const product = productsMap[productId] || {};
+                const quantity = cartData.cartProductIds[productId] || 1;
+                const savedSize = sizeMap[productId] || 7;
+                
+                return {
+                    ...product,
+                    id: productId,
+                    quantity: quantity,
+                    price: product.price || 0,
+                    selectedSize: savedSize
+                };
+            });
+            
+            console.log("Final cart items:", cartItems);
+            setCart(cartItems);
+            localStorage.setItem('sapatosanCart', JSON.stringify(cartItems));
+        } catch (error) {
+            console.error('Error fetching cart with products:', error);
+            setCart([]);
+            localStorage.setItem('sapatosanCart', JSON.stringify([]));
+        }
+    };
 
     // Update the fetchUserOrders function for consistency with other pages
     const fetchUserOrders = async () => {
@@ -319,6 +318,39 @@ const fetchCartWithProducts = async () => {
         }
         return null;
     };
+    
+    // Add the new forceCheckPaymentStatus function
+    const forceCheckPaymentStatus = async (orderId) => {
+        const token = localStorage.getItem('token');
+        if (!token || !orderId) return;
+        
+        setCheckingPayment(true);
+        try {
+            // First make a manual check call to update the status
+            await axios.post(
+                `http://localhost:8080/api/payments/check/${orderId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            // Then fetch the current order status
+            const response = await checkOrderStatus(orderId);
+            if (response) {
+                // Refresh orders to show the updated status
+                fetchUserOrders();
+                return response;
+            }
+        } catch (error) {
+            console.error(`Error checking payment status for order ${orderId}:`, error);
+        } finally {
+            setCheckingPayment(false);
+        }
+        return null;
+    };
 
     // Add the formatOrderDate function for consistency with other pages
     const formatOrderDate = (dateString) => {
@@ -338,30 +370,34 @@ const fetchCartWithProducts = async () => {
         
         // If we have orders and the orders modal is open, set up polling
         if (showOrders && orders.length > 0) {
-            // Find orders that are in PENDING payment status
-            const pendingOrders = orders.filter(
-                order => order.paymentStatus === 'PENDING'
+            // Find orders that are not marked as PAID yet
+            const unpaidOrders = orders.filter(
+                order => order.paymentStatus !== 'PAID'
             );
             
-            if (pendingOrders.length > 0) {
-                // Poll every 10 seconds to check for status changes
+            if (unpaidOrders.length > 0) {
+                // Poll every 5 seconds to check for status changes
                 intervalId = setInterval(async () => {
-                    let updatesFound = false;
+                    let updatedAny = false;
                     
-                    for (const order of pendingOrders) {
+                    // For each unpaid order, check its current status
+                    for (const order of unpaidOrders) {
                         const updatedOrder = await checkOrderStatus(order.id);
                         
-                        if (updatedOrder && updatedOrder.paymentStatus !== order.paymentStatus) {
-                            updatesFound = true;
-                            break;
+                        // If the order status has changed, mark that we need to refresh
+                        if (updatedOrder && 
+                            (updatedOrder.paymentStatus !== order.paymentStatus || 
+                             updatedOrder.status !== order.status)) {
+                            updatedAny = true;
                         }
                     }
                     
-                    if (updatesFound) {
-                        // If any order status changed, refresh all orders
+                    // If any order was updated, refresh the entire order list
+                    if (updatedAny) {
+                        console.log("Order status changed, refreshing orders list");
                         fetchUserOrders();
                     }
-                }, 10000); // Poll every 10 seconds
+                }, 5000); // Poll every 5 seconds, same as other pages
             }
         }
         
@@ -411,7 +447,6 @@ const fetchCartWithProducts = async () => {
     
         try {
             const response = await axios.delete(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
                 `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
@@ -447,7 +482,6 @@ const fetchCartWithProducts = async () => {
             const token = localStorage.getItem('token');
             if (token) {
                 await axios.post(
-                   // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/auth/logout`,
                     `http://localhost:8080/api/auth/logout`,
                     {},
                     { headers: { Authorization: `Bearer ${token}` } }
@@ -553,8 +587,7 @@ const fetchCartWithProducts = async () => {
 
                 if (token && cartItems.length > 0) {
                     // Fetch all products from the backend
-                    //const response = await axios.get('https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products', {
-                     const response = await axios.get('http://localhost:8080/api/products', {
+                    const response = await axios.get('http://localhost:8080/api/products', {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
@@ -701,7 +734,7 @@ const fetchCartWithProducts = async () => {
                                                     <p className="cart-item-size">Size: US {item.selectedSize || '?'}</p>
                                                     <p className="cart-item-quantity">Quantity: {item.quantity || 0}</p>
                                                     <p className="cart-item-price">
-                                                        ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                                        ₱{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                                                     </p>
                                                 </div>
                                                 <button 
@@ -720,7 +753,7 @@ const fetchCartWithProducts = async () => {
                                 <div className="cart-summary">
                                     <div className="cart-total">
                                         <span>Total:</span>
-                                        <span>${calculateTotal()}</span>
+                                        <span>₱{calculateTotal()}</span>
                                     </div>
                                     <div className="cart-actions">
                                         <button 
@@ -730,6 +763,10 @@ const fetchCartWithProducts = async () => {
                                             Continue Shopping
                                         </button>
                                         <button className="checkout" onClick={handleCheckout}>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
                                             Proceed to Checkout
                                         </button>
                                     </div>
@@ -798,9 +835,9 @@ const fetchCartWithProducts = async () => {
                                             </div>
                                             <div className="order-price">
                                                 <h4>Total:</h4>
-                                                <p className="order-total">₱{order.totalAmount?.toFixed(2) || '0.00'}</p>
+                                                <p className="order-total">₱{(order.totalAmount / 100)?.toFixed(2) || '0.00'}</p>
                                                 
-                                                {order.paymentStatus === 'PENDING' && (
+                                                {order.paymentStatus !== 'PAID' && (
                                                     <div className="payment-actions">
                                                         <button 
                                                             className="complete-payment-btn"
@@ -817,6 +854,15 @@ const fetchCartWithProducts = async () => {
                                                                     );
                                                                     
                                                                     if (paymentResponse.data && paymentResponse.data.link) {
+                                                                        // Update the order status to PENDING before redirecting
+                                                                        await axios.patch(
+                                                                            `http://localhost:8080/api/orders/${order.id}`,
+                                                                            null,
+                                                                            { 
+                                                                                params: { paymentStatus: 'PENDING' },
+                                                                                headers: { Authorization: `Bearer ${token}` }
+                                                                            }
+                                                                        );
                                                                         window.location.href = paymentResponse.data.link;
                                                                     } else {
                                                                         alert('Payment link not available. Please contact support.');
@@ -828,6 +874,15 @@ const fetchCartWithProducts = async () => {
                                                             }}
                                                         >
                                                             <i className="fas fa-credit-card"></i> Complete Payment
+                                                        </button>
+                                                        
+                                                        <button 
+                                                            className="check-payment-btn"
+                                                            onClick={() => forceCheckPaymentStatus(order.id)}
+                                                            disabled={checkingPayment}
+                                                        >
+                                                            <i className={`fas fa-sync ${checkingPayment ? 'fa-spin' : ''}`}></i>
+                                                            {checkingPayment ? 'Checking...' : 'Check Payment Status'}
                                                         </button>
                                                     </div>
                                                 )}

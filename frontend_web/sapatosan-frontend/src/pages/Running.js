@@ -29,6 +29,7 @@ const Running = () => {
     const [showOrders, setShowOrders] = useState(false);
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [orderError, setOrderError] = useState(null);
+    const [checkingPayment, setCheckingPayment] = useState(false);
     
     // Fetch products from backend
     useEffect(() => {
@@ -45,7 +46,6 @@ const Running = () => {
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 
                 const response = await axios.get(
-                    //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                     `http://localhost:8080/api/products`,
                     { headers }
                 );
@@ -82,7 +82,7 @@ const Running = () => {
                 
                 // If user is logged in, fetch their cart
                 if (token) {
-                    fetchCartWithProducts(); // Use the new function
+                    fetchCartWithProducts();
                 }
             } catch (err) {
                 console.error('Failed to fetch running products:', err);
@@ -107,7 +107,6 @@ const Running = () => {
         try {
             // First, get the cart data
             const cartResponse = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}`,
                 `http://localhost:8080/api/carts/user/${userId}`,
                 {
                     headers: {
@@ -137,7 +136,6 @@ const Running = () => {
             
             // Next, fetch ALL products (not just running) to find the ones in the cart
             const productsResponse = await axios.get(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
                 `http://localhost:8080/api/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -257,6 +255,39 @@ const Running = () => {
         return null;
     };
 
+    // Add the new forceCheckPaymentStatus function
+    const forceCheckPaymentStatus = async (orderId) => {
+        const token = localStorage.getItem('token');
+        if (!token || !orderId) return;
+        
+        setCheckingPayment(true);
+        try {
+            // First make a manual check call to update the status
+            await axios.post(
+                `http://localhost:8080/api/payments/check/${orderId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            
+            // Then fetch the current order status
+            const response = await checkOrderStatus(orderId);
+            if (response) {
+                // Refresh orders to show the updated status
+                fetchUserOrders();
+                return response;
+            }
+        } catch (error) {
+            console.error(`Error checking payment status for order ${orderId}:`, error);
+        } finally {
+            setCheckingPayment(false);
+        }
+        return null;
+    };
+
     // Add the formatOrderDate function
     const formatOrderDate = (dateString) => {
         const options = { 
@@ -275,30 +306,34 @@ const Running = () => {
         
         // If we have orders and the orders modal is open, set up polling
         if (showOrders && orders.length > 0) {
-            // Find orders that are in PENDING payment status
-            const pendingOrders = orders.filter(
-                order => order.paymentStatus === 'PENDING'
+            // Find orders that are not marked as PAID yet
+            const unpaidOrders = orders.filter(
+                order => order.paymentStatus !== 'PAID'
             );
             
-            if (pendingOrders.length > 0) {
-                // Poll every 10 seconds to check for status changes
+            if (unpaidOrders.length > 0) {
+                // Poll every 5 seconds to check for status changes
                 intervalId = setInterval(async () => {
-                    let updatesFound = false;
+                    let updatedAny = false;
                     
-                    for (const order of pendingOrders) {
+                    // For each unpaid order, check its current status
+                    for (const order of unpaidOrders) {
                         const updatedOrder = await checkOrderStatus(order.id);
                         
-                        if (updatedOrder && updatedOrder.paymentStatus !== order.paymentStatus) {
-                            updatesFound = true;
-                            break;
+                        // If the order status has changed, mark that we need to refresh
+                        if (updatedOrder && 
+                            (updatedOrder.paymentStatus !== order.paymentStatus || 
+                             updatedOrder.status !== order.status)) {
+                            updatedAny = true;
                         }
                     }
                     
-                    if (updatesFound) {
-                        // If any order status changed, refresh all orders
+                    // If any order was updated, refresh the entire order list
+                    if (updatedAny) {
+                        console.log("Order status changed, refreshing orders list");
                         fetchUserOrders();
                     }
-                }, 10000); // Poll every 10 seconds
+                }, 5000);
             }
         }
         
@@ -368,7 +403,6 @@ const Running = () => {
             console.log("Adding to cart:", cartProduct); // Debug
 
             const response = await axios.post(
-                //`https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/add-product`,
                 `http://localhost:8080/api/carts/${userId}/add-product`,
                 cartProduct,
                 {
@@ -400,7 +434,6 @@ const Running = () => {
     
         try {
             const response = await axios.delete(
-               // `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/${userId}/remove-product/${productId}`,
                 `http://localhost:8080/api/carts/${userId}/remove-product/${productId}`,
                 {
                     headers: {
@@ -431,7 +464,10 @@ const Running = () => {
     };
 
     const calculateTotal = () => {
-        return cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+        return cart.reduce((total, item) => {
+            const itemTotal = (item.price || 0) * (item.quantity || 1);
+            return total + itemTotal;
+        }, 0).toFixed(2);
     };
 
     const toggleCart = () => {
@@ -441,7 +477,7 @@ const Running = () => {
             const userId = localStorage.getItem('userId');
             if (token && userId) {
                 console.log("Refreshing cart data before displaying");
-                fetchCartWithProducts(); // Use the new function
+                fetchCartWithProducts();
             }
         }
         
@@ -449,6 +485,7 @@ const Running = () => {
         // Close other modals
         if (!showCart) {
             setQuickViewShoe(null);
+            setShowOrders(false);
         }
     };
 
@@ -456,6 +493,7 @@ const Running = () => {
         setQuickViewShoe(shoe);
         setSelectedSize(null); // Reset the selected size
         setShowCart(false); // Close the cart if it's open
+        setShowOrders(false); // Close orders if it's open
     };
 
     const closeQuickView = () => {
@@ -572,6 +610,9 @@ const Running = () => {
         }
     }, []);
 
+    // Static sizes for the frontend
+    const staticSizes = [7, 8, 9, 10, 11, 12];
+
     return (
         <div className="running-page">
             {/* Header */}
@@ -594,7 +635,7 @@ const Running = () => {
                                 <i className="fas fa-box"></i>
                                 <span className="header-order-count">{orders.length}</span>
                             </div>
-                            <div className="header-cart-icon" onClick={toggleCart}>
+                            <div className="header-cart-icon cart-icon" onClick={toggleCart}>
                                 <i className="fas fa-shopping-cart"></i>
                                 <span className="header-cart-count">{cart.length}</span>
                             </div>
@@ -685,7 +726,7 @@ const Running = () => {
                                         <h3 className="product-name">{shoe.name}</h3>
                                         <div className="product-price">₱{shoe.price.toFixed(2)}</div>
                                         <div className="product-sizes">
-                                            {shoe.sizes.map(size => (
+                                            {staticSizes.map(size => (
                                                 <span className="size-option" key={size}>US {size}</span>
                                             ))}
                                         </div>
@@ -837,6 +878,10 @@ const Running = () => {
                                             Continue Shopping
                                         </button>
                                         <button className="checkout" onClick={handleCheckout}>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
                                             Proceed to Checkout
                                         </button>
                                     </div>
@@ -905,9 +950,9 @@ const Running = () => {
                                             </div>
                                             <div className="order-price">
                                                 <h4>Total:</h4>
-                                                <p className="order-total">₱{order.totalAmount?.toFixed(2) || '0.00'}</p>
+                                                <p className="order-total">₱{(order.totalAmount / 100)?.toFixed(2) || '0.00'}</p>
                                                 
-                                                {order.paymentStatus === 'PENDING' && (
+                                                {order.paymentStatus !== 'PAID' && (
                                                     <div className="payment-actions">
                                                         <button 
                                                             className="complete-payment-btn"
@@ -924,6 +969,15 @@ const Running = () => {
                                                                     );
                                                                     
                                                                     if (paymentResponse.data && paymentResponse.data.link) {
+                                                                        // Update the order status to PENDING before redirecting
+                                                                        await axios.patch(
+                                                                            `http://localhost:8080/api/orders/${order.id}`,
+                                                                            null,
+                                                                            { 
+                                                                                params: { paymentStatus: 'PENDING' },
+                                                                                headers: { Authorization: `Bearer ${token}` }
+                                                                            }
+                                                                        );
                                                                         window.location.href = paymentResponse.data.link;
                                                                     } else {
                                                                         alert('Payment link not available. Please contact support.');
@@ -935,6 +989,15 @@ const Running = () => {
                                                             }}
                                                         >
                                                             <i className="fas fa-credit-card"></i> Complete Payment
+                                                        </button>
+                                                        
+                                                        <button 
+                                                            className="check-payment-btn"
+                                                            onClick={() => forceCheckPaymentStatus(order.id)}
+                                                            disabled={checkingPayment}
+                                                        >
+                                                            <i className={`fas fa-sync ${checkingPayment ? 'fa-spin' : ''}`}></i>
+                                                            {checkingPayment ? 'Checking...' : 'Check Payment Status'}
                                                         </button>
                                                     </div>
                                                 )}

@@ -1,17 +1,27 @@
 package edu.cit.sapatosan.service;
 
-import com.google.firebase.database.*;
-import edu.cit.sapatosan.entity.OrderEntity;
-import edu.cit.sapatosan.entity.PaymentEntity;
-import edu.cit.sapatosan.entity.UserEntity;
-import okhttp3.*;
+import java.util.Base64;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Base64;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import edu.cit.sapatosan.entity.OrderEntity;
+import edu.cit.sapatosan.entity.PaymentEntity;
+import edu.cit.sapatosan.entity.UserEntity;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 @Service
 public class PaymentService {
@@ -85,6 +95,12 @@ public class PaymentService {
 
     public void createWebhookForPayment(String paymentId, String orderId) {
         try {
+            // Skip webhook creation for localhost environments
+            if (webhookUrl.contains("localhost")) {
+                System.out.println("Skipping webhook creation for localhost environment");
+                return;
+            }
+            
             OkHttpClient client = new OkHttpClient();
             MediaType mediaType = MediaType.parse("application/json");
             String bodyJson = String.format("{\"data\":{\"attributes\":{\"url\":\"%s\",\"events\":[\"link.payment.paid\"]}}}", webhookUrl);
@@ -100,10 +116,12 @@ public class PaymentService {
             Response response = client.newCall(request).execute();
             if (!response.isSuccessful() || response.body() == null) {
                 String errorBody = response.body() != null ? response.body().string() : "No response body";
-                throw new RuntimeException("Failed to create webhook: " + response.message() + " - " + errorBody);
+                System.err.println("Failed to create webhook: " + response.message() + " - " + errorBody);
+                // Continue without throwing exception
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error while creating webhook", e);
+            System.err.println("Error while creating webhook: " + e.getMessage());
+            // Continue without throwing exception
         }
     }
 
@@ -169,5 +187,50 @@ public class PaymentService {
 
     public void deletePayment(String paymentId) {
         paymentRef.child(paymentId).removeValueAsync();
+    }
+
+    public void checkPaymentStatusManually(String orderId) {
+        getPaymentByOrderId(orderId).thenAccept(paymentOptional -> {
+            if (paymentOptional.isPresent()) {
+                PaymentEntity payment = paymentOptional.get();
+                if ("pending".equals(payment.getStatus()) && payment.getLinkId() != null) {
+                    try {
+                        OkHttpClient client = new OkHttpClient();
+                        Request request = new Request.Builder()
+                                .url("https://api.paymongo.com/v1/links/" + payment.getLinkId())
+                                .get()
+                                .addHeader("accept", "application/json")
+                                .addHeader("authorization", getAuthorizationHeader())
+                                .build();
+
+                        Response response = client.newCall(request).execute();
+                        if (response.isSuccessful() && response.body() != null) {
+                            JSONObject responseBody = new JSONObject(response.body().string());
+                            String status = responseBody.getJSONObject("data")
+                                .getJSONObject("attributes")
+                                .getString("status");
+                                
+                            if ("paid".equalsIgnoreCase(status)) {
+                                // Update the payment status
+                                payment.setStatus("completed");
+                                updatePayment(payment);
+                                
+                                // Update the order status
+                                DatabaseReference orderRef = FirebaseDatabase.getInstance().getReference("orders");
+                                orderRef.child(orderId).child("paymentStatus")
+                                    .setValueAsync(OrderEntity.PaymentStatus.PAID);
+                                
+                                System.out.println("Manual payment check: Payment completed for order " + orderId);
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error checking payment status manually: " + e.getMessage());
+                    }
+                }
+            }
+        }).exceptionally(ex -> {
+            System.err.println("Exception when checking payment status: " + ex.getMessage());
+            return null;
+        });
     }
 }
