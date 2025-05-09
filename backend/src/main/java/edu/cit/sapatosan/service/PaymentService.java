@@ -52,7 +52,7 @@ public class PaymentService {
                 MediaType mediaType = MediaType.parse("application/json");
                 JSONObject payload = new JSONObject();
                 JSONObject attributes = new JSONObject();
-                attributes.put("amount", payment.getAmount().intValue() * 100); // Convert to cents
+                attributes.put("amount", payment.getAmount().intValue()); // Convert to cents
                 // Include user details in the description
                 String description = String.format(
                         "Payment for order %s by %s %s (%s)",
