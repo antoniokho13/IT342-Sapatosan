@@ -1,4 +1,3 @@
-import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import AdminAnalytics from './pages/AdminAnalytics';
 import AdminCategories from './pages/AdminCategories';
@@ -10,6 +9,7 @@ import Casual from './pages/Casual';
 import Checkout from './pages/Checkout';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import OrderConfirmation from './pages/OrderConfirmation';
 import Register from './pages/Register';
 import Running from './pages/Running';
 import UserInformation from './pages/UserInformation';
@@ -28,7 +28,7 @@ function App() {
           <Route path="/running" element={<Running />} />
           <Route path="/profile" element={<UserInformation />} />
           <Route path="/checkout" element={<Checkout />} />
-
+          <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
           
           {/* Admin Routes */}
           <Route path="/admin/users" element={<AdminUsers />} />
