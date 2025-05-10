@@ -99,7 +99,7 @@ const Checkout = () => {
             
             // Next, fetch ALL products to find the ones in the cart
             const productsResponse = await axios.get(
-                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/products`,
+                `https://gleaming-ofelia-sapatosan-b16af7a5.koyeb.app/api/carts/user/${userId}/products`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             
